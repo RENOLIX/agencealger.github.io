@@ -667,3 +667,165 @@ progress { accent-color: var(--orange); width: 100%; }
   .travel-inline-facts.vertical-facts div { grid-template-columns: 20px 1fr; }
   .travel-inline-facts.vertical-facts strong { grid-column: 2; }
 }
+
+@media (max-width: 900px) {
+  .mobile-menu { direction: rtl; text-align: right; }
+  .mobile-menu a { text-align: right; }
+
+  .section-head,
+  .testimonials .section-head,
+  .about-story,
+  .about-copy,
+  .contact-hero > div:first-child {
+    direction: rtl;
+    text-align: right;
+  }
+
+  .section-head {
+    align-items: stretch;
+    display: grid;
+    gap: 18px;
+  }
+
+  .section-head > div:first-child,
+  .section-head h2,
+  .section-head .label,
+  .tours-head > div:first-child,
+  .why-left,
+  .team-section .section-head > div:first-child,
+  .testimonials .section-head > div:first-child,
+  .about-story > div:first-child,
+  .about-copy,
+  .timeline,
+  .timeline article,
+  .about-values article,
+  .contact-form,
+  .contact-info,
+  .contact-card {
+    text-align: right;
+  }
+
+  .section-head p,
+  .about-copy p,
+  .why-left p {
+    max-width: none;
+    text-align: right;
+  }
+
+  .tours-head .filters {
+    justify-content: flex-start;
+    margin-right: 0;
+  }
+
+  .why {
+    gap: 26px;
+    padding: 72px 22px;
+  }
+
+  .why-left {
+    margin: 0;
+    order: -1;
+  }
+
+  .why-left h2,
+  .section-head h2,
+  .about-story h2 {
+    font-size: clamp(2rem, 9vw, 3rem);
+    line-height: 1.08;
+  }
+
+  .why-stats {
+    gap: 12px;
+  }
+
+  .testimonial-nav {
+    justify-content: flex-start;
+  }
+
+  .team-search {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .about-hero,
+  .about-values,
+  .about-story,
+  .contact-layout {
+    direction: rtl;
+  }
+
+  .about-values article h2,
+  .about-values article p,
+  .timeline h3,
+  .timeline p {
+    text-align: right;
+  }
+
+  .admin-appbar {
+    align-items: center;
+    display: grid;
+    grid-template-columns: 1fr;
+    min-height: 88px;
+    padding: 12px 16px;
+    position: sticky;
+  }
+
+  .admin-appbar-brand {
+    justify-content: center;
+    width: 100%;
+  }
+
+  .admin-appbar-brand img {
+    height: 56px;
+    margin: 0 auto;
+  }
+
+  .admin-menu-toggle {
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+
+  .admin-appbar .profile {
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    gap: 0;
+    left: 16px;
+    padding: 0;
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+
+  .admin-appbar .profile > span {
+    display: none;
+  }
+
+  .admin-appbar .profile div {
+    text-align: left;
+  }
+
+  .admin-appbar .profile strong {
+    display: block;
+    font-size: 12px;
+    line-height: 1.2;
+    max-width: 90px;
+  }
+
+  .admin-appbar .profile small {
+    font-size: 10px;
+  }
+
+  .admin-topnav.open {
+    direction: rtl;
+    text-align: right;
+  }
+
+  .admin-topnav.open button {
+    justify-content: flex-start;
+    text-align: right;
+  }
+}
