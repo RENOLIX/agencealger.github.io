@@ -3,7 +3,7 @@ import { motion } from "motion/react";
 
 function getIntroVideoSrc() {
   if (typeof window === "undefined") {
-    return "/agencedevoyage.github.io/pc1.mp4";
+    return "/agencealger.github.io/pc1.mp4";
   }
 
   const isPhone =
@@ -12,8 +12,8 @@ function getIntroVideoSrc() {
     window.matchMedia("(hover: none)").matches;
 
   return isPhone
-    ? "/agencedevoyage.github.io/pc2-mobile.mp4?v=2"
-    : "/agencedevoyage.github.io/pc1.mp4";
+    ? "/agencealger.github.io/pc2-mobile.mp4?v=2"
+    : "/agencealger.github.io/pc1.mp4";
 }
 
 export default function VideoIntro({ onComplete }: { onComplete: () => void }) {
@@ -71,7 +71,7 @@ export default function VideoIntro({ onComplete }: { onComplete: () => void }) {
       <div className="intro-shade" />
       <div className="intro-brand">
         <motion.p initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
-          Bienvenue chez
+          مرحبا بكم في
         </motion.p>
         <motion.h1 initial={{ opacity: 0, scale: 0.94 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.8, duration: 1.1 }}>
           Hamdi
@@ -81,7 +81,7 @@ export default function VideoIntro({ onComplete }: { onComplete: () => void }) {
         </motion.h2>
         <motion.span initial={{ scaleX: 0 }} animate={{ scaleX: 1 }} transition={{ delay: 1.5, duration: 1 }} />
         <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.8 }}>
-          Le monde vous attend
+          رحلتكم إلى مكة تبدأ هنا
         </motion.p>
       </div>
     </motion.div>

@@ -18,7 +18,7 @@ function Protected({ children }: { children: React.ReactNode }) {
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <BrowserRouter basename="/agencedevoyage.github.io">
+    <BrowserRouter basename="/agencealger.github.io">
       <AuthProvider>
         <ScrollToTop />
         <Routes>

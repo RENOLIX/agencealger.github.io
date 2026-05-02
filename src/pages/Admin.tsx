@@ -1,22 +1,23 @@
 import { FormEvent, useMemo, useState } from "react";
 import { ArrowLeft, Edit3, LogOut, Mail, Plus, ReceiptText, Save, ShieldCheck, Trash2, UserRound, Users, WalletCards } from "lucide-react";
 import { useAuth } from "../components/providers/auth";
-import { benefitIcons, benefitOptions, getUsers, readStore, saveUsers, seedTravels, writeStore, type BenefitKey, type ContactMessage, type Reservation, type Travel, type User } from "../lib/data";
+import { benefitIcons, benefitLabels, benefitOptions, categoryLabels, getUsers, readStore, saveUsers, seedTravels, writeStore, type BenefitKey, type ContactMessage, type Reservation, type Travel, type User } from "../lib/data";
 
 type Tab = "reservations" | "voyages" | "historique" | "messages" | "users";
 
 const emptyTravel: Omit<Travel, "id" | "ticketsLeft" | "rating"> = {
   name: "",
-  destination: "",
-  country: "",
+  destination: "مكة المكرمة",
+  country: "السعودية",
   image: "",
   images: [],
   date: "",
-  duration: "7 jours",
-  price: 1200,
+  duration: "30 يوم",
+  price: 185000,
   description: "",
+  guides: "",
   category: "Culture",
-  benefits: ["Vol", "Hotel"],
+  benefits: ["Vol", "Hotel", "Repas", "Guide", "Transfert"],
   ticketsTotal: 20,
 };
 
@@ -63,14 +64,7 @@ export default function Admin() {
     const initials = userForm.name.split(" ").map((part) => part[0]).join("").slice(0, 2).toUpperCase() || "HV";
     persistUsers([
       ...adminUsers,
-      {
-        id: crypto.randomUUID(),
-        name: userForm.name.trim(),
-        email: cleanEmail,
-        password: userForm.password,
-        role: userForm.role,
-        avatar: initials,
-      },
+      { id: crypto.randomUUID(), name: userForm.name.trim(), email: cleanEmail, password: userForm.password, role: userForm.role, avatar: initials },
     ]);
     setUserForm({ name: "", email: "", password: "", role: "employee" });
   }
@@ -116,6 +110,7 @@ export default function Admin() {
       duration: travel.duration,
       price: travel.price,
       description: travel.description,
+      guides: travel.guides,
       category: travel.category,
       benefits: travel.benefits,
       ticketsTotal: travel.ticketsTotal,
@@ -128,7 +123,7 @@ export default function Admin() {
     return new Promise<string>((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => resolve(String(reader.result ?? ""));
-      reader.onerror = () => reject(new Error("Image illisible"));
+      reader.onerror = () => reject(new Error("تعذر قراءة الصورة"));
       reader.readAsDataURL(file);
     });
   }
@@ -138,29 +133,21 @@ export default function Admin() {
     const images = await Promise.all(Array.from(files).map(readImageFile));
     setTravelForm((current) => {
       const nextImages = [...current.images, ...images];
-      return {
-        ...current,
-        images: nextImages,
-        image: nextImages[0] ?? current.image,
-      };
+      return { ...current, images: nextImages, image: nextImages[0] ?? current.image };
     });
   }
 
   function removeTravelImage(index: number) {
     setTravelForm((current) => {
       const nextImages = current.images.filter((_, imageIndex) => imageIndex !== index);
-      return {
-        ...current,
-        images: nextImages,
-        image: nextImages[0] ?? "",
-      };
+      return { ...current, images: nextImages, image: nextImages[0] ?? "" };
     });
   }
 
   function saveTravel(event: FormEvent) {
     event.preventDefault();
     const total = Number(travelForm.ticketsTotal);
-    const fallbackImage = "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1200";
+    const fallbackImage = "https://images.unsplash.com/photo-1591604129939-f1efa4d9f7fa?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1200";
     const images = travelForm.images.length ? travelForm.images : [travelForm.image || fallbackImage];
     const image = images[0];
 
@@ -196,7 +183,7 @@ export default function Admin() {
   }
 
   function deleteTravel(travelId: string) {
-    if (!window.confirm("Supprimer ce voyage ?")) return;
+    if (!window.confirm("حذف هذه الرحلة؟")) return;
     persistTravels(travels.filter((item) => item.id !== travelId));
     if (reservationForm.travelId === travelId) {
       setReservationForm({ ...reservationForm, travelId: travels.find((item) => item.id !== travelId)?.id ?? "" });
@@ -206,37 +193,37 @@ export default function Admin() {
   return (
     <main className="admin-shell">
       <aside className="admin-side">
-        <div className="admin-logo"><img src="/agencedevoyage.github.io/logo-normal.png" alt="Hamdi Voyage" /></div>
-        <button className={tab === "reservations" ? "active" : ""} onClick={() => setTab("reservations")}><ReceiptText /> Reservations</button>
-        <button className={tab === "voyages" ? "active" : ""} onClick={() => setTab("voyages")}><WalletCards /> Voyages</button>
-        <button className={tab === "historique" ? "active" : ""} onClick={() => setTab("historique")}><UserRound /> Historique</button>
-        <button className={tab === "messages" ? "active" : ""} onClick={() => setTab("messages")}><Mail /> Messages</button>
-        {user?.role === "admin" && <button className={tab === "users" ? "active" : ""} onClick={() => setTab("users")}><Users /> Utilisateurs</button>}
-        <button onClick={logout}><LogOut /> Deconnexion</button>
+        <div className="admin-logo"><img src="/agencealger.github.io/logo-normal.png" alt="Hamdi Voyage" /></div>
+        <button className={tab === "reservations" ? "active" : ""} onClick={() => setTab("reservations")}><ReceiptText /> الحجوزات</button>
+        <button className={tab === "voyages" ? "active" : ""} onClick={() => setTab("voyages")}><WalletCards /> الرحلات</button>
+        <button className={tab === "historique" ? "active" : ""} onClick={() => setTab("historique")}><UserRound /> السجل</button>
+        <button className={tab === "messages" ? "active" : ""} onClick={() => setTab("messages")}><Mail /> الرسائل</button>
+        {user?.role === "admin" && <button className={tab === "users" ? "active" : ""} onClick={() => setTab("users")}><Users /> المستخدمون</button>}
+        <button onClick={logout}><LogOut /> تسجيل الخروج</button>
       </aside>
 
       <section className="admin-main">
         <header className="admin-top">
-          <div><span className="label">Back office</span><h1>{tab === "voyages" ? "Gestion des voyages" : tab === "historique" ? "Historique commercial" : tab === "messages" ? "Messages clients" : tab === "users" ? "Utilisateurs" : "Creer une reservation"}</h1></div>
-          <div className="profile"><span>{user?.avatar}</span><div><strong>{user?.name}</strong><small>{user?.role === "admin" ? "Administrateur" : "Employe"}</small></div></div>
+          <div><span className="label">لوحة التحكم</span><h1>{tab === "voyages" ? "إدارة الرحلات" : tab === "historique" ? "السجل التجاري" : tab === "messages" ? "رسائل العملاء" : tab === "users" ? "المستخدمون" : "إنشاء حجز"}</h1></div>
+          <div className="profile"><span>{user?.avatar}</span><div><strong>{user?.name}</strong><small>{user?.role === "admin" ? "مدير" : "موظف"}</small></div></div>
         </header>
 
         <div className="metric-grid">
-          <article><span>Reservations visibles</span><strong>{visibleReservations.length}</strong></article>
-          <article><span>Chiffre realise</span><strong>{totalSales.toLocaleString("fr-FR")} EUR</strong></article>
-          <article><span>Billets disponibles</span><strong>{travels.reduce((sum, item) => sum + item.ticketsLeft, 0)}</strong></article>
-          <article><span>Messages clients</span><strong>{messages.length}</strong></article>
+          <article><span>الحجوزات الظاهرة</span><strong>{visibleReservations.length}</strong></article>
+          <article><span>المبيعات</span><strong>{totalSales.toLocaleString("fr-FR")} دج</strong></article>
+          <article><span>الأماكن المتاحة</span><strong>{travels.reduce((sum, item) => sum + item.ticketsLeft, 0)}</strong></article>
+          <article><span>رسائل العملاء</span><strong>{messages.length}</strong></article>
         </div>
 
         {tab === "reservations" && (
           <div className="admin-grid">
             <form className="admin-card form-grid" onSubmit={createReservation}>
-              <h2>Nouvelle reservation</h2>
-              <label>Voyage<select value={reservationForm.travelId} onChange={(event) => setReservationForm({ ...reservationForm, travelId: event.target.value })}>{travels.map((travel) => <option key={travel.id} value={travel.id}>{travel.name} - {travel.ticketsLeft} billets</option>)}</select></label>
-              <label>Nom client<input required value={reservationForm.clientName} onChange={(event) => setReservationForm({ ...reservationForm, clientName: event.target.value })} /></label>
-              <label>Telephone client<input required value={reservationForm.clientPhone} onChange={(event) => setReservationForm({ ...reservationForm, clientPhone: event.target.value })} /></label>
-              <label>Quantite<input type="number" min={1} value={reservationForm.quantity} onChange={(event) => setReservationForm({ ...reservationForm, quantity: Number(event.target.value) })} /></label>
-              <button><ShieldCheck /> Valider la reservation</button>
+              <h2>حجز جديد</h2>
+              <label>الرحلة<select value={reservationForm.travelId} onChange={(event) => setReservationForm({ ...reservationForm, travelId: event.target.value })}>{travels.map((travel) => <option key={travel.id} value={travel.id}>{travel.name} - {travel.ticketsLeft} مكان</option>)}</select></label>
+              <label>اسم العميل<input required value={reservationForm.clientName} onChange={(event) => setReservationForm({ ...reservationForm, clientName: event.target.value })} /></label>
+              <label>هاتف العميل<input required value={reservationForm.clientPhone} onChange={(event) => setReservationForm({ ...reservationForm, clientPhone: event.target.value })} /></label>
+              <label>العدد<input type="number" min={1} value={reservationForm.quantity} onChange={(event) => setReservationForm({ ...reservationForm, quantity: Number(event.target.value) })} /></label>
+              <button><ShieldCheck /> تأكيد الحجز</button>
             </form>
             <TravelInventory travels={travels} />
           </div>
@@ -247,44 +234,45 @@ export default function Admin() {
             travelMode === "form" ? (
               <form className="admin-card form-grid travel-editor" onSubmit={saveTravel}>
                 <div className="editor-head">
-                  <button type="button" className="ghost-action" onClick={() => { setTravelMode("list"); setEditingTravelId(null); setTravelForm(emptyTravel); }}><ArrowLeft /> Retour</button>
-                  <h2>{editingTravelId ? "Modifier le voyage" : "Ajouter un voyage"}</h2>
+                  <button type="button" className="ghost-action" onClick={() => { setTravelMode("list"); setEditingTravelId(null); setTravelForm(emptyTravel); }}><ArrowLeft /> رجوع</button>
+                  <h2>{editingTravelId ? "تعديل الرحلة" : "إضافة رحلة"}</h2>
                 </div>
                 <div className="form-two">
-                  <label>Nom<input required value={travelForm.name} onChange={(event) => setTravelForm({ ...travelForm, name: event.target.value })} /></label>
-                  <label>Destination<input required value={travelForm.destination} onChange={(event) => setTravelForm({ ...travelForm, destination: event.target.value })} /></label>
-                  <label>Pays<input required value={travelForm.country} onChange={(event) => setTravelForm({ ...travelForm, country: event.target.value })} /></label>
-                  <label>Date<input type="date" required value={travelForm.date} onChange={(event) => setTravelForm({ ...travelForm, date: event.target.value })} /></label>
-                  <label>Duree<input required value={travelForm.duration} onChange={(event) => setTravelForm({ ...travelForm, duration: event.target.value })} /></label>
-                  <label>Categorie<select value={travelForm.category} onChange={(event) => setTravelForm({ ...travelForm, category: event.target.value as Travel["category"] })}><option>Plage</option><option>Aventure</option><option>Culture</option><option>Luxe</option></select></label>
-                  <label>Prix EUR<input type="number" min={1} value={travelForm.price} onChange={(event) => setTravelForm({ ...travelForm, price: Number(event.target.value) })} /></label>
-                  <label>Billets disponibles<input type="number" min={0} value={travelForm.ticketsTotal} onChange={(event) => setTravelForm({ ...travelForm, ticketsTotal: Number(event.target.value) })} /></label>
+                  <label>الاسم<input required value={travelForm.name} onChange={(event) => setTravelForm({ ...travelForm, name: event.target.value })} /></label>
+                  <label>الوجهة<input required value={travelForm.destination} onChange={(event) => setTravelForm({ ...travelForm, destination: event.target.value })} /></label>
+                  <label>البلد<input required value={travelForm.country} onChange={(event) => setTravelForm({ ...travelForm, country: event.target.value })} /></label>
+                  <label>تاريخ الانطلاق<input type="date" required value={travelForm.date} onChange={(event) => setTravelForm({ ...travelForm, date: event.target.value })} /></label>
+                  <label>المدة<input required value={travelForm.duration} onChange={(event) => setTravelForm({ ...travelForm, duration: event.target.value })} /></label>
+                  <label>الفئة<select value={travelForm.category} onChange={(event) => setTravelForm({ ...travelForm, category: event.target.value as Travel["category"] })}><option value="Plage">{categoryLabels.Plage}</option><option value="Aventure">{categoryLabels.Aventure}</option><option value="Culture">{categoryLabels.Culture}</option><option value="Luxe">{categoryLabels.Luxe}</option></select></label>
+                  <label>السعر دج<input type="number" min={1} value={travelForm.price} onChange={(event) => setTravelForm({ ...travelForm, price: Number(event.target.value) })} /></label>
+                  <label>الأماكن المتاحة<input type="number" min={0} value={travelForm.ticketsTotal} onChange={(event) => setTravelForm({ ...travelForm, ticketsTotal: Number(event.target.value) })} /></label>
                 </div>
                 <div className="image-uploader">
                   <label className="upload-zone">
                     <input type="file" accept="image/*" multiple onChange={(event) => void uploadTravelImages(event.target.files)} />
-                    <strong>Uploader des photos</strong>
-                    <span>Choisissez une ou plusieurs photos depuis votre appareil.</span>
+                    <strong>رفع الصور</strong>
+                    <span>اختر صورة أو أكثر من جهازك.</span>
                   </label>
                   {travelForm.images.length > 0 && (
                     <div className="uploaded-images">
                       {travelForm.images.map((image, index) => (
                         <div key={`${image.slice(0, 18)}-${index}`}>
-                          <img src={image} alt={`Voyage ${index + 1}`} />
+                          <img src={image} alt={`رحلة ${index + 1}`} />
                           <button type="button" onClick={() => removeTravelImage(index)}><Trash2 size={14} /></button>
-                          {index === 0 && <small>Principale</small>}
+                          {index === 0 && <small>الرئيسية</small>}
                         </div>
                       ))}
                     </div>
                   )}
                 </div>
-                <label>Description<textarea required value={travelForm.description} onChange={(event) => setTravelForm({ ...travelForm, description: event.target.value })} /></label>
+                <label>الوصف<textarea required value={travelForm.description} onChange={(event) => setTravelForm({ ...travelForm, description: event.target.value })} /></label>
+                <label>أسماء المرشدين<textarea required value={travelForm.guides} onChange={(event) => setTravelForm({ ...travelForm, guides: event.target.value })} placeholder="مثال: الشيخ أحمد، الأستاذ سمير" /></label>
                 <div className="benefit-picker">
                   {benefitOptions.map((benefit) => {
                     const Icon = benefitIcons[benefit];
                     return (
                       <label key={benefit}>
-                        <span><Icon size={16} /> {benefit}</span>
+                        <span><Icon size={16} /> {benefitLabels[benefit]}</span>
                         <input
                           type="checkbox"
                           checked={travelForm.benefits.includes(benefit)}
@@ -294,13 +282,13 @@ export default function Admin() {
                     );
                   })}
                 </div>
-                <button><Save /> {editingTravelId ? "Enregistrer les modifications" : "Ajouter le voyage"}</button>
+                <button><Save /> {editingTravelId ? "حفظ التعديلات" : "إضافة الرحلة"}</button>
               </form>
             ) : (
               <div className="travel-admin-list">
                 <div className="list-toolbar">
-                  <div><h2>Voyages</h2><p>{travels.length} voyage(s) dans le catalogue</p></div>
-                  <button onClick={openNewTravel}><Plus /> Ajouter un voyage</button>
+                  <div><h2>الرحلات</h2><p>{travels.length} رحلة في القائمة</p></div>
+                  <button onClick={openNewTravel}><Plus /> إضافة رحلة</button>
                 </div>
                 <div className="travel-management-grid">
                   {travels.map((travel) => (
@@ -310,43 +298,44 @@ export default function Admin() {
                         {(travel.images?.length ?? 0) > 3 && <span>+{travel.images.length - 3}</span>}
                       </div>
                       <div>
-                        <span>{travel.category} · {travel.date}</span>
+                        <span>{categoryLabels[travel.category]} - {travel.date}</span>
                         <h3>{travel.name}</h3>
-                        <p>{travel.destination} · {travel.country}</p>
-                        <strong>{travel.price.toLocaleString("fr-FR")} EUR</strong>
-                        <small>{travel.ticketsLeft}/{travel.ticketsTotal} billets disponibles</small>
+                        <p>{travel.destination} - {travel.country}</p>
+                        <p>المرشدون: {travel.guides}</p>
+                        <strong>{travel.price.toLocaleString("fr-FR")} دج</strong>
+                        <small>{travel.ticketsLeft}/{travel.ticketsTotal} مكان متاح</small>
                       </div>
                       <footer>
-                        <button onClick={() => openEditTravel(travel)}><Edit3 /> Modifier</button>
-                        <button className="danger" onClick={() => deleteTravel(travel.id)}><Trash2 /> Supprimer</button>
+                        <button onClick={() => openEditTravel(travel)}><Edit3 /> تعديل</button>
+                        <button className="danger" onClick={() => deleteTravel(travel.id)}><Trash2 /> حذف</button>
                       </footer>
                     </article>
                   ))}
                 </div>
               </div>
             )
-          ) : <div className="admin-card"><h2>Acces limite</h2><p>Seul l'administrateur peut ajouter, modifier ou supprimer les voyages.</p></div>
+          ) : <div className="admin-card"><h2>صلاحية محدودة</h2><p>المدير فقط يمكنه إضافة الرحلات أو تعديلها أو حذفها.</p></div>
         )}
 
         {tab === "historique" && (
           <div className="history-list">
             {user?.role === "admin" && <EmployeeBoard reservations={reservations} />}
-            {visibleReservations.map((reservation) => <article key={reservation.id} className="history-row"><div><strong>{reservation.clientName}</strong><span>{reservation.travelName} par {reservation.employeeName}</span></div><div><strong>{reservation.quantity} billet(s)</strong><span>{new Date(reservation.createdAt).toLocaleString("fr-FR")}</span></div><strong>{reservation.total.toLocaleString("fr-FR")} EUR</strong></article>)}
+            {visibleReservations.map((reservation) => <article key={reservation.id} className="history-row"><div><strong>{reservation.clientName}</strong><span>{reservation.travelName} بواسطة {reservation.employeeName}</span></div><div><strong>{reservation.quantity} مكان</strong><span>{new Date(reservation.createdAt).toLocaleString("fr-FR")}</span></div><strong>{reservation.total.toLocaleString("fr-FR")} دج</strong></article>)}
           </div>
         )}
 
         {tab === "messages" && (
           <div className="message-list">
             {messages.length === 0 ? (
-              <div className="admin-card"><h2>Aucun message</h2><p>Les demandes envoyees depuis la page Contact apparaitront ici.</p></div>
+              <div className="admin-card"><h2>لا توجد رسائل</h2><p>الطلبات المرسلة من صفحة الاتصال ستظهر هنا.</p></div>
             ) : messages.map((message) => (
               <article key={message.id} className="message-card">
                 <div className="message-head">
-                  <div><strong>{message.fullName}</strong><span>{message.email} · {message.phone}</span></div>
-                  <button onClick={() => persistMessages(messages.map((item) => item.id === message.id ? { ...item, status: "Lu" } : item))}>{message.status}</button>
+                  <div><strong>{message.fullName}</strong><span>{message.email} - {message.phone}</span></div>
+                  <button onClick={() => persistMessages(messages.map((item) => item.id === message.id ? { ...item, status: "Lu" } : item))}>{message.status === "Lu" ? "مقروء" : "جديد"}</button>
                 </div>
                 <p>{message.message}</p>
-                <footer><span>{message.destination || "Destination non precisee"}</span><span>{new Date(message.createdAt).toLocaleString("fr-FR")}</span></footer>
+                <footer><span>{message.destination || "وجهة غير محددة"}</span><span>{new Date(message.createdAt).toLocaleString("fr-FR")}</span></footer>
               </article>
             ))}
           </div>
@@ -355,23 +344,23 @@ export default function Admin() {
         {tab === "users" && user?.role === "admin" && (
           <div className="admin-grid">
             <form className="admin-card form-grid" onSubmit={createUser}>
-              <h2>Ajouter un utilisateur</h2>
-              <label>Nom complet<input required value={userForm.name} onChange={(event) => setUserForm({ ...userForm, name: event.target.value })} /></label>
+              <h2>إضافة مستخدم</h2>
+              <label>الاسم الكامل<input required value={userForm.name} onChange={(event) => setUserForm({ ...userForm, name: event.target.value })} /></label>
               <label>Email<input required type="email" value={userForm.email} onChange={(event) => setUserForm({ ...userForm, email: event.target.value })} /></label>
-              <label>Mot de passe<input required value={userForm.password} onChange={(event) => setUserForm({ ...userForm, password: event.target.value })} /></label>
-              <label>Role<select value={userForm.role} onChange={(event) => setUserForm({ ...userForm, role: event.target.value as User["role"] })}><option value="employee">Employe</option><option value="admin">Administrateur</option></select></label>
-              <button><Plus /> Ajouter</button>
+              <label>كلمة المرور<input required value={userForm.password} onChange={(event) => setUserForm({ ...userForm, password: event.target.value })} /></label>
+              <label>الدور<select value={userForm.role} onChange={(event) => setUserForm({ ...userForm, role: event.target.value as User["role"] })}><option value="employee">موظف</option><option value="admin">مدير</option></select></label>
+              <button><Plus /> إضافة</button>
             </form>
             <div className="admin-card user-list">
-              <h2>Comptes</h2>
+              <h2>الحسابات</h2>
               {adminUsers.map((account) => (
                 <article key={account.id}>
                   <span>{account.avatar}</span>
-                  <div><strong>{account.name}</strong><small>{account.email} · {account.role === "admin" ? "Administrateur" : "Employe"}</small></div>
+                  <div><strong>{account.name}</strong><small>{account.email} - {account.role === "admin" ? "مدير" : "موظف"}</small></div>
                   <button
                     disabled={account.id === user.id}
                     onClick={() => persistUsers(adminUsers.filter((item) => item.id !== account.id))}
-                    title={account.id === user.id ? "Impossible de supprimer votre compte connecte" : "Supprimer"}
+                    title={account.id === user.id ? "لا يمكن حذف الحساب المتصل" : "حذف"}
                   >
                     <Trash2 size={16} />
                   </button>
@@ -386,12 +375,12 @@ export default function Admin() {
 }
 
 function TravelInventory({ travels }: { travels: Travel[] }) {
-  return <div className="admin-card inventory"><h2>Stock voyages</h2>{travels.map((travel) => <article key={travel.id}><img src={travel.image} alt="" /><div><strong>{travel.name}</strong><span>{travel.date} - {travel.price.toLocaleString("fr-FR")} EUR</span><progress value={travel.ticketsLeft} max={travel.ticketsTotal} /></div><b>{travel.ticketsLeft}/{travel.ticketsTotal}</b></article>)}</div>;
+  return <div className="admin-card inventory"><h2>مخزون الرحلات</h2>{travels.map((travel) => <article key={travel.id}><img src={travel.image} alt="" /><div><strong>{travel.name}</strong><span>{travel.date} - {travel.price.toLocaleString("fr-FR")} دج</span><progress value={travel.ticketsLeft} max={travel.ticketsTotal} /></div><b>{travel.ticketsLeft}/{travel.ticketsTotal}</b></article>)}</div>;
 }
 
 function EmployeeBoard({ reservations }: { reservations: Reservation[] }) {
   return <div className="employee-board">{getUsers().filter((item) => item.role === "employee").map((employee) => {
     const rows = reservations.filter((item) => item.employeeId === employee.id);
-    return <article key={employee.id}><span>{employee.avatar}</span><strong>{employee.name}</strong><small>{rows.length} reservations</small><b>{rows.reduce((sum, item) => sum + item.total, 0).toLocaleString("fr-FR")} EUR</b></article>;
+    return <article key={employee.id}><span>{employee.avatar}</span><strong>{employee.name}</strong><small>{rows.length} حجز</small><b>{rows.reduce((sum, item) => sum + item.total, 0).toLocaleString("fr-FR")} دج</b></article>;
   })}</div>;
 }

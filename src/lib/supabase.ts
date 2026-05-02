@@ -2,11 +2,11 @@ import { createClient } from "@supabase/supabase-js";
 
 const rawSupabaseUrl =
   import.meta.env.VITE_SUPABASE_URL ??
-  "https://zvpvigyplahxuumabqiv.supabase.co";
+  "https://kyvxdxzepwpksubhgaov.supabase.co/rest/v1/";
 
 const supabasePublishableKey =
   import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ??
-  "sb_publishable_H66Ms8TZI6dn2tbMU1wRLQ_GxsQ92BD";
+  "sb_publishable_iPR5t6sfttrv-EC_1GdfaQ_auz5nHR_";
 
 const supabaseUrl = rawSupabaseUrl.replace(/\/rest\/v1\/?$/, "");
 

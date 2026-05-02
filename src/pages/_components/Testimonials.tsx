@@ -2,10 +2,10 @@ import { useState } from "react";
 import { ChevronLeft, ChevronRight, Quote, Star } from "lucide-react";
 
 const testimonials = [
-  ["Isabelle Moreau", "Paris", "Maldives Prestige", "Un voyage absolument parfait. L'equipe a pris soin de chaque detail, du resort aux excursions.", "IM"],
-  ["Thomas Dupont", "Lyon", "Tokyo & Kyoto", "Le Japon me faisait rever. Horizons a transforme ce reve en realite avec une organisation impeccable.", "TD"],
-  ["Marie-Claire Bertrand", "Bordeaux", "Perou Mysterieux", "Machu Picchu au lever du soleil restera grave toute ma vie. Guide exceptionnel et groupe chaleureux.", "MB"],
-  ["Antoine Lebrun", "Marseille", "Bali Authentique", "La villa a Ubud, les temples, les ceremonies: une immersion totale et tres fluide.", "AL"],
+  ["أمينة بن سالم", "الجزائر", "عمرة شهر يونيو", "تنظيم ممتاز من أول يوم. المرشد كان حاضرا معنا في كل التفاصيل.", "AB"],
+  ["محمد قادري", "وهران", "عمرة شهر يوليو", "الإقامة قريبة والخدمة واضحة. الحجز من الوكالة كان سهلا ومطمئنا.", "MQ"],
+  ["سارة حميدي", "قسنطينة", "عمرة شهر سبتمبر", "رحلة هادئة ومناسبة للعائلة. كل شيء كان منظما من 1 إلى 30.", "SH"],
+  ["ياسين مرابط", "عنابة", "عمرة شهر نوفمبر", "أعجبني وضوح البرنامج وأسماء المرشدين قبل السفر. تجربة موثوقة.", "YM"],
 ];
 
 export default function Testimonials() {
@@ -14,7 +14,7 @@ export default function Testimonials() {
   return (
     <section className="testimonials">
       <div className="section-head">
-        <div><span className="label">Temoignages</span><h2>Ce que disent<br /><em>nos voyageurs</em></h2></div>
+        <div><span className="label">آراء العملاء</span><h2>ماذا يقول<br /><em>المعتمرون</em></h2></div>
         <div className="testimonial-nav">
           <button onClick={() => setCurrent((current - 1 + testimonials.length) % testimonials.length)}><ChevronLeft /></button>
           <span>{current + 1} / {testimonials.length}</span>
@@ -27,7 +27,7 @@ export default function Testimonials() {
         <blockquote>"{item[3]}"</blockquote>
         <div className="traveler">
           <span>{item[4]}</span>
-          <div><strong>{item[0]}</strong><small>{item[1]} · {item[2]}</small></div>
+          <div><strong>{item[0]}</strong><small>{item[1]} - {item[2]}</small></div>
         </div>
         <div className="testimonial-rail">
           {testimonials.map((entry, index) => <button key={entry[0]} className={index === current ? "active" : ""} onClick={() => setCurrent(index)}>{entry[4]}</button>)}

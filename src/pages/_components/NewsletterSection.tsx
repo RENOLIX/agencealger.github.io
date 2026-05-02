@@ -6,15 +6,15 @@ export default function NewsletterSection() {
   return (
     <section className="newsletter">
       <div>
-        <span className="label">Newsletter</span>
-        <h2>Offres exclusives<br /><em>en avant-premiere</em></h2>
-        <p>Promotions, nouvelles destinations et conseils d'experts directement dans votre boite mail.</p>
+        <span className="label">النشرة</span>
+        <h2>عروض العمرة<br /><em>قبل الجميع</em></h2>
+        <p>تواريخ الرحلات، الأماكن المتاحة، والعروض الخاصة مباشرة في بريدك.</p>
         {!done ? (
           <form onSubmit={(event) => { event.preventDefault(); setDone(true); }}>
-            <input type="email" required placeholder="votre@email.com" />
-            <button><Send size={15} /> S'inscrire</button>
+            <input type="email" required placeholder="you@email.com" />
+            <button><Send size={15} /> تسجيل</button>
           </form>
-        ) : <div className="success"><CheckCircle /> Inscription reussie, merci !</div>}
+        ) : <div className="success"><CheckCircle /> تم التسجيل، شكرا لك!</div>}
       </div>
     </section>
   );

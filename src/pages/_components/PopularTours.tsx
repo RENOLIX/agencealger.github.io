@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Clock, MapPin, Star, Users } from "lucide-react";
-import { benefitIcons, readStore, seedTravels, type Travel } from "../../lib/data";
+import { benefitIcons, benefitLabels, categoryLabels, readStore, seedTravels, type Travel } from "../../lib/data";
 
 const categories = ["Tous", "Plage", "Aventure", "Culture", "Luxe"] as const;
 
@@ -12,8 +12,8 @@ export default function PopularTours() {
   return (
     <section id="tours" className="section pale">
       <div className="section-head">
-        <div><span className="label">Nos Voyages</span><h2>Voyages les plus<br /><em>demandes</em></h2></div>
-        <div className="filters">{categories.map((cat) => <button className={active === cat ? "active" : ""} onClick={() => setActive(cat)} key={cat}>{cat}</button>)}</div>
+        <div><span className="label">رحلاتنا</span><h2>برامج العمرة<br /><em>المتاحة</em></h2></div>
+        <div className="filters">{categories.map((cat) => <button className={active === cat ? "active" : ""} onClick={() => setActive(cat)} key={cat}>{categoryLabels[cat]}</button>)}</div>
       </div>
       <div className="tour-grid">
         {filtered.map((tour) => (
@@ -29,12 +29,13 @@ export default function PopularTours() {
               <div className="benefits">
                 {tour.benefits.map((benefit) => {
                   const Icon = benefitIcons[benefit];
-                  return <span key={benefit}><Icon size={12} /> {benefit}</span>;
+                  return <span key={benefit}><Icon size={12} /> {benefitLabels[benefit]}</span>;
                 })}
               </div>
+              <p className="tour-desc">المرشدون: {tour.guides}</p>
               <div className="tour-foot">
-                <div><strong>{tour.price.toLocaleString("fr-FR")} EUR</strong><span>par personne</span></div>
-                <span className={tour.ticketsLeft < 8 ? "low-stock" : ""}><Users size={13} /> {tour.ticketsLeft}/{tour.ticketsTotal} billets</span>
+                <div><strong>{tour.price.toLocaleString("fr-FR")} دج</strong><span>للشخص</span></div>
+                <span className={tour.ticketsLeft < 8 ? "low-stock" : ""}><Users size={13} /> {tour.ticketsLeft}/{tour.ticketsTotal} مكان</span>
               </div>
             </div>
           </article>

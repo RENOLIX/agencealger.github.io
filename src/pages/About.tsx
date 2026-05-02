@@ -3,9 +3,9 @@ import Navbar from "./_components/Navbar";
 import Footer from "./_components/Footer";
 
 const values = [
-  { icon: Compass, title: "Vision claire", text: "Chaque itineraire est construit avec une logique simple: moins de friction, plus de moments forts." },
-  { icon: Gem, title: "Selection premium", text: "Hotels, guides et experiences sont choisis pour leur qualite reelle, pas pour remplir une brochure." },
-  { icon: UsersRound, title: "Equipe proche", text: "Les conseillers suivent les dossiers comme des projets vivants, du devis jusqu'au retour." },
+  { icon: Compass, title: "برنامج واضح", text: "كل رحلة تبدأ في اليوم 1 وتنتهي في اليوم 30 مع تفاصيل سهلة الفهم." },
+  { icon: Gem, title: "اختيار مريح", text: "فنادق وخدمات نقل ووجبات مختارة لتناسب المعتمرين والعائلات." },
+  { icon: UsersRound, title: "فريق قريب", text: "الموظفون يتابعون الحجوزات والمرشدون يرافقون المجموعة طوال الرحلة." },
 ];
 
 export default function About() {
@@ -14,15 +14,15 @@ export default function About() {
       <Navbar />
       <section className="about-hero">
         <div className="about-copy">
-          <span className="label">A propos</span>
-          <h1>Une agence qui transforme le voyage en experience precise.</h1>
-          <p>Hamdi Voyage melange exigence, sens du detail et outils modernes pour creer des sejours beaux a regarder, simples a vendre, faciles a suivre.</p>
-          <a href="/agencedevoyage.github.io/#tours">Voir les voyages <ArrowUpRight size={17} /></a>
+          <span className="label">من نحن</span>
+          <h1>وكالة تنظم رحلات العمرة إلى مكة باهتمام ووضوح.</h1>
+          <p>Hamdi Voyage تجمع بين الخبرة، المتابعة الدقيقة، ولوحة إدارة حديثة لتسهيل الحجز وتنظيم الرحلات الشهرية.</p>
+          <a href="/agencealger.github.io/#tours">عرض الرحلات <ArrowUpRight size={17} /></a>
         </div>
         <div className="about-collage">
-          <img src="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=900" alt="Voyage nature" />
-          <img src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=700" alt="Plage premium" />
-          <div><Sparkles /><strong>18 ans</strong><span>d'expertise voyage</span></div>
+          <img src="https://images.unsplash.com/photo-1591604129939-f1efa4d9f7fa?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=900" alt="مكة المكرمة" />
+          <img src="https://images.unsplash.com/photo-1580418827493-f2b22c0a76cb?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=700" alt="الحرم الشريف" />
+          <div><Sparkles /><strong>18 سنة</strong><span>خبرة في السفر</span></div>
         </div>
       </section>
 
@@ -38,14 +38,14 @@ export default function About() {
 
       <section className="about-story">
         <div>
-          <span className="label">Notre methode</span>
-          <h2>Du reve au depart, tout est orchestre.</h2>
+          <span className="label">طريقتنا</span>
+          <h2>من الطلب إلى الانطلاق، كل شيء منظم.</h2>
         </div>
         <div className="timeline">
           {[
-            ["01", "Ecoute", "Budget, envie, rythme, contraintes: on part du client."],
-            ["02", "Design du sejour", "Vols, hotels, transferts, activites et marges de confort."],
-            ["03", "Suivi", "Reservation, documents, assistance et historique equipe."],
+            ["01", "الاستماع", "عدد المسافرين، الميزانية، الشهر المناسب، واحتياجات العائلة."],
+            ["02", "تحضير البرنامج", "الطيران، الفندق، النقل، الوجبات، وأسماء المرشدين."],
+            ["03", "المتابعة", "الحجز، الوثائق، المساعدة، وسجل واضح داخل الإدارة."],
           ].map(([n, title, text]) => (
             <article key={n}><span>{n}</span><h3>{title}</h3><p>{text}</p></article>
           ))}
@@ -55,8 +55,8 @@ export default function About() {
       <section className="about-band">
         <Plane />
         <div className="about-band-track">
-          <h2>150+ destinations, une seule obsession: que le client sente que tout est sous controle.</h2>
-          <h2 aria-hidden="true">150+ destinations, une seule obsession: que le client sente que tout est sous controle.</h2>
+          <h2>6 رحلات شهرية إلى مكة، وهدف واحد: أن يشعر العميل أن كل شيء تحت السيطرة.</h2>
+          <h2 aria-hidden="true">6 رحلات شهرية إلى مكة، وهدف واحد: أن يشعر العميل أن كل شيء تحت السيطرة.</h2>
         </div>
         <Globe2 />
       </section>

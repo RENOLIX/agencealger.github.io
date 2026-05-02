@@ -1,25 +1,25 @@
 import { BadgeCheck, BellRing, Crown, Globe2, Route, ShieldCheck } from "lucide-react";
 
 const features = [
-  { icon: ShieldCheck, title: "Voyages 100% securises", desc: "Partenaires verifies, dossiers controles, suivi clair jusqu'au retour.", color: "coral" },
-  { icon: BellRing, title: "Support premium", desc: "Une equipe disponible pour accompagner chaque client au bon moment.", color: "blue" },
-  { icon: BadgeCheck, title: "Experts certifies", desc: "Conseillers formes, destinations maitrisees et documents prepares.", color: "green" },
-  { icon: Globe2, title: "Reseau mondial", desc: "Hotels, guides et experiences locales selectionnes dans 150+ destinations.", color: "violet" },
-  { icon: Route, title: "Sur-mesure flexible", desc: "Itineraires ajustes selon budget, rythme, profil et dates disponibles.", color: "amber" },
-  { icon: Crown, title: "Acces d'exception", desc: "Upgrades, moments VIP, adresses rares et details qui changent tout.", color: "rose" },
+  { icon: ShieldCheck, title: "رحلات آمنة", desc: "ملفات مضبوطة، حجوزات واضحة، ومتابعة حتى العودة.", color: "coral" },
+  { icon: BellRing, title: "دعم دائم", desc: "فريق متاح لمرافقة كل عميل في الوقت المناسب.", color: "blue" },
+  { icon: BadgeCheck, title: "مرشدون موثوقون", desc: "أسماء المرشدين تظهر في كل برنامج ويمكن تعديلها من الإدارة.", color: "green" },
+  { icon: Globe2, title: "تنظيم كامل", desc: "فنادق، نقل، وجبات، ومرافقة داخل برنامج واحد.", color: "violet" },
+  { icon: Route, title: "رحلة من 1 إلى 30", desc: "كل شهر برنامج واضح المدة وسهل الحجز.", color: "amber" },
+  { icon: Crown, title: "خدمة مميزة", desc: "تفاصيل صغيرة تجعل الرحلة أكثر راحة واطمئنانا.", color: "rose" },
 ];
 
 export default function WhyChooseUs() {
   return (
     <section id="why" className="why">
       <div className="why-left">
-        <span className="label">Pourquoi nous</span>
-        <h2>L'excellence<br />du voyage<br /><em>depuis 2006</em></h2>
-        <p>Une agence pensee pour vendre mieux, organiser plus vite et offrir une experience propre du premier appel jusqu'au retour du client.</p>
+        <span className="label">لماذا نحن</span>
+        <h2>تنظيم موثوق<br />لرحلات العمرة<br /><em>منذ 2006</em></h2>
+        <p>وكالة تهتم بتفاصيل الرحلة من أول اتصال حتى عودة العميل، مع لوحة إدارة سهلة للحجوزات والبرامج.</p>
         <div className="why-stats">
-          <div><strong>12K+</strong><span>Clients</span></div>
-          <div><strong>150+</strong><span>Destinations</span></div>
-          <div><strong>4.9</strong><span>Note</span></div>
+          <div><strong>12K+</strong><span>عميل</span></div>
+          <div><strong>6</strong><span>رحلات</span></div>
+          <div><strong>4.9</strong><span>تقييم</span></div>
         </div>
       </div>
       <div className="feature-grid">

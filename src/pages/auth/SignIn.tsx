@@ -15,7 +15,7 @@ export default function SignIn() {
   function submit(event: FormEvent) {
     event.preventDefault();
     if (login(email, password)) navigate("/admin");
-    else setError("Identifiants incorrects.");
+    else setError("بيانات الدخول غير صحيحة.");
   }
 
   return (
@@ -24,16 +24,16 @@ export default function SignIn() {
         <div className="auth-visual">
           <Plane />
           <h1>Hamdi Back Office</h1>
-          <p>Les clients consultent les offres. Les employes creent les reservations. L'admin pilote tout.</p>
+          <p>العملاء يشاهدون برامج العمرة، والموظفون ينشئون الحجوزات، والمدير يتحكم في كل شيء.</p>
         </div>
         <form onSubmit={submit} className="auth-form">
-          <span className="label">Connexion</span>
-          <h2>Espace equipe</h2>
+          <span className="label">تسجيل الدخول</span>
+          <h2>مساحة الفريق</h2>
           <label><Mail size={16} /> Email<input value={email} onChange={(event) => setEmail(event.target.value)} /></label>
-          <label><LockKeyhole size={16} /> Mot de passe<input type="password" value={password} onChange={(event) => setPassword(event.target.value)} /></label>
+          <label><LockKeyhole size={16} /> كلمة المرور<input type="password" value={password} onChange={(event) => setPassword(event.target.value)} /></label>
           {error && <p className="form-error">{error}</p>}
-          <button>Entrer dans l'admin</button>
-          <p className="hint">Admin: admin@hamdi.local / admin123<br />Employe: sara@hamdi.local / voyage123</p>
+          <button>الدخول إلى الإدارة</button>
+          <p className="hint">Admin: admin@hamdi.local / admin123<br />موظف: sara@hamdi.local / voyage123</p>
         </form>
       </section>
     </main>

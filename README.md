@@ -1,6 +1,6 @@
-# Hamdi Voyage
+# Hamdi Voyage - Agence Alger
 
-Site vitrine et espace back-office pour une agence de voyage.
+Site vitrine arabe et espace back-office pour des voyages mensuels vers La Mecque.
 
 Comptes de demo:
 
@@ -8,4 +8,4 @@ Comptes de demo:
 - Employe: `sara@hamdi.local` / `voyage123`
 - Employe: `yacine@hamdi.local` / `voyage123`
 
-Placez les videos d'intro dans `public/pc1.mp4` et `public/pc2.mp4`.
+Le champ `guides` permet d'ajouter les noms des guides depuis l'admin.

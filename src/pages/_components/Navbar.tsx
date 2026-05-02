@@ -3,11 +3,11 @@ import { Link, useLocation } from "react-router-dom";
 import { Menu, Phone, X } from "lucide-react";
 
 const links = [
-  { label: "Accueil", href: "/#hero" },
-  { label: "Destinations", href: "/#destinations" },
-  { label: "Voyage", href: "/#tours" },
-  { label: "A propos", href: "/about" },
-  { label: "Contact", href: "/contact" },
+  { label: "الرئيسية", href: "/#hero" },
+  { label: "البرامج", href: "/#destinations" },
+  { label: "الرحلات", href: "/#tours" },
+  { label: "من نحن", href: "/about" },
+  { label: "اتصل بنا", href: "/contact" },
 ];
 
 export default function Navbar() {
@@ -27,7 +27,7 @@ export default function Navbar() {
     <header className={`nav ${scrolled ? "nav-scrolled" : ""}`}>
       <Link to="/#hero" className="brand" aria-label="Hamdi Voyage">
         <img
-          src={normalMode ? "/agencedevoyage.github.io/logo-normal.png" : "/agencedevoyage.github.io/logo-transparent.png"}
+          src={normalMode ? "/agencealger.github.io/logo-normal.png" : "/agencealger.github.io/logo-transparent.png"}
           alt="Hamdi Voyage"
         />
       </Link>
@@ -36,7 +36,7 @@ export default function Navbar() {
       </nav>
       <div className="nav-actions">
         <a href="tel:+33123456789"><Phone size={14} /> +33 1 23 45 67 89</a>
-        <a className="nav-cta" href="/agencedevoyage.github.io/#tours">Explorer</a>
+        <a className="nav-cta" href="/agencealger.github.io/#tours">استكشف</a>
       </div>
       <button className="menu-btn" onClick={() => setOpen(!open)} aria-label="Menu">{open ? <X /> : <Menu />}</button>
       {open && (

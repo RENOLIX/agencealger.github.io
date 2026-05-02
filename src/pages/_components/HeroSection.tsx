@@ -2,9 +2,9 @@ import { useState } from "react";
 import { Calendar, MapPin, Search, Users } from "lucide-react";
 
 const slides = [
-  { image: "https://images.unsplash.com/photo-1651610526505-a46802a4f2a7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1920", label: "Grece", title: "Santorini", sub: "L'ile bleue et blanche" },
-  { image: "https://images.unsplash.com/photo-1542292714-0af7af35e324?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1920", label: "Ocean Indien", title: "Maldives", sub: "Bungalows sur l'eau" },
-  { image: "https://images.unsplash.com/photo-1578592325919-ca966e981cb5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1920", label: "Japon", title: "Tokyo", sub: "Tradition & modernite" },
+  { image: "https://images.unsplash.com/photo-1591604129939-f1efa4d9f7fa?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1920", label: "مكة المكرمة", title: "عمرة كل شهر", sub: "رحلات منظمة من 1 إلى 30 مع مرشدين وخدمة كاملة" },
+  { image: "https://images.unsplash.com/photo-1580418827493-f2b22c0a76cb?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1920", label: "الحرم الشريف", title: "رحلة مطمئنة", sub: "إقامة، نقل، متابعة، وبرنامج واضح من البداية إلى العودة" },
+  { image: "https://images.unsplash.com/photo-1564769662533-4f00a87b4056?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1920", label: "السعودية", title: "مرافقة موثوقة", sub: "مرشدون معكم في كل خطوة وخدمة مناسبة للعائلات" },
 ];
 
 export default function HeroSection() {
@@ -21,15 +21,15 @@ export default function HeroSection() {
         <h1>{item.title}</h1>
         <p>{item.sub}</p>
         <div className="stats">
-          <div><strong>150+</strong><span>Destinations</span></div>
-          <div><strong>12 000+</strong><span>Voyageurs</span></div>
-          <div><strong>18 ans</strong><span>D'experience</span></div>
+          <div><strong>6</strong><span>رحلات شهرية</span></div>
+          <div><strong>1-30</strong><span>برنامج كامل</span></div>
+          <div><strong>18 سنة</strong><span>خبرة</span></div>
         </div>
         <form className="search-bar">
-          <label><MapPin size={17} /><span>Destination<input placeholder="Ou voulez-vous aller ?" /></span></label>
-          <label><Calendar size={17} /><span>Date de depart<input type="date" aria-label="Date de depart" /></span></label>
-          <label><Users size={17} /><span>Voyageurs<select defaultValue="2"><option>1 pers.</option><option value="2">2 pers.</option><option>3 pers.</option><option>4+ pers.</option></select></span></label>
-          <button type="button"><Search size={17} /> Rechercher</button>
+          <label><MapPin size={17} /><span>الوجهة<input placeholder="مكة المكرمة" /></span></label>
+          <label><Calendar size={17} /><span>تاريخ الانطلاق<input type="date" aria-label="تاريخ الانطلاق" /></span></label>
+          <label><Users size={17} /><span>المسافرون<select defaultValue="2"><option>1 شخص</option><option value="2">2 أشخاص</option><option>3 أشخاص</option><option>4+ أشخاص</option></select></span></label>
+          <button type="button"><Search size={17} /> بحث</button>
         </form>
       </div>
     </section>

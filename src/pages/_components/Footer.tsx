@@ -10,15 +10,15 @@ export default function Footer() {
       </div>
       <div className="footer-grid">
         <div>
-          <img className="footer-logo" src="/agencedevoyage.github.io/logo-transparent.png" alt="Hamdi Voyage" />
-          <p>Depuis 2006, nous creons des experiences de voyage premium pour des voyageurs exigeants.</p>
+          <img className="footer-logo" src="/agencealger.github.io/logo-transparent.png" alt="Hamdi Voyage" />
+          <p>منذ 2006، ننظم رحلات عمرة مريحة وواضحة إلى مكة المكرمة.</p>
           <div className="socials"><Share2 /><Camera /><MessageCircle /><Globe /></div>
         </div>
-        <div><h4>Destinations</h4>{["Maldives", "Santorini", "Bali", "Tokyo", "Machu Picchu", "Dubai", "Paris", "Maroc"].map((x) => <a href="#destinations" key={x}>{x}</a>)}</div>
-        <div><h4>Services</h4>{["Voyages sur mesure", "Lune de miel", "Voyages de groupe", "Voyages d'affaires", "Croisieres luxe", "Safari & Aventure"].map((x) => <a href="#tours" key={x}>{x}</a>)}</div>
-        <div><h4>Certifications</h4><p><Plane size={15} /> Membre IATA certifie</p><p><Globe size={15} /> Atout France agree</p><strong>98% satisfaction client</strong></div>
+        <div><h4>البرامج</h4>{["عمرة يونيو", "عمرة يوليو", "عمرة أغسطس", "عمرة سبتمبر", "عمرة أكتوبر", "عمرة نوفمبر"].map((x) => <a href="#destinations" key={x}>{x}</a>)}</div>
+        <div><h4>الخدمات</h4>{["تذاكر الطيران", "الفندق", "النقل", "الوجبات", "المرشدون", "متابعة الحجز"].map((x) => <a href="#tours" key={x}>{x}</a>)}</div>
+        <div><h4>الثقة</h4><p><Plane size={15} /> تنظيم رحلات شهرية</p><p><Globe size={15} /> مرافقة للمعتمرين</p><strong>98% رضا العملاء</strong></div>
       </div>
-      <div className="footer-bottom">© {new Date().getFullYear()} Hamdi Voyage. Tous droits reserves.</div>
+      <div className="footer-bottom">© {new Date().getFullYear()} Hamdi Voyage. كل الحقوق محفوظة.</div>
     </footer>
   );
 }

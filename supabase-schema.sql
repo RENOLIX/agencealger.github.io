@@ -1,14 +1,24 @@
--- Hamdi Voyage - schema Supabase
+-- Agence Alger / Hamdi Voyage - schema Supabase
 -- A coller dans Supabase SQL Editor, puis executer.
 
 create extension if not exists pgcrypto;
 
-create type public.app_role as enum ('admin', 'employee');
-create type public.travel_category as enum ('Plage', 'Aventure', 'Culture', 'Luxe');
-create type public.benefit_key as enum ('Vol', 'Hotel', 'Repas', 'Guide', 'Spa', 'Wifi', 'Plage', 'Assurance');
-create type public.reservation_status as enum ('Validee', 'En attente', 'Annulee');
+do $$ begin
+  create type public.app_role as enum ('admin', 'employee');
+exception when duplicate_object then null;
+end $$;
 
-create table public.profiles (
+do $$ begin
+  create type public.travel_category as enum ('Plage', 'Aventure', 'Culture', 'Luxe');
+exception when duplicate_object then null;
+end $$;
+
+do $$ begin
+  create type public.reservation_status as enum ('Validee', 'En attente', 'Annulee');
+exception when duplicate_object then null;
+end $$;
+
+create table if not exists public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   full_name text not null,
   role public.app_role not null default 'employee',
@@ -16,18 +26,20 @@ create table public.profiles (
   created_at timestamptz not null default now()
 );
 
-create table public.travels (
+create table if not exists public.travels (
   id uuid primary key default gen_random_uuid(),
   name text not null,
   destination text not null,
   country text not null,
   image_url text not null,
+  image_urls text[] not null default '{}',
   departure_date date not null,
   duration text not null,
   price numeric(12,2) not null check (price >= 0),
   description text not null,
+  guides text not null default '',
   category public.travel_category not null,
-  benefits public.benefit_key[] not null default '{}',
+  benefits text[] not null default '{}',
   tickets_total integer not null check (tickets_total >= 0),
   tickets_left integer not null check (tickets_left >= 0),
   rating numeric(2,1) not null default 4.8,
@@ -38,7 +50,10 @@ create table public.travels (
   constraint tickets_left_lte_total check (tickets_left <= tickets_total)
 );
 
-create table public.reservations (
+alter table public.travels add column if not exists guides text not null default '';
+alter table public.travels add column if not exists image_urls text[] not null default '{}';
+
+create table if not exists public.reservations (
   id uuid primary key default gen_random_uuid(),
   travel_id uuid not null references public.travels(id) on delete restrict,
   employee_id uuid not null references public.profiles(id) on delete restrict,
@@ -51,9 +66,20 @@ create table public.reservations (
   created_at timestamptz not null default now()
 );
 
-create index reservations_employee_id_idx on public.reservations(employee_id);
-create index reservations_travel_id_idx on public.reservations(travel_id);
-create index travels_active_departure_idx on public.travels(active, departure_date);
+create table if not exists public.contact_messages (
+  id uuid primary key default gen_random_uuid(),
+  full_name text not null,
+  phone text not null,
+  email text not null,
+  destination text,
+  message text not null,
+  status text not null default 'Nouveau',
+  created_at timestamptz not null default now()
+);
+
+create index if not exists reservations_employee_id_idx on public.reservations(employee_id);
+create index if not exists reservations_travel_id_idx on public.reservations(travel_id);
+create index if not exists travels_active_departure_idx on public.travels(active, departure_date);
 
 create or replace function public.touch_updated_at()
 returns trigger
@@ -65,6 +91,7 @@ begin
 end;
 $$;
 
+drop trigger if exists travels_touch_updated_at on public.travels;
 create trigger travels_touch_updated_at
 before update on public.travels
 for each row execute function public.touch_updated_at();
@@ -91,13 +118,14 @@ begin
     new.id,
     coalesce(new.raw_user_meta_data->>'full_name', split_part(new.email, '@', 1)),
     coalesce((new.raw_user_meta_data->>'role')::public.app_role, 'employee'),
-    upper(left(coalesce(new.raw_user_meta_data->>'full_name', new.email), 1))
+    upper(left(coalesce(new.raw_user_meta_data->>'full_name', new.email), 2))
   )
   on conflict (id) do nothing;
   return new;
 end;
 $$;
 
+drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created
 after insert on auth.users
 for each row execute function public.handle_new_user();
@@ -142,24 +170,8 @@ begin
   set tickets_left = tickets_left - p_quantity
   where id = p_travel_id;
 
-  insert into public.reservations (
-    travel_id,
-    employee_id,
-    client_name,
-    client_phone,
-    quantity,
-    unit_price,
-    status
-  )
-  values (
-    p_travel_id,
-    auth.uid(),
-    p_client_name,
-    p_client_phone,
-    p_quantity,
-    selected_travel.price,
-    'Validee'
-  )
+  insert into public.reservations (travel_id, employee_id, client_name, client_phone, quantity, unit_price, status)
+  values (p_travel_id, auth.uid(), p_client_name, p_client_phone, p_quantity, selected_travel.price, 'Validee')
   returning * into created_reservation;
 
   return created_reservation;
@@ -169,59 +181,85 @@ $$;
 alter table public.profiles enable row level security;
 alter table public.travels enable row level security;
 alter table public.reservations enable row level security;
+alter table public.contact_messages enable row level security;
 
+drop policy if exists "profiles_select_self_or_admin" on public.profiles;
 create policy "profiles_select_self_or_admin"
 on public.profiles for select
 to authenticated
 using (id = auth.uid() or public.current_user_role() = 'admin');
 
+drop policy if exists "profiles_admin_update" on public.profiles;
 create policy "profiles_admin_update"
 on public.profiles for update
 to authenticated
 using (public.current_user_role() = 'admin')
 with check (public.current_user_role() = 'admin');
 
+drop policy if exists "travels_public_read_active" on public.travels;
 create policy "travels_public_read_active"
 on public.travels for select
 to anon, authenticated
 using (active = true);
 
+drop policy if exists "travels_admin_insert" on public.travels;
 create policy "travels_admin_insert"
 on public.travels for insert
 to authenticated
 with check (public.current_user_role() = 'admin');
 
+drop policy if exists "travels_admin_update" on public.travels;
 create policy "travels_admin_update"
 on public.travels for update
 to authenticated
 using (public.current_user_role() = 'admin')
 with check (public.current_user_role() = 'admin');
 
+drop policy if exists "travels_admin_delete" on public.travels;
 create policy "travels_admin_delete"
 on public.travels for delete
 to authenticated
 using (public.current_user_role() = 'admin');
 
+drop policy if exists "reservations_select_own_or_admin" on public.reservations;
 create policy "reservations_select_own_or_admin"
 on public.reservations for select
 to authenticated
 using (employee_id = auth.uid() or public.current_user_role() = 'admin');
 
+drop policy if exists "reservations_insert_employee" on public.reservations;
 create policy "reservations_insert_employee"
 on public.reservations for insert
 to authenticated
 with check (employee_id = auth.uid());
 
+drop policy if exists "reservations_admin_update" on public.reservations;
 create policy "reservations_admin_update"
 on public.reservations for update
 to authenticated
 using (public.current_user_role() = 'admin')
 with check (public.current_user_role() = 'admin');
 
--- Donnees demo. Les profils reels se creent via Auth > Users.
+drop policy if exists "contact_messages_insert_public" on public.contact_messages;
+create policy "contact_messages_insert_public"
+on public.contact_messages for insert
+to anon, authenticated
+with check (true);
+
+drop policy if exists "contact_messages_admin_read" on public.contact_messages;
+create policy "contact_messages_admin_read"
+on public.contact_messages for select
+to authenticated
+using (public.current_user_role() = 'admin');
+
+truncate table public.travels restart identity cascade;
+
 insert into public.travels
-  (name, destination, country, image_url, departure_date, duration, price, description, category, benefits, tickets_total, tickets_left, rating)
+  (name, destination, country, image_url, image_urls, departure_date, duration, price, description, guides, category, benefits, tickets_total, tickets_left, rating)
 values
-  ('Escapade Grecque', 'Santorini & Mykonos', 'Grece', 'https://images.unsplash.com/photo-1651610526505-a46802a4f2a7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1200', '2026-06-15', '8 jours', 2490, 'Couchers de soleil, maisons blanches, criques privees et hotels elegants en bord de mer.', 'Plage', array['Vol','Hotel','Repas','Guide','Plage']::public.benefit_key[], 38, 24, 4.9),
-  ('Bali Authentique', 'Ubud & Seminyak', 'Indonesie', 'https://images.unsplash.com/photo-1550232864-45ae019ae566?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1200', '2026-07-08', '12 jours', 3150, 'Temples, rizieres, villa privee et immersion douce dans la culture balinaise.', 'Culture', array['Vol','Hotel','Repas','Guide','Wifi']::public.benefit_key[], 30, 18, 4.8),
-  ('Maldives Prestige', 'Atoll de Male', 'Maldives', 'https://images.unsplash.com/photo-1575231902142-29aaec0bd547?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1200', '2026-07-01', '7 jours', 4890, 'Bungalow sur l''eau, spa, lagon transparent et service ultra-personnalise.', 'Luxe', array['Vol','Hotel','Repas','Spa','Plage','Assurance']::public.benefit_key[], 16, 9, 5.0);
+  ('عمرة شهر يونيو', 'مكة المكرمة', 'السعودية', 'https://images.unsplash.com/photo-1591604129939-f1efa4d9f7fa?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1200', array['https://images.unsplash.com/photo-1591604129939-f1efa4d9f7fa?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1200'], '2026-06-01', '30 يوم', 185000, 'برنامج كامل من 1 إلى 30 يونيو يشمل الإقامة قرب الحرم، النقل، والمتابعة اليومية.', 'الشيخ أحمد بن يوسف، الأستاذ سمير بن عمر', 'Culture', array['Vol','Hotel','Repas','Guide','Transfert','Assurance'], 45, 31, 4.9),
+  ('عمرة شهر يوليو', 'مكة المكرمة', 'السعودية', 'https://images.unsplash.com/photo-1580418827493-f2b22c0a76cb?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1200', array['https://images.unsplash.com/photo-1580418827493-f2b22c0a76cb?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1200'], '2026-07-01', '30 يوم', 189000, 'رحلة منظمة من 1 إلى 30 يوليو مع مرشدين مرافقين وخدمة متابعة للحجاج والمعتمرين.', 'الحاج مصطفى قادري، الأستاذة نوال حميدي', 'Culture', array['Vol','Hotel','Repas','Guide','Wifi','Transfert'], 40, 22, 4.8),
+  ('عمرة شهر أغسطس', 'مكة المكرمة', 'السعودية', 'https://images.unsplash.com/photo-1564769662533-4f00a87b4056?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1200', array['https://images.unsplash.com/photo-1564769662533-4f00a87b4056?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1200'], '2026-08-01', '30 يوم', 192000, 'إقامة مريحة من 1 إلى 30 أغسطس، تنقلات جماعية، ومرافقة إدارية طوال الرحلة.', 'الشيخ عبد الرحمن علي، الأستاذ كريم منصوري', 'Luxe', array['Vol','Hotel','Repas','Guide','Climatisation','Assurance'], 36, 14, 5.0),
+  ('عمرة شهر سبتمبر', 'مكة المكرمة', 'السعودية', 'https://images.unsplash.com/photo-1578895101408-1a36b834405b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1200', array['https://images.unsplash.com/photo-1578895101408-1a36b834405b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1200'], '2026-09-01', '30 يوم', 179000, 'برنامج اقتصادي من 1 إلى 30 سبتمبر مع خدمات أساسية منظمة وقريبة من احتياجات العائلات.', 'الحاج رابح دحمان، الأستاذ ياسين مرابط', 'Aventure', array['Vol','Hotel','Guide','Transfert','Bagages'], 50, 37, 4.7),
+  ('عمرة شهر أكتوبر', 'مكة المكرمة', 'السعودية', 'https://images.unsplash.com/photo-1589820296156-2454bb8a6ad1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1200', array['https://images.unsplash.com/photo-1589820296156-2454bb8a6ad1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1200'], '2026-10-01', '30 يوم', 187000, 'رحلة من 1 إلى 30 أكتوبر تجمع بين التنظيم الهادئ والإرشاد الديني والمتابعة اليومية.', 'الشيخ بلال زروقي، الأستاذة مريم بلقاسم', 'Culture', array['Vol','Hotel','Repas','Guide','Wifi','Assurance'], 42, 26, 4.9),
+  ('عمرة شهر نوفمبر', 'مكة المكرمة', 'السعودية', 'https://images.unsplash.com/photo-1519818187420-8e49de7adeef?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1200', array['https://images.unsplash.com/photo-1519818187420-8e49de7adeef?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1200'], '2026-11-01', '30 يوم', 194000, 'برنامج مميز من 1 إلى 30 نوفمبر مع فنادق مختارة وخدمة إرشاد ومرافقة كاملة.', 'الحاج نور الدين بوعلام، الأستاذة سهام عابد', 'Luxe', array['Vol','Hotel','Repas','Guide','Wifi','Paiement flexible'], 34, 19, 4.8);
