@@ -5,6 +5,7 @@ import { AuthProvider, useAuth } from "./components/providers/auth";
 import Index from "./pages/Index";
 import SignIn from "./pages/auth/SignIn";
 import Admin from "./pages/Admin";
+import AdminReservationCatalog from "./pages/AdminReservationCatalog";
 import ApprovalReservations from "./pages/ApprovalReservations";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
@@ -36,6 +37,8 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
           <Route path="/voyages/:travelId" element={<TravelDetail />} />
           <Route path="/auth" element={<SignIn />} />
           <Route path="/admin" element={<Protected><Admin /></Protected>} />
+          <Route path="/admin/reservations/new" element={<Protected><AdminReservationCatalog /></Protected>} />
+          <Route path="/admin/reservations/new/:travelId" element={<Protected><TravelDetail /></Protected>} />
           <Route path="/admin/approvals" element={<AdminOnly><ApprovalReservations /></AdminOnly>} />
           <Route path="*" element={<NotFound />} />
         </Routes>

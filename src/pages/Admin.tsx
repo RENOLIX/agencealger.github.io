@@ -357,9 +357,14 @@ export default function Admin() {
 
         {tab === "reservations" && (
           <div className="reservation-admin-shell">
-            <div className="reservation-admin-search">
-              <Search size={18} />
-              <input value={reservationQuery} onChange={(event) => setReservationQuery(event.target.value)} placeholder="ابحث باسم العميل أو الرحلة أو الموظف" />
+            <div className="reservation-admin-toolbar">
+              <div className="reservation-admin-search">
+                <Search size={18} />
+                <input value={reservationQuery} onChange={(event) => setReservationQuery(event.target.value)} placeholder="ابحث باسم العميل أو الرحلة أو الموظف" />
+              </div>
+              <button type="button" className="create-reservation-button" onClick={() => navigate("/admin/reservations/new")}>
+                <Plus size={16} /> إنشاء حجز جديد
+              </button>
             </div>
             <div className="reservation-admin-list">
               {filteredReservations.length === 0 ? (

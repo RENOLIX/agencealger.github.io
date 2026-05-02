@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Clock, MapPin, Star, Users } from "lucide-react";
+import { CalendarDays, Clock, MapPin, Star, Users } from "lucide-react";
 import { Link } from "react-router-dom";
 import { benefitIcons, benefitLabels, categoryLabels, getTravels, syncTravelsFromSupabase, type Travel } from "../../lib/data";
 
@@ -43,7 +43,10 @@ export default function PopularTours() {
                 <div><strong>{tour.price.toLocaleString("fr-FR")} دج</strong><span>للشخص</span></div>
                 <span className={tour.ticketsLeft < 8 ? "low-stock" : ""}><Users size={13} /> {tour.ticketsLeft}/{tour.ticketsTotal} مكان</span>
               </div>
-              <Link className="reserve-link" to={`/voyages/${tour.id}`}>حجز هذه الرحلة</Link>
+              <Link className="reserve-link" to={`/voyages/${tour.id}`}>
+                <span>عرض تفاصيل الرحلة</span>
+                <small><CalendarDays size={13} /> فتح صفحة البرنامج الكاملة</small>
+              </Link>
             </div>
           </article>
         ))}
