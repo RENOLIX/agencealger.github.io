@@ -20,8 +20,8 @@ export default function About() {
           <a href="/agencealger.github.io/#tours">عرض الرحلات <ArrowUpRight size={17} /></a>
         </div>
         <div className="about-collage">
-          <img src="https://images.unsplash.com/photo-1591604129939-f1efa4d9f7fa?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=900" alt="مكة المكرمة" />
-          <img src="https://images.unsplash.com/photo-1580418827493-f2b22c0a76cb?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=700" alt="الحرم الشريف" />
+          <img src="https://images.pexels.com/photos/18274181/pexels-photo-18274181.jpeg?auto=compress&cs=tinysrgb&w=1000" alt="مكة المكرمة" />
+          <img src="https://images.pexels.com/photos/34959936/pexels-photo-34959936.jpeg?auto=compress&cs=tinysrgb&w=900" alt="الحرم الشريف" />
           <div><Sparkles /><strong>18 سنة</strong><span>خبرة في السفر</span></div>
         </div>
       </section>

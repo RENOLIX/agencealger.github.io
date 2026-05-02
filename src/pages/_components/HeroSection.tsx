@@ -2,9 +2,9 @@ import { useState } from "react";
 import { Calendar, MapPin, Search, Users } from "lucide-react";
 
 const slides = [
-  { image: "https://images.unsplash.com/photo-1591604129939-f1efa4d9f7fa?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1920", label: "مكة المكرمة", title: "عمرة كل شهر", sub: "رحلات منظمة من 1 إلى 30 مع مرشدين وخدمة كاملة" },
-  { image: "https://images.unsplash.com/photo-1580418827493-f2b22c0a76cb?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1920", label: "الحرم الشريف", title: "رحلة مطمئنة", sub: "إقامة، نقل، متابعة، وبرنامج واضح من البداية إلى العودة" },
-  { image: "https://images.unsplash.com/photo-1564769662533-4f00a87b4056?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1920", label: "السعودية", title: "مرافقة موثوقة", sub: "مرشدون معكم في كل خطوة وخدمة مناسبة للعائلات" },
+  { image: "https://images.pexels.com/photos/32525647/pexels-photo-32525647.jpeg?auto=compress&cs=tinysrgb&w=1920", label: "مكة المكرمة", title: "عمرة كل شهر", sub: "رحلات منظمة من 1 إلى 30 مع مرشدين وخدمة كاملة" },
+  { image: "https://images.pexels.com/photos/35315914/pexels-photo-35315914.jpeg?auto=compress&cs=tinysrgb&w=1920", label: "الحرم الشريف", title: "رحلة مطمئنة", sub: "إقامة، نقل، متابعة، وبرنامج واضح من البداية إلى العودة" },
+  { image: "https://images.pexels.com/photos/36954370/pexels-photo-36954370.jpeg?auto=compress&cs=tinysrgb&w=1920", label: "السعودية", title: "مرافقة موثوقة", sub: "مرشدون معكم في كل خطوة وخدمة مناسبة للعائلات" },
 ];
 
 export default function HeroSection() {
