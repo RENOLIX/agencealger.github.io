@@ -1,5 +1,5 @@
 import { createContext, useContext, useMemo, useState } from "react";
-import { readStore, users, writeStore, type User } from "../../lib/data";
+import { getUsers, readStore, writeStore, type User } from "../../lib/data";
 
 type AuthContextValue = {
   user: User | null;
@@ -15,7 +15,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const value = useMemo<AuthContextValue>(() => ({
     user,
     login(email, password) {
-      const found = users.find((item) => item.email === email.trim().toLowerCase() && item.password === password);
+      const found = getUsers().find((item) => item.email === email.trim().toLowerCase() && item.password === password);
       if (!found) return false;
       setUser(found);
       writeStore("hv-user", found);

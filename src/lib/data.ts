@@ -56,11 +56,19 @@ export type ContactMessage = {
   createdAt: string;
 };
 
-export const users: User[] = [
+export const seedUsers: User[] = [
   { id: "admin", name: "Nora Admin", email: "admin@hamdi.local", password: "admin123", role: "admin", avatar: "NA" },
   { id: "sara", name: "Sara Benali", email: "sara@hamdi.local", password: "voyage123", role: "employee", avatar: "SB" },
   { id: "yacine", name: "Yacine Morel", email: "yacine@hamdi.local", password: "voyage123", role: "employee", avatar: "YM" },
 ];
+
+export function getUsers() {
+  return readStore<User[]>("hv-users", seedUsers);
+}
+
+export function saveUsers(nextUsers: User[]) {
+  writeStore("hv-users", nextUsers);
+}
 
 export const benefitIcons: Record<BenefitKey, ElementType> = {
   Vol: Plane,
