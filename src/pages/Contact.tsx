@@ -41,10 +41,10 @@ export default function Contact() {
         <form className="contact-form" onSubmit={submit}>
           <div>
             <label>الاسم الكامل<input required value={form.fullName} onChange={(event) => setForm({ ...form, fullName: event.target.value })} placeholder="اسمك" /></label>
-            <label>الهاتف<input required value={form.phone} onChange={(event) => setForm({ ...form, phone: event.target.value })} placeholder="+213 ..." /></label>
+            <label>الهاتف<input required value={form.phone} onChange={(event) => setForm({ ...form, phone: event.target.value })} placeholder="0777777794" /></label>
           </div>
           <label>Email<input required type="email" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} placeholder="you@email.com" /></label>
-          <label>الشهر المطلوب<input value={form.destination} onChange={(event) => setForm({ ...form, destination: event.target.value })} placeholder="يونيو، يوليو، أغسطس..." /></label>
+          <label>الشهر المطلوب<input value={form.destination} onChange={(event) => setForm({ ...form, destination: event.target.value })} placeholder="جوان، جويلية، اوت..." /></label>
           <label>الرسالة<textarea required value={form.message} onChange={(event) => setForm({ ...form, message: event.target.value })} placeholder="عدد المسافرين، الميزانية، نوع الغرفة، أي ملاحظات..." /></label>
           <button><Send size={17} /> إرسال الطلب</button>
           {sent && <p className="contact-success"><CheckCircle size={17} /> تم إرسال الرسالة إلى مساحة الإدارة.</p>}
@@ -52,10 +52,11 @@ export default function Contact() {
 
         <aside className="contact-info">
           {[
-            { icon: Phone, title: "الهاتف", text: "+33 1 23 45 67 89" },
+            { icon: Phone, title: "الهاتف 1", text: "0777777794" },
+            { icon: Phone, title: "الهاتف 2", text: "0550813142" },
             { icon: Mail, title: "Email", text: "contact@hamdi-voyage.com" },
-            { icon: MapPin, title: "الوكالة", text: "12 Av. des Champs-Elysees, Paris" },
             { icon: CalendarDays, title: "الأوقات", text: "الاثنين - السبت، 09:00 - 19:00" },
+            { icon: MapPin, title: "الوكالة", text: "الجزائر" },
           ].map(({ icon: Icon, title, text }) => (
             <article key={title}><Icon size={21} /><div><strong>{title}</strong><span>{text}</span></div></article>
           ))}

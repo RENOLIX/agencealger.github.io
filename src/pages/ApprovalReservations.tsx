@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import { CheckCircle2, Clock3, LogOut, Search, ShieldCheck, XCircle } from "lucide-react";
-import { Link, Navigate } from "react-router-dom";
+import { CheckCircle2, Clock3, Search, XCircle } from "lucide-react";
+import { Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "../components/providers/auth";
+import AdminTopbar from "./_components/AdminTopbar";
 import {
   getReservations,
   getTravels,
@@ -17,6 +18,7 @@ import {
 
 export default function ApprovalReservations() {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const [reservations, setReservations] = useState<Reservation[]>(() => getReservations());
   const [travels, setTravels] = useState<Travel[]>(() => getTravels());
   const [query, setQuery] = useState("");
@@ -60,27 +62,22 @@ export default function ApprovalReservations() {
 
   return (
     <main className="admin-shell admin-shell-modern">
-      <aside className="admin-side admin-side-modern">
-        <div className="admin-logo">
-          <img src="/agencealger.github.io/logo-normal.png" alt="Hamdi Voyage" />
-        </div>
-        <Link className="admin-side-link" to="/admin">لوحة الإدارة</Link>
-        <Link className="admin-side-link active" to="/admin/approvals">الحجوزات للموافقة</Link>
-        <button onClick={logout}><LogOut /> تسجيل الخروج</button>
-      </aside>
-
       <section className="admin-main admin-main-modern">
+        <AdminTopbar
+          user={user}
+          items={[
+            { key: "dashboard", label: "لوحة الإدارة", onClick: () => navigate("/admin") },
+            { key: "approvals", label: "الحجوزات للموافقة", active: true, onClick: () => navigate("/admin/approvals") },
+          ]}
+          onCreateReservation={() => navigate("/admin/reservations/new")}
+          onOpenApprovals={() => navigate("/admin/approvals")}
+          onLogout={logout}
+        />
+
         <header className="admin-top admin-top-modern">
           <div>
             <span className="label">صفحة منفصلة</span>
             <h1>الحجوزات في انتظار الموافقة</h1>
-          </div>
-          <div className="profile">
-            <span>{user.avatar}</span>
-            <div>
-              <strong>{user.name}</strong>
-              <small>مدير</small>
-            </div>
           </div>
         </header>
 
@@ -101,7 +98,7 @@ export default function ApprovalReservations() {
             {pendingReservations.length === 0 ? (
               <article className="admin-card">
                 <h2>لا توجد حجوزات تنتظر الموافقة</h2>
-                <p>كل الطلبات الجديدة ستظهر هنا مباشرة بعد أن يرسلها الموظف أو العميل.</p>
+                <p>كل الطلبات الجديدة ستظهر هنا مباشرة بعد أن يرسلها الموظف.</p>
               </article>
             ) : pendingReservations.map((reservation) => (
               <article key={reservation.id} className="admin-card reservation-request-card">

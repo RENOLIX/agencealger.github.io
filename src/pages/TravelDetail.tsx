@@ -1,6 +1,6 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { CalendarDays, CheckCircle2, ChevronLeft, FileText, MapPin, Phone, Plane, ShieldCheck, Upload, UserPlus, Users } from "lucide-react";
-import { Link, Navigate, useLocation, useParams } from "react-router-dom";
+import { CalendarDays, CheckCircle2, ChevronLeft, FileText, MapPin, Phone, Upload, UserPlus, Users } from "lucide-react";
+import { Link, Navigate, useLocation, useNavigate, useParams } from "react-router-dom";
 import Navbar from "./_components/Navbar";
 import Footer from "./_components/Footer";
 import {
@@ -8,6 +8,7 @@ import {
   benefitLabels,
   categoryLabels,
   createReservationInSupabase,
+  formatArabicDate,
   getTravels,
   syncTravelsFromSupabase,
   type PassengerType,
@@ -36,9 +37,11 @@ function createPassenger(type: PassengerType): ReservationPassenger {
 export default function TravelDetail() {
   const { travelId } = useParams();
   const location = useLocation();
+  const navigate = useNavigate();
   const { user } = useAuth();
   const isAdminFlow = location.pathname.startsWith("/admin/");
   const [travel, setTravel] = useState<Travel | null>(() => getTravels().find((item) => item.id === travelId) ?? null);
+  const [activeImage, setActiveImage] = useState(0);
 
   const [adults, setAdults] = useState(1);
   const [children, setChildren] = useState(0);
@@ -50,6 +53,7 @@ export default function TravelDetail() {
   const [attachments, setAttachments] = useState<ReservationAttachment[]>([]);
   const [passengers, setPassengers] = useState<ReservationPassenger[]>([createPassenger("adult")]);
   const [submittedId, setSubmittedId] = useState("");
+  const [submitError, setSubmitError] = useState("");
 
   const quantity = adults + children;
   const maxTickets = travel?.ticketsLeft ?? 0;
@@ -61,6 +65,10 @@ export default function TravelDetail() {
   }, [travelId]);
 
   useEffect(() => {
+    setActiveImage(0);
+  }, [travelId]);
+
+  useEffect(() => {
     const total = adults + children;
     if (passengers.length > total) {
       setPassengers((current) => current.slice(0, total));
@@ -69,12 +77,16 @@ export default function TravelDetail() {
 
   const total = useMemo(() => {
     if (!travel) return 0;
-    return adults * travel.price + children * travel.childPrice;
+    const childUnit = travel.hasChildPrice ? Number(travel.childPrice ?? 0) : travel.price;
+    return adults * travel.price + children * childUnit;
   }, [adults, children, travel]);
 
   if (!travel) return <Navigate to="/" replace />;
   if (isAdminFlow && !user) return <Navigate to="/auth" replace />;
   const currentTravel = travel;
+
+  const gallery = currentTravel.images.length > 0 ? currentTravel.images : [currentTravel.image];
+  const currentImage = gallery[Math.min(activeImage, gallery.length - 1)] ?? currentTravel.image;
 
   async function readFiles(files: FileList | null) {
     if (!files?.length) return;
@@ -124,6 +136,7 @@ export default function TravelDetail() {
 
   async function submitReservation(event: FormEvent) {
     event.preventDefault();
+    setSubmitError("");
     if (quantity < 1 || quantity > currentTravel.ticketsLeft) return;
     if (passengers.length !== quantity || passengers.some((passenger) => !isPassengerComplete(passenger))) return;
 
@@ -148,258 +161,288 @@ export default function TravelDetail() {
       createdAt: new Date().toISOString(),
     };
 
-    await createReservationInSupabase(nextReservation);
-    setSubmittedId(nextReservation.id);
-    setCustomerFirstName("");
-    setCustomerLastName("");
-    setCustomerAddress("");
-    setCustomerPhone("");
-    setGeneralNotes("");
-    setAdults(1);
-    setChildren(0);
-    setPassengers([createPassenger("adult")]);
-    setAttachments([]);
+    try {
+      await createReservationInSupabase(nextReservation);
+      setSubmittedId(nextReservation.id);
+      setCustomerFirstName("");
+      setCustomerLastName("");
+      setCustomerAddress("");
+      setCustomerPhone("");
+      setGeneralNotes("");
+      setAdults(1);
+      setChildren(0);
+      setPassengers([createPassenger("adult")]);
+      setAttachments([]);
+    } catch {
+      setSubmitError("تعذر إرسال الطلب حاليا، حاول مرة أخرى.");
+    }
   }
+
+  const travelInfoContent = (
+    <section className="travel-booking-shell">
+      <div className="travel-booking-card">
+        <div className="travel-booking-gallery">
+          <div className="travel-gallery-main">
+            <img src={currentImage} alt={travel.name} />
+          </div>
+          {gallery.length > 1 && (
+            <div className="travel-gallery-thumbs">
+              {gallery.map((image, index) => (
+                <button key={`${image.slice(0, 18)}-${index}`} type="button" className={index === activeImage ? "active" : ""} onClick={() => setActiveImage(index)}>
+                  <img src={image} alt={`${travel.name}-${index + 1}`} />
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="travel-booking-summary">
+          <Link to={isAdminFlow ? "/admin/reservations/new" : "/#tours"} className="travel-back inline-back">
+            <ChevronLeft size={18} /> {isAdminFlow ? "العودة إلى اختيار الرحلات" : "العودة إلى الرحلات"}
+          </Link>
+
+          <span className="label">{isAdminFlow ? "ملف داخلي" : "برنامج الرحلة"}</span>
+          <h1>{travel.name}</h1>
+          <p className="travel-summary-copy">{travel.description}</p>
+
+          <div className="travel-meta-list">
+            <span><MapPin size={15} /> {travel.destination} - {travel.country}</span>
+            <span><CalendarDays size={15} /> {travel.departures?.length ? `${travel.departures.length} مواعيد انطلاق` : formatArabicDate(travel.date)}</span>
+            <span><Users size={15} /> {travel.guides.length} مرشد</span>
+          </div>
+
+          <div className="travel-inline-facts">
+            <div><small>المدة</small><strong>{travel.duration}</strong></div>
+            <div><small>الفئة</small><strong>{categoryLabels[travel.category]}</strong></div>
+            <div><small>الرحلة الجوية</small><strong>{travel.flightMode === "escale" ? "مع توقف" : "مباشرة"}</strong></div>
+            <div><small>الشركة</small><strong>{(travel.airlines ?? ["Air Algérie"]).join(" - ")}</strong></div>
+            <div><small>سعر البالغ (ADT)</small><strong>{travel.price.toLocaleString("fr-FR")} دج</strong></div>
+            {travel.hasChildPrice && <div><small>سعر الطفل (CLD)</small><strong>{Number(travel.childPrice ?? 0).toLocaleString("fr-FR")} دج</strong></div>}
+            {travel.hasBabyPrice && <div><small>سعر الرضيع (INF)</small><strong>{Number(travel.babyPrice ?? 0).toLocaleString("fr-FR")} دج</strong></div>}
+            <div><small>المقاعد المتوفرة</small><strong>{travel.ticketsLeft}</strong></div>
+          </div>
+
+          {travel.departures && travel.departures.length > 0 && (
+            <div className="travel-subsection">
+              <h2>مواعيد الانطلاق</h2>
+              <div className="travel-chip-grid">
+                {travel.departures.map((departure) => <span key={departure}>{formatArabicDate(departure)}</span>)}
+              </div>
+            </div>
+          )}
+
+          <div className="travel-subsection">
+            <h2>الخدمات المشمولة</h2>
+            <div className="travel-feature-list">
+              {travel.benefits.map((benefit) => {
+                const Icon = benefitIcons[benefit];
+                if (!Icon) return null;
+                return (
+                  <div key={benefit} className="travel-feature-item">
+                    <span><Icon size={16} /></span>
+                    <strong>{benefitLabels[benefit] ?? benefit}</strong>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="travel-subsection">
+            <h2>وصف الرحلة</h2>
+            <p>{travel.longDescription}</p>
+          </div>
+
+          <div className="travel-subsection">
+            <h2>فريق المرافقة</h2>
+            <div className="travel-chip-grid">
+              {travel.guides.map((guide) => <span key={guide}>{guide}</span>)}
+            </div>
+          </div>
+
+          {travel.hotels && travel.hotels.length > 0 && (
+            <div className="travel-subsection">
+              <h2>الفنادق</h2>
+              <div className="travel-hotels-grid">
+                {travel.hotels.map((hotel) => (
+                  <article key={hotel.id} className="travel-hotel-card">
+                    <strong>{hotel.name}</strong>
+                    {hotel.photos.length > 0 && (
+                      <div className="travel-hotel-photos">
+                        {hotel.photos.map((photo, index) => (
+                          <img key={`${hotel.id}-${index}`} src={photo} alt={`${hotel.name}-${index + 1}`} />
+                        ))}
+                      </div>
+                    )}
+                  </article>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {!isAdminFlow && (
+            <div className="travel-admin-only-note">
+              الحجز يتم من مساحة الموظفين داخل الإدارة فقط. هذه الصفحة مخصصة لعرض البرنامج والتفاصيل.
+            </div>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+
+  const reservationContent = isAdminFlow && (
+    <section className="reservation-section reservation-section-admin">
+      <div className="reservation-shell">
+        <div className="reservation-copy">
+          <span className="label">إتمام الحجز</span>
+          <h2>ملف حجز داخلي</h2>
+          <p>بعد الإرسال سيظهر الطلب مباشرة في صفحة الحجوزات للموافقة، ويُنقص المخزون فقط بعد موافقة المدير.</p>
+        </div>
+
+        <form className="reservation-form" onSubmit={submitReservation}>
+          <div className="reservation-top-grid">
+            <label>
+              عدد البالغين
+              <select value={adults} onChange={(event) => {
+                const nextAdults = Number(event.target.value);
+                setAdults(nextAdults);
+                if (nextAdults + children > maxTickets) setChildren(Math.max(0, maxTickets - nextAdults));
+              }}>
+                {Array.from({ length: Math.max(1, maxTickets) }, (_, index) => index + 1).map((count) => (
+                  <option key={count} value={count}>{count}</option>
+                ))}
+              </select>
+            </label>
+            <label>
+              عدد الأطفال
+              <select value={children} onChange={(event) => setChildren(Number(event.target.value))}>
+                {Array.from({ length: Math.max(1, maxTickets - adults + 1) }, (_, index) => index).map((count) => (
+                  <option key={count} value={count}>{count}</option>
+                ))}
+              </select>
+            </label>
+            <label>
+              الاسم
+              <input required value={customerFirstName} onChange={(event) => setCustomerFirstName(event.target.value)} />
+            </label>
+            <label>
+              اللقب
+              <input required value={customerLastName} onChange={(event) => setCustomerLastName(event.target.value)} />
+            </label>
+            <label className="span-two">
+              العنوان
+              <input required value={customerAddress} onChange={(event) => setCustomerAddress(event.target.value)} />
+            </label>
+            <label>
+              رقم الهاتف
+              <input required value={customerPhone} onChange={(event) => setCustomerPhone(event.target.value)} placeholder="+213 ..." />
+            </label>
+          </div>
+
+          <div className="reservation-line" />
+
+          <div className="traveler-header">
+            <div>
+              <h3>معلومات المسافرين</h3>
+              <p>{passengers.length} / {quantity} مسافر مضاف</p>
+            </div>
+            <button type="button" className="secondary-button" onClick={addPassengerCard} disabled={passengers.length >= quantity}>
+              <UserPlus size={16} /> إضافة مسافر
+            </button>
+          </div>
+
+          <div className="traveler-card-list">
+            {passengers.map((passenger, index) => (
+              <article key={passenger.id} className="traveler-card">
+                <div className="traveler-card-head">
+                  <strong>المسافر {index + 1}</strong>
+                  <span>{passenger.type === "adult" ? "بالغ" : "طفل"}</span>
+                </div>
+                <div className="traveler-grid">
+                  <label>الاسم<input required value={passenger.firstName} onChange={(event) => updatePassenger(passenger.id, "firstName", event.target.value)} /></label>
+                  <label>اللقب<input required value={passenger.lastName} onChange={(event) => updatePassenger(passenger.id, "lastName", event.target.value)} /></label>
+                  <label>رقم الهاتف<input required value={passenger.phone} onChange={(event) => updatePassenger(passenger.id, "phone", event.target.value)} /></label>
+                  <label>مكان الميلاد<input required value={passenger.birthPlace} onChange={(event) => updatePassenger(passenger.id, "birthPlace", event.target.value)} /></label>
+                  <label>تاريخ الميلاد<input required type="date" value={passenger.birthDate} onChange={(event) => updatePassenger(passenger.id, "birthDate", event.target.value)} /></label>
+                  <label>رقم جواز السفر<input required value={passenger.passportNumber} onChange={(event) => updatePassenger(passenger.id, "passportNumber", event.target.value)} /></label>
+                  <label>انتهاء جواز السفر<input required type="date" value={passenger.passportExpiry} onChange={(event) => updatePassenger(passenger.id, "passportExpiry", event.target.value)} /></label>
+                  <label className="span-two">ملاحظة خاصة<textarea value={passenger.notes} onChange={(event) => updatePassenger(passenger.id, "notes", event.target.value)} /></label>
+                </div>
+              </article>
+            ))}
+          </div>
+
+          <div className="reservation-line" />
+
+          <div className="documents-block">
+            <div className="traveler-header">
+              <div>
+                <h3>الصور والوثائق</h3>
+                <p>رفع مباشر من الهاتف أو الحاسوب.</p>
+              </div>
+              <label className="upload-cta">
+                <Upload size={16} /> رفع ملفات
+                <input type="file" accept="image/*,.pdf,.doc,.docx" multiple onChange={(event) => void readFiles(event.target.files)} />
+              </label>
+            </div>
+            <div className="attachment-list">
+              {attachments.map((attachment) => (
+                <div key={attachment.id} className="attachment-item">
+                  <FileText size={16} />
+                  <span>{attachment.name}</span>
+                  <button type="button" onClick={() => removeAttachment(attachment.id)}>حذف</button>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <label className="span-two">
+            ملاحظة عامة
+            <textarea value={generalNotes} onChange={(event) => setGeneralNotes(event.target.value)} />
+          </label>
+
+          <div className="reservation-recap">
+            <div><span>الرحلة</span><strong>{travel.name}</strong></div>
+            <div><span>المقاعد المطلوبة</span><strong>{quantity}</strong></div>
+            <div><span>الإجمالي</span><strong>{total.toLocaleString("fr-FR")} دج</strong></div>
+            <div><span>المرفقات</span><strong>{attachments.length}</strong></div>
+          </div>
+
+          <button className="primary-reservation-button" disabled={quantity > travel.ticketsLeft}>
+            <CheckCircle2 size={18} /> إرسال طلب الحجز
+          </button>
+
+          {submittedId && (
+            <div className="reservation-success">
+              <strong>تم إرسال الطلب بنجاح</strong>
+              <span>رقم الطلب: {submittedId}</span>
+              <button type="button" className="secondary-button" onClick={() => navigate("/admin")}>العودة إلى السجل</button>
+            </div>
+          )}
+
+          {submitError && <p className="reservation-warning">{submitError}</p>}
+          {quantity > travel.ticketsLeft && (
+            <p className="reservation-warning">الكمية المطلوبة أكبر من الأماكن المتاحة حاليا.</p>
+          )}
+        </form>
+      </div>
+    </section>
+  );
 
   const content = (
     <>
-      <section className="travel-hero travel-hero-clean" style={{ backgroundImage: `linear-gradient(90deg, rgba(7, 12, 20, 0.84), rgba(7, 12, 20, 0.44)), url(${currentTravel.banner})` }}>
+      <section className="travel-hero travel-hero-compact" style={{ backgroundImage: `linear-gradient(100deg, rgba(10, 17, 26, 0.88), rgba(10, 17, 26, 0.48)), url(${travel.banner || travel.image})` }}>
         <div className="travel-hero-shell">
-          <Link to={isAdminFlow ? "/admin/reservations/new" : "/#tours"} className="travel-back"><ChevronLeft size={18} /> {isAdminFlow ? "العودة إلى اختيار الرحلات" : "العودة إلى الرحلات"}</Link>
-          <span className="label">{isAdminFlow ? "إنشاء حجز داخلي" : "تفاصيل الرحلة"}</span>
-          <h1>{currentTravel.name}</h1>
-          <p>{currentTravel.longDescription}</p>
+          <span className="label">{isAdminFlow ? "إنشاء حجز داخلي" : "رحلة عمرة"}</span>
+          <h1>{travel.name}</h1>
           <div className="travel-hero-meta">
-            <span><MapPin size={16} /> {currentTravel.destination}</span>
-            <span><CalendarDays size={16} /> {currentTravel.date}</span>
-            <span><Users size={16} /> {currentTravel.ticketsLeft} مكان متاح</span>
+            <span><MapPin size={16} /> {travel.destination}</span>
+            <span><CalendarDays size={16} /> {formatArabicDate(travel.date)}</span>
+            <span><Users size={16} /> {travel.ticketsLeft} مكان متاح</span>
           </div>
         </div>
       </section>
-
-      <section className="travel-layout-band">
-        <div className="travel-overview">
-          <div className="travel-media">
-            <img src={currentTravel.image} alt={currentTravel.name} />
-          </div>
-          <div className="travel-summary travel-summary-panel">
-            <div className="section-head compact-head">
-              <div>
-                <span className="label">برنامج الرحلة</span>
-                <h2>معلومات واضحة<br /><em>بتصميم أنظف</em></h2>
-              </div>
-            </div>
-            <p>{currentTravel.description}</p>
-            <div className="travel-chip-row">
-              <span><Plane size={14} /> {currentTravel.duration}</span>
-              <span><ShieldCheck size={14} /> {categoryLabels[currentTravel.category]}</span>
-              <span><Users size={14} /> {currentTravel.guides.join(" - ")}</span>
-            </div>
-            <div className="travel-tariffs">
-              <article>
-                <small>سعر البالغ</small>
-                <strong>{currentTravel.price.toLocaleString("fr-FR")} دج</strong>
-              </article>
-              <article>
-                <small>سعر الطفل</small>
-                <strong>{currentTravel.childPrice.toLocaleString("fr-FR")} دج</strong>
-              </article>
-              <article>
-                <small>المقاعد المتوفرة</small>
-                <strong>{currentTravel.ticketsLeft}</strong>
-              </article>
-            </div>
-          </div>
-        </div>
-
-        <div className="travel-divider">
-          <div className="travel-divider-line" />
-        </div>
-
-        <section className="travel-benefits-wrap">
-          <div className="section-head compact-head travel-info-head">
-            <div>
-              <span className="label">الخدمات المختارة</span>
-              <h2>كل ما تم اختياره<br /><em>لهذه الرحلة</em></h2>
-            </div>
-          </div>
-
-          <div className="travel-benefits-grid">
-            {currentTravel.benefits.map((benefit) => {
-              const Icon = benefitIcons[benefit];
-              if (!Icon) return null;
-              return (
-                <article key={benefit} className="benefit-feature-card">
-                  <span><Icon size={18} /></span>
-                  <strong>{benefitLabels[benefit] ?? benefit}</strong>
-                </article>
-              );
-            })}
-          </div>
-        </section>
-
-        <section className="travel-description-panel">
-          <div className="travel-description-card">
-            <span className="label">وصف الرحلة</span>
-            <h2>تفاصيل إضافية</h2>
-            <p>{currentTravel.longDescription}</p>
-          </div>
-          <div className="travel-guides-card">
-            <span className="label">المرشدون</span>
-            <h2>فريق المرافقة</h2>
-            <div className="travel-guides-list">
-              {currentTravel.guides.map((guide) => <span key={guide}>{guide}</span>)}
-            </div>
-          </div>
-        </section>
-
-        {!isAdminFlow && (
-          <section className="travel-public-note">
-            <div className="travel-public-note-card">
-              <span className="label">الحجز</span>
-              <h2>الحجز يتم عبر الإدارة فقط</h2>
-              <p>هذه الصفحة مخصصة لعرض البرنامج والتفاصيل. إنشاء الحجز يتم من مساحة الموظفين داخل الإدارة.</p>
-            </div>
-          </section>
-        )}
-
-        {isAdminFlow && (
-          <section className="reservation-section reservation-section-admin">
-            <div className="reservation-shell">
-              <div className="reservation-copy">
-                <span className="label">ملف الحجز</span>
-                <h2>إتمام الحجز<br /><em>من داخل الإدارة</em></h2>
-                <p>أدخل بيانات صاحب الطلب والمسافرين والوثائق، ثم أرسل الملف ليظهر مباشرة في صفحة الحجوزات للموافقة.</p>
-              </div>
-
-              <form className="reservation-form" onSubmit={submitReservation}>
-                <div className="reservation-top-grid">
-                  <label>
-                    عدد البالغين
-                    <select value={adults} onChange={(event) => {
-                      const nextAdults = Number(event.target.value);
-                      setAdults(nextAdults);
-                    if (nextAdults + children > maxTickets) setChildren(Math.max(0, maxTickets - nextAdults));
-                    }}>
-                      {Array.from({ length: Math.max(1, maxTickets) }, (_, index) => index + 1).map((count) => (
-                        <option key={count} value={count}>{count}</option>
-                      ))}
-                    </select>
-                  </label>
-                  <label>
-                    عدد الأطفال
-                    <select value={children} onChange={(event) => setChildren(Number(event.target.value))}>
-                      {Array.from({ length: Math.max(1, maxTickets - adults + 1) }, (_, index) => index).map((count) => (
-                        <option key={count} value={count}>{count}</option>
-                      ))}
-                    </select>
-                  </label>
-                  <label>
-                    الاسم
-                    <input required value={customerFirstName} onChange={(event) => setCustomerFirstName(event.target.value)} />
-                  </label>
-                  <label>
-                    اللقب
-                    <input required value={customerLastName} onChange={(event) => setCustomerLastName(event.target.value)} />
-                  </label>
-                  <label className="span-two">
-                    العنوان
-                    <input required value={customerAddress} onChange={(event) => setCustomerAddress(event.target.value)} />
-                  </label>
-                  <label>
-                    رقم الهاتف
-                    <input required value={customerPhone} onChange={(event) => setCustomerPhone(event.target.value)} placeholder="+213 ..." />
-                  </label>
-                </div>
-
-                <div className="reservation-line" />
-
-                <div className="traveler-header">
-                  <div>
-                    <h3>معلومات المسافرين</h3>
-                    <p>{passengers.length} / {quantity} مسافر مضاف</p>
-                  </div>
-                  <button type="button" className="secondary-button" onClick={addPassengerCard} disabled={passengers.length >= quantity}>
-                    <UserPlus size={16} /> إضافة مسافر
-                  </button>
-                </div>
-
-                <div className="traveler-card-list">
-                  {passengers.map((passenger, index) => (
-                    <article key={passenger.id} className="traveler-card">
-                      <div className="traveler-card-head">
-                        <strong>المسافر {index + 1}</strong>
-                        <span>{passenger.type === "adult" ? "بالغ" : "طفل"}</span>
-                      </div>
-                      <div className="traveler-grid">
-                        <label>الاسم<input required value={passenger.firstName} onChange={(event) => updatePassenger(passenger.id, "firstName", event.target.value)} /></label>
-                        <label>اللقب<input required value={passenger.lastName} onChange={(event) => updatePassenger(passenger.id, "lastName", event.target.value)} /></label>
-                        <label>رقم الهاتف<input required value={passenger.phone} onChange={(event) => updatePassenger(passenger.id, "phone", event.target.value)} /></label>
-                        <label>مكان الميلاد<input required value={passenger.birthPlace} onChange={(event) => updatePassenger(passenger.id, "birthPlace", event.target.value)} /></label>
-                        <label>تاريخ الميلاد<input required type="date" value={passenger.birthDate} onChange={(event) => updatePassenger(passenger.id, "birthDate", event.target.value)} /></label>
-                        <label>رقم جواز السفر<input required value={passenger.passportNumber} onChange={(event) => updatePassenger(passenger.id, "passportNumber", event.target.value)} /></label>
-                        <label>انتهاء جواز السفر<input required type="date" value={passenger.passportExpiry} onChange={(event) => updatePassenger(passenger.id, "passportExpiry", event.target.value)} /></label>
-                        <label className="span-two">ملاحظة خاصة<textarea value={passenger.notes} onChange={(event) => updatePassenger(passenger.id, "notes", event.target.value)} /></label>
-                      </div>
-                    </article>
-                  ))}
-                </div>
-
-                <div className="reservation-line" />
-
-                <div className="documents-block">
-                  <div className="traveler-header">
-                    <div>
-                      <h3>الصور والوثائق</h3>
-                      <p>رفع مباشر من الهاتف أو الحاسوب.</p>
-                    </div>
-                    <label className="upload-cta">
-                      <Upload size={16} /> رفع ملفات
-                      <input type="file" accept="image/*,.pdf,.doc,.docx" multiple onChange={(event) => void readFiles(event.target.files)} />
-                    </label>
-                  </div>
-                  <div className="attachment-list">
-                    {attachments.map((attachment) => (
-                      <div key={attachment.id} className="attachment-item">
-                        <FileText size={16} />
-                        <span>{attachment.name}</span>
-                        <button type="button" onClick={() => removeAttachment(attachment.id)}>حذف</button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <label className="span-two">
-                  ملاحظة عامة
-                  <textarea value={generalNotes} onChange={(event) => setGeneralNotes(event.target.value)} />
-                </label>
-
-                <div className="reservation-recap">
-                  <div><span>الرحلة</span><strong>{currentTravel.name}</strong></div>
-                  <div><span>المقاعد المطلوبة</span><strong>{quantity}</strong></div>
-                  <div><span>الإجمالي</span><strong>{total.toLocaleString("fr-FR")} دج</strong></div>
-                  <div><span>المرفقات</span><strong>{attachments.length}</strong></div>
-                </div>
-
-                <button className="primary-reservation-button" disabled={quantity > currentTravel.ticketsLeft}>
-                  <CheckCircle2 size={18} /> إرسال طلب الحجز
-                </button>
-
-                {submittedId && (
-                  <div className="reservation-success">
-                    <strong>تم إرسال الطلب بنجاح</strong>
-                    <span>رقم الطلب: {submittedId}</span>
-                  </div>
-                )}
-
-                {quantity > currentTravel.ticketsLeft && (
-                  <p className="reservation-warning">الكمية المطلوبة أكبر من الأماكن المتاحة حاليا.</p>
-                )}
-              </form>
-            </div>
-          </section>
-        )}
-      </section>
+      {travelInfoContent}
+      {reservationContent}
     </>
   );
 

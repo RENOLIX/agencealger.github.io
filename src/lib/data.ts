@@ -73,6 +73,15 @@ export type BenefitKey =
 
 export type TravelCategory = "Plage" | "Aventure" | "Culture" | "Luxe";
 
+export type TravelHotel = {
+  id: string;
+  name: string;
+  photos: string[];
+};
+
+export type FlightMode = "direct" | "escale";
+export type AirlineCode = "Air Algérie" | "MS" | "TK";
+
 export type Travel = {
   id: string;
   name: string;
@@ -81,13 +90,20 @@ export type Travel = {
   image: string;
   images: string[];
   date: string;
+  departures?: string[];
   duration: string;
   price: number;
-  childPrice: number;
+  childPrice?: number | null;
+  babyPrice?: number | null;
+  hasChildPrice?: boolean;
+  hasBabyPrice?: boolean;
   description: string;
   longDescription: string;
   banner: string;
   guides: string[];
+  hotels?: TravelHotel[];
+  flightMode?: FlightMode;
+  airlines?: AirlineCode[];
   category: TravelCategory;
   benefits: BenefitKey[];
   ticketsTotal: number;
@@ -158,12 +174,37 @@ export type TeamGroup = {
 
 export const seedUsers: User[] = [
   { id: "admin", name: "Nora Admin", email: "admin@hamdi.local", password: "admin123", role: "admin", avatar: "NA" },
-  { id: "sara", name: "Sara Benali", email: "sara@hamdi.local", password: "voyage123", role: "employee", avatar: "SB" },
-  { id: "yacine", name: "Yacine Morel", email: "yacine@hamdi.local", password: "voyage123", role: "employee", avatar: "YM" },
+  { id: "seller-bouraq", name: "وكالة البراق", email: "elbouraqtravel@gmail.com", password: "Hamdi2026!01", role: "employee", avatar: "بر" },
+  { id: "seller-fariha", name: "وكالة فريحة", email: "agencefareha@gmail.com", password: "Hamdi2026!02", role: "employee", avatar: "فر" },
+  { id: "seller-barouaguia", name: "فرع حمدي البراواقية", email: "voyage26.02hamdi@gmail.com", password: "Hamdi2026!03", role: "employee", avatar: "بر" },
+  { id: "seller-kasr", name: "فرع قصر البخاري", email: "Voyage26hamdi@gmail.com", password: "Hamdi2026!04", role: "employee", avatar: "قب" },
+  { id: "seller-mahieddine", name: "محي الدين محروق", email: "voyage.hamdi35.1@gmail.com", password: "Hamdi2026!05", role: "employee", avatar: "مح" },
+  { id: "seller-bejaia", name: "فرع حمدي بجاية", email: "Hamdivoyagebejaia06@gmail.com", password: "Hamdi2026!06", role: "employee", avatar: "بج" },
+  { id: "seller-reghaia", name: "فرع الرغاية -الجزائر-", email: "voyage16hamdi@gmail.com", password: "Hamdi2026!07", role: "employee", avatar: "رغ" },
 ];
 
+function mergeUsersWithSeeds(users: User[]) {
+  const byEmail = new globalThis.Map<string, User>();
+
+  for (const user of users) {
+    byEmail.set(user.email.trim().toLowerCase(), user);
+  }
+
+  for (const seedUser of seedUsers) {
+    const email = seedUser.email.trim().toLowerCase();
+    if (!byEmail.has(email)) {
+      byEmail.set(email, seedUser);
+    }
+  }
+
+  return Array.from(byEmail.values());
+}
+
 export function getUsers() {
-  return readStore<User[]>("hv-users", seedUsers);
+  const storedUsers = readStore<User[]>("hv-users", []);
+  const mergedUsers = mergeUsersWithSeeds(storedUsers);
+  if (mergedUsers.length !== storedUsers.length) writeStore("hv-users", mergedUsers);
+  return mergedUsers;
 }
 
 export function saveUsers(nextUsers: User[]) {
@@ -291,6 +332,40 @@ export const passengerTypeLabels: Record<PassengerType, string> = {
   adult: "بالغ",
   child: "طفل",
 };
+
+const ARABIC_MONTHS = [
+  "جانفي",
+  "فيفري",
+  "مارس",
+  "افريل",
+  "ماي",
+  "جوان",
+  "جويلية",
+  "اوت",
+  "سبتمبر",
+  "اكتوبر",
+  "نوفمبر",
+  "ديسمبر",
+];
+
+export function getArabicMonthName(monthIndex: number) {
+  return ARABIC_MONTHS[monthIndex] ?? "";
+}
+
+export function formatArabicDate(dateValue: string) {
+  if (!dateValue) return "";
+  const date = new Date(`${dateValue}T00:00:00`);
+  if (Number.isNaN(date.getTime())) return dateValue;
+  return `${date.getDate()} ${getArabicMonthName(date.getMonth())} ${date.getFullYear()}`;
+}
+
+export function formatArabicMonthRange(dateValue: string, duration = "30 يوم") {
+  if (!dateValue) return duration;
+  const date = new Date(`${dateValue}T00:00:00`);
+  if (Number.isNaN(date.getTime())) return `${dateValue} - ${duration}`;
+  const durationLabel = duration.includes("30") ? "30" : duration;
+  return `${date.getDate()} - ${durationLabel} ${getArabicMonthName(date.getMonth())}`;
+}
 
 export const seedTeamGroups: TeamGroup[] = [
   { id: "general-director", title: "المدير العام للمجموعة", members: ["حمدي نبيل"] },
@@ -528,11 +603,11 @@ export const destinations = [
 ];
 
 export function getTravels() {
-  return readStore<Travel[]>("hv-travels", seedTravels);
+  return readStore<Travel[]>("hv-travels", seedTravels).map(normalizeTravel);
 }
 
 export function saveTravels(nextTravels: Travel[]) {
-  writeStore("hv-travels", nextTravels);
+  writeStore("hv-travels", nextTravels.map(normalizeTravel));
 }
 
 export function getReservations() {
@@ -562,12 +637,19 @@ type TravelRow = {
   image_urls: string[] | null;
   banner_url: string;
   departure_date: string;
+  departures: string[] | null;
   duration: string;
   adult_price: number | string;
-  child_price: number | string;
+  child_price: number | string | null;
+  baby_price: number | string | null;
+  has_child_price: boolean | null;
+  has_baby_price: boolean | null;
   short_description: string;
   long_description: string;
   guides: string[] | null;
+  hotels: TravelHotel[] | null;
+  flight_mode: FlightMode | null;
+  airlines: AirlineCode[] | null;
   category: TravelCategory;
   benefits: string[] | null;
   tickets_total: number;
@@ -640,6 +722,38 @@ type ReservationAttachmentRow = {
   public_url: string | null;
 };
 
+function normalizeTravel(travel: Travel): Travel {
+  const image = travel.image || travel.banner || travel.images?.[0] || "https://images.pexels.com/photos/32525647/pexels-photo-32525647.jpeg?auto=compress&cs=tinysrgb&w=1400";
+  const images = Array.isArray(travel.images) && travel.images.length > 0 ? travel.images.filter(Boolean) : [image];
+  const departures = Array.isArray(travel.departures) && travel.departures.length > 0
+    ? Array.from(new Set(travel.departures.filter(Boolean))).sort()
+    : [travel.date || new Date().toISOString().slice(0, 10)];
+  const hasChildPrice = travel.hasChildPrice ?? travel.childPrice != null;
+  const hasBabyPrice = travel.hasBabyPrice ?? travel.babyPrice != null;
+
+  return {
+    ...travel,
+    image,
+    images,
+    banner: travel.banner || images[0] || image,
+    date: departures[0] || travel.date || new Date().toISOString().slice(0, 10),
+    departures,
+    childPrice: hasChildPrice ? Number(travel.childPrice ?? 0) : null,
+    babyPrice: hasBabyPrice ? Number(travel.babyPrice ?? 0) : null,
+    hasChildPrice,
+    hasBabyPrice,
+    hotels: Array.isArray(travel.hotels)
+      ? travel.hotels.map((hotel) => ({
+        id: hotel.id || crypto.randomUUID(),
+        name: hotel.name,
+        photos: Array.isArray(hotel.photos) ? hotel.photos.filter(Boolean) : [],
+      }))
+      : [],
+    flightMode: travel.flightMode ?? "direct",
+    airlines: Array.isArray(travel.airlines) && travel.airlines.length > 0 ? travel.airlines : ["Air Algérie"],
+  };
+}
+
 function mapTravelRow(row: TravelRow): Travel {
   const image = row.image_url || "https://images.pexels.com/photos/32525647/pexels-photo-32525647.jpeg?auto=compress&cs=tinysrgb&w=1400";
   const images = Array.isArray(row.image_urls) && row.image_urls.length > 0
@@ -651,7 +765,7 @@ function mapTravelRow(row: TravelRow): Travel {
     : [];
   const category = travelCategorySet.has(row.category) ? row.category : "Culture";
 
-  return {
+  return normalizeTravel({
     id: row.id,
     name: row.name || "رحلة عمرة",
     destination: row.destination || "مكة المكرمة",
@@ -660,41 +774,56 @@ function mapTravelRow(row: TravelRow): Travel {
     images,
     banner: row.banner_url || image,
     date: row.departure_date || new Date().toISOString().slice(0, 10),
+    departures: Array.isArray(row.departures) && row.departures.length > 0 ? row.departures.filter(Boolean) : [row.departure_date || new Date().toISOString().slice(0, 10)],
     duration: row.duration || "30 يوم",
     price: Number(row.adult_price ?? 0),
-    childPrice: Number(row.child_price ?? 0),
+    childPrice: row.child_price == null ? null : Number(row.child_price),
+    babyPrice: row.baby_price == null ? null : Number(row.baby_price),
+    hasChildPrice: row.has_child_price ?? row.child_price != null,
+    hasBabyPrice: row.has_baby_price ?? row.baby_price != null,
     description: row.short_description || "برنامج عمرة منظم.",
     longDescription: row.long_description || row.short_description || "برنامج عمرة منظم مع متابعة كاملة.",
     guides,
+    hotels: Array.isArray(row.hotels) ? row.hotels : [],
+    flightMode: row.flight_mode ?? "direct",
+    airlines: Array.isArray(row.airlines) ? row.airlines : ["Air Algérie"],
     category,
     benefits,
     ticketsTotal: Number(row.tickets_total ?? 0),
     ticketsLeft: Number(row.tickets_left ?? 0),
     rating: Number(row.rating ?? 4.8),
-  };
+  });
 }
 
 function mapTravelToRow(travel: Travel) {
+  const normalized = normalizeTravel(travel);
   return {
-    id: travel.id,
-    name: travel.name,
-    destination: travel.destination,
-    country: travel.country,
-    image_url: travel.image,
-    image_urls: travel.images,
-    banner_url: travel.banner,
-    departure_date: travel.date,
-    duration: travel.duration,
-    adult_price: travel.price,
-    child_price: travel.childPrice,
-    short_description: travel.description,
-    long_description: travel.longDescription,
-    guides: travel.guides,
-    category: travel.category,
-    benefits: travel.benefits,
-    tickets_total: travel.ticketsTotal,
-    tickets_left: travel.ticketsLeft,
-    rating: travel.rating,
+    id: normalized.id,
+    name: normalized.name,
+    destination: normalized.destination,
+    country: normalized.country,
+    image_url: normalized.image,
+    image_urls: normalized.images,
+    banner_url: normalized.banner,
+    departure_date: normalized.date,
+    departures: normalized.departures,
+    duration: normalized.duration,
+    adult_price: normalized.price,
+    child_price: normalized.hasChildPrice ? normalized.childPrice : null,
+    baby_price: normalized.hasBabyPrice ? normalized.babyPrice : null,
+    has_child_price: normalized.hasChildPrice,
+    has_baby_price: normalized.hasBabyPrice,
+    short_description: normalized.description,
+    long_description: normalized.longDescription,
+    guides: normalized.guides,
+    hotels: normalized.hotels ?? [],
+    flight_mode: normalized.flightMode ?? "direct",
+    airlines: normalized.airlines ?? ["Air Algérie"],
+    category: normalized.category,
+    benefits: normalized.benefits,
+    tickets_total: normalized.ticketsTotal,
+    tickets_left: normalized.ticketsLeft,
+    rating: normalized.rating,
     active: true,
   };
 }
@@ -961,7 +1090,7 @@ export async function syncReservationsFromSupabase() {
       ? supabase.from("reservation_attachments").select("id, reservation_id, file_name, mime_type, storage_path, public_url").in("reservation_id", reservationIds)
       : Promise.resolve({ data: [], error: null }),
     travelIds.length > 0
-      ? supabase.from("travels").select("id, name, destination, country, image_url, image_urls, banner_url, departure_date, duration, adult_price, child_price, short_description, long_description, guides, category, benefits, tickets_total, tickets_left, rating").in("id", travelIds)
+      ? supabase.from("travels").select("id, name, destination, country, image_url, image_urls, banner_url, departure_date, departures, duration, adult_price, child_price, baby_price, has_child_price, has_baby_price, short_description, long_description, guides, hotels, flight_mode, airlines, category, benefits, tickets_total, tickets_left, rating").in("id", travelIds)
       : Promise.resolve({ data: [], error: null }),
   ]);
 

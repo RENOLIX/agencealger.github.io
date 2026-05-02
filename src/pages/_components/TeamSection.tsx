@@ -1,14 +1,19 @@
 import { useEffect, useMemo, useState } from "react";
-import { BriefcaseBusiness, Search, Users } from "lucide-react";
+import { BriefcaseBusiness, ChevronDown, Search, Users } from "lucide-react";
 import { getTeamGroups, syncTeamGroupsFromSupabase, type TeamGroup } from "../../lib/data";
 
 export default function TeamSection() {
   const [query, setQuery] = useState("");
   const [groups, setGroups] = useState<TeamGroup[]>(() => getTeamGroups());
+  const [openGroups, setOpenGroups] = useState<string[]>([]);
 
   useEffect(() => {
     void syncTeamGroupsFromSupabase().then(setGroups).catch(() => undefined);
   }, []);
+
+  useEffect(() => {
+    setOpenGroups((current) => current.length === 0 && groups.length > 0 ? [groups[0].id] : current);
+  }, [groups]);
 
   const filteredGroups = useMemo(() => {
     const needle = query.trim().toLowerCase();
@@ -21,6 +26,10 @@ export default function TeamSection() {
       }))
       .filter((group) => group.title.toLowerCase().includes(needle) || group.members.length > 0);
   }, [groups, query]);
+
+  function toggleGroup(groupId: string) {
+    setOpenGroups((current) => current.includes(groupId) ? current.filter((id) => id !== groupId) : [...current, groupId]);
+  }
 
   return (
     <section id="team" className="section team-section">
@@ -40,26 +49,35 @@ export default function TeamSection() {
         </div>
       </div>
 
-      <div className="team-grid">
-        {filteredGroups.map((group) => (
-          <article key={group.id} className="team-card">
-            <div className="team-card-head">
-              <span><BriefcaseBusiness size={18} /></span>
-              <div>
-                <h3>{group.title}</h3>
-                <small>{group.members.length} عضو</small>
-              </div>
-            </div>
-            <div className="team-members">
-              {group.members.map((member) => (
-                <div key={`${group.id}-${member}`} className="team-member">
-                  <Users size={14} />
-                  <span>{member}</span>
+      <div className="team-accordion">
+        {filteredGroups.map((group) => {
+          const isOpen = openGroups.includes(group.id);
+          return (
+            <article key={group.id} className={`team-accordion-card ${isOpen ? "open" : ""}`}>
+              <button type="button" className="team-accordion-head" onClick={() => toggleGroup(group.id)}>
+                <div>
+                  <span><BriefcaseBusiness size={18} /></span>
+                  <div>
+                    <h3>{group.title}</h3>
+                    <small>{group.members.length} عضو</small>
+                  </div>
                 </div>
-              ))}
-            </div>
-          </article>
-        ))}
+                <ChevronDown size={18} />
+              </button>
+
+              {isOpen && (
+                <div className="team-members">
+                  {group.members.map((member) => (
+                    <div key={`${group.id}-${member}`} className="team-member">
+                      <Users size={14} />
+                      <span>{member}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </article>
+          );
+        })}
       </div>
     </section>
   );

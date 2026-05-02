@@ -12,6 +12,16 @@ const features = [
 export default function WhyChooseUs() {
   return (
     <section id="why" className="why">
+      <div className="feature-grid">
+        {features.map(({ icon: Icon, title, desc, color }) => (
+          <article key={title} className={`feature ${color}`}>
+            <span><Icon size={23} /></span>
+            <h3>{title}</h3>
+            <p>{desc}</p>
+          </article>
+        ))}
+      </div>
+
       <div className="why-left">
         <span className="label">لماذا نحن</span>
         <h2>تنظيم موثوق<br />لرحلات العمرة<br /><em>منذ 2006</em></h2>
@@ -21,15 +31,6 @@ export default function WhyChooseUs() {
           <div><strong>6</strong><span>رحلات</span></div>
           <div><strong>4.9</strong><span>تقييم</span></div>
         </div>
-      </div>
-      <div className="feature-grid">
-        {features.map(({ icon: Icon, title, desc, color }) => (
-          <article key={title} className={`feature ${color}`}>
-            <span><Icon size={23} /></span>
-            <h3>{title}</h3>
-            <p>{desc}</p>
-          </article>
-        ))}
       </div>
     </section>
   );

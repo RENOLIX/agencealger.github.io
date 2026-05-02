@@ -515,3 +515,100 @@ progress { accent-color: var(--orange); width: 100%; }
   from { transform: translateX(0); }
   to { transform: translateX(-100%); }
 }
+
+/* 2026 refresh */
+.tours-head { align-items: flex-start; direction: rtl; }
+.why { grid-template-columns: 1.15fr .85fr; }
+.feature-grid { margin: 0; }
+.why-left { margin: 0 0 0 auto; }
+
+.team-accordion { display: grid; gap: 16px; margin: auto; max-width: 1180px; }
+.team-accordion-card { background: rgba(255,255,255,.92); border: 1px solid rgba(15,23,42,.08); border-radius: 24px; box-shadow: 0 18px 48px -36px rgba(14,165,233,.16); direction: rtl; overflow: hidden; }
+.team-accordion-head { align-items: center; background: transparent; border: 0; color: var(--ink); display: flex; justify-content: space-between; padding: 22px 24px; width: 100%; }
+.team-accordion-head > div { align-items: center; display: flex; flex-direction: row-reverse; gap: 14px; }
+.team-accordion-head > div > span { align-items: center; background: linear-gradient(135deg, #f97316, #facc15); border-radius: 16px; color: white; display: flex; height: 44px; justify-content: center; width: 44px; }
+.team-accordion-head h3 { font-size: 24px; margin-bottom: 4px; text-align: right; }
+.team-accordion-head small { color: var(--muted); font-weight: 800; }
+.team-accordion-card.open .team-accordion-head svg:last-child { transform: rotate(180deg); }
+.team-accordion-card .team-members { border-top: 1px solid #edf2f7; padding: 0 24px 24px; }
+
+.admin-shell { background: linear-gradient(180deg, #eef4fb 0%, #f8fbff 22%, #ffffff 100%); display: block; min-height: 100vh; }
+.admin-main-modern { margin: 0 auto; max-width: 1400px; padding: 24px 32px 40px; }
+.admin-appbar { align-items: center; background: rgba(255,255,255,.9); border: 1px solid rgba(15,23,42,.08); border-radius: 24px; box-shadow: 0 18px 48px -36px rgba(15,23,42,.12); display: flex; gap: 18px; justify-content: space-between; margin-bottom: 26px; padding: 14px 18px; position: sticky; top: 18px; z-index: 20; }
+.admin-appbar-brand { align-items: center; display: flex; flex-direction: row-reverse; gap: 12px; }
+.admin-appbar-brand img { height: 64px; object-fit: contain; width: auto; }
+.admin-menu-toggle { align-items: center; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; color: #0f172a; display: none; height: 42px; justify-content: center; width: 42px; }
+.admin-topnav { align-items: center; display: flex; flex: 1; flex-wrap: wrap; gap: 10px; justify-content: center; }
+.admin-topnav button { align-items: center; background: transparent; border: 1px solid transparent; border-radius: 999px; color: #334155; display: inline-flex; font-size: 14px; font-weight: 800; gap: 8px; min-height: 44px; padding: 0 16px; }
+.admin-topnav button.active { background: #111827; color: white; }
+.admin-topnav-cta { background: linear-gradient(135deg, #f97316, #ea580c) !important; color: white !important; }
+.admin-top { margin-bottom: 24px; }
+
+.guide-picker-shell, .departure-block, .hotel-block { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 22px; padding: 20px; }
+.guide-picker-head, .editor-subhead, .hotel-editor-head, .departure-row { align-items: center; display: flex; gap: 14px; justify-content: space-between; }
+.guide-picker-head span, .editor-subhead span { color: #64748b; display: block; font-size: 13px; line-height: 1.6; margin-top: 4px; }
+.guide-picker-grid { display: grid; gap: 12px; grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: 18px; }
+.guide-option { align-items: center; background: white; border: 1px solid #e2e8f0; border-radius: 16px; display: flex; justify-content: space-between; padding: 14px 16px; }
+.selected-guides-row, .travel-chip-grid { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+.selected-guides-row span, .travel-chip-grid span { background: #fff; border: 1px solid #dbe5ef; border-radius: 999px; padding: 9px 14px; }
+.pricing-grid { display: grid; gap: 16px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.price-optional { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 18px; display: grid; gap: 12px; padding: 16px; }
+.price-optional input[type="number"] { min-height: 48px; }
+.checkbox-row { align-items: center; display: flex; gap: 10px; }
+.checkbox-row input { width: auto; }
+.departure-list, .hotel-editor-list { display: grid; gap: 14px; margin-top: 16px; }
+.departure-row input { flex: 1; }
+.hotel-editor-card { background: white; border: 1px solid #e2e8f0; border-radius: 18px; display: grid; gap: 14px; padding: 16px; }
+.hotel-editor-head input { flex: 1; }
+.upload-zone.compact { min-height: auto; }
+.hotel-photos img { min-height: 120px; }
+.hint-text { color: #64748b; margin: 0; }
+
+.travel-page, .travel-page-admin { background: #f4f7fb; }
+.travel-hero-compact { min-height: 320px; padding: 138px 32px 44px; }
+.travel-booking-shell { margin: -42px auto 0; max-width: 1240px; padding: 0 32px 80px; position: relative; z-index: 2; }
+.travel-booking-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 28px; box-shadow: 0 22px 56px -40px rgba(15,23,42,.2); display: grid; gap: 26px; grid-template-columns: minmax(0, 1.02fr) minmax(0, .98fr); overflow: hidden; padding: 24px; }
+.travel-booking-gallery { display: grid; gap: 12px; }
+.travel-gallery-main img { border-radius: 22px; height: 410px; object-fit: cover; width: 100%; }
+.travel-gallery-thumbs { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(84px, 1fr)); }
+.travel-gallery-thumbs button { background: transparent; border: 2px solid transparent; border-radius: 16px; overflow: hidden; padding: 0; }
+.travel-gallery-thumbs button.active { border-color: #f97316; }
+.travel-gallery-thumbs img { display: block; height: 76px; object-fit: cover; width: 100%; }
+.travel-booking-summary { direction: rtl; text-align: right; }
+.inline-back { color: #475569; margin-bottom: 18px; }
+.travel-booking-summary h1 { font-size: clamp(2.2rem, 4vw, 3.5rem); line-height: 1.05; margin-bottom: 14px; }
+.travel-summary-copy { color: #64748b; line-height: 1.9; margin-bottom: 18px; }
+.travel-meta-list { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 22px; }
+.travel-meta-list span { align-items: center; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 999px; display: inline-flex; gap: 8px; padding: 10px 14px; }
+.travel-inline-facts { border-top: 1px solid #edf2f7; border-bottom: 1px solid #edf2f7; display: flex; flex-wrap: wrap; gap: 18px 24px; margin: 20px 0; padding: 18px 0; }
+.travel-inline-facts div { display: flex; gap: 10px; }
+.travel-inline-facts small { color: #64748b; font-size: 14px; font-weight: 700; }
+.travel-inline-facts strong { font-size: 16px; }
+.travel-subsection { border-top: 1px solid #edf2f7; margin-top: 20px; padding-top: 20px; }
+.travel-subsection h2 { font-size: 24px; margin-bottom: 12px; }
+.travel-subsection p { color: #64748b; line-height: 1.9; margin: 0; }
+.travel-feature-list { display: grid; gap: 12px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.travel-feature-item { align-items: center; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 18px; display: flex; gap: 12px; padding: 14px 16px; }
+.travel-feature-item span { align-items: center; background: #f97316; border-radius: 12px; color: white; display: flex; height: 34px; justify-content: center; width: 34px; }
+.travel-hotels-grid { display: grid; gap: 14px; }
+.travel-hotel-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 18px; padding: 16px; }
+.travel-hotel-card strong { display: block; margin-bottom: 12px; }
+.travel-hotel-photos { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); }
+.travel-hotel-photos img { border-radius: 14px; height: 90px; object-fit: cover; width: 100%; }
+.travel-admin-only-note { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 18px; color: #475569; line-height: 1.8; margin-top: 20px; padding: 16px 18px; }
+
+@media (max-width: 900px) {
+  .admin-main-modern { padding: 18px 16px 32px; }
+  .admin-appbar { align-items: stretch; display: grid; gap: 12px; padding: 12px; }
+  .admin-menu-toggle { display: inline-flex; }
+  .admin-topnav { display: none; }
+  .admin-topnav.open { display: grid; justify-content: stretch; }
+  .admin-topnav button { justify-content: center; width: 100%; }
+  .admin-appbar .profile { order: -1; }
+  .guide-picker-grid, .pricing-grid, .travel-booking-card, .travel-feature-list { grid-template-columns: 1fr; }
+  .travel-booking-shell { margin-top: -24px; padding: 0 16px 56px; }
+  .travel-gallery-main img { height: 280px; }
+  .travel-inline-facts { display: grid; gap: 10px; }
+  .travel-inline-facts div { justify-content: space-between; }
+  .travel-hero-compact { padding: 116px 16px 36px; }
+}

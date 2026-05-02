@@ -35,13 +35,14 @@ export default function Navbar() {
         {links.map((link) => <Link key={link.label} to={link.href}>{link.label}</Link>)}
       </nav>
       <div className="nav-actions">
-        <a href="tel:+33123456789"><Phone size={14} /> +33 1 23 45 67 89</a>
+        <a href="tel:0777777794"><Phone size={14} /> 0777777794</a>
         <a className="nav-cta" href="/agencealger.github.io/#tours">استكشف</a>
       </div>
       <button className="menu-btn" onClick={() => setOpen(!open)} aria-label="Menu">{open ? <X /> : <Menu />}</button>
       {open && (
         <div className="mobile-menu">
           {links.map((link) => <Link key={link.label} onClick={() => setOpen(false)} to={link.href}>{link.label}</Link>)}
+          <a href="tel:0550813142">0550813142</a>
         </div>
       )}
     </header>

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { ArrowUpRight } from "lucide-react";
-import { getTravels, syncTravelsFromSupabase, type Travel } from "../../lib/data";
+import { formatArabicMonthRange, getTravels, syncTravelsFromSupabase, type Travel } from "../../lib/data";
 
 export default function DestinationsSection() {
   const [travels, setTravels] = useState<Travel[]>(() => getTravels());
@@ -14,7 +14,7 @@ export default function DestinationsSection() {
     country: travel.destination,
     image: travel.image,
     trips: travel.ticketsLeft,
-    tag: `${travel.date} - ${travel.duration}`,
+    tag: formatArabicMonthRange(travel.date, travel.duration),
     tall: index === 0 || index === travels.length - 1,
   })), [travels]);
 
