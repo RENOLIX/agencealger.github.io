@@ -54,7 +54,10 @@ export default function About() {
 
       <section className="about-band">
         <Plane />
-        <h2>150+ destinations, une seule obsession: que le client sente que tout est sous controle.</h2>
+        <div className="about-band-track">
+          <h2>150+ destinations, une seule obsession: que le client sente que tout est sous controle.</h2>
+          <h2 aria-hidden="true">150+ destinations, une seule obsession: que le client sente que tout est sous controle.</h2>
+        </div>
         <Globe2 />
       </section>
       <Footer />

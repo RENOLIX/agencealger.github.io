@@ -184,7 +184,7 @@ em { color: var(--orange); }
 .profile { align-items: center; background: white; border: 1px solid #ead8bd; border-radius: 24px; display: flex; gap: 12px; padding: 12px 16px; }
 .profile > span { align-items: center; background: var(--orange); border-radius: 50%; color: white; display: flex; font-weight: 900; height: 42px; justify-content: center; width: 42px; }
 .profile small { color: var(--muted); display: block; }
-.metric-grid { display: grid; gap: 16px; grid-template-columns: repeat(3, 1fr); margin-bottom: 22px; }
+.metric-grid { display: grid; gap: 16px; grid-template-columns: repeat(4, 1fr); margin-bottom: 22px; }
 .metric-grid article, .admin-card, .history-row, .employee-board article { background: rgba(255,255,255,.86); border: 1px solid #ead8bd; border-radius: 28px; box-shadow: 0 24px 70px -54px rgba(219,97,149,.55); padding: 22px; }
 .metric-grid span { color: var(--muted); display: block; font-size: 11px; font-weight: 900; letter-spacing: .18em; text-transform: uppercase; }
 .metric-grid strong { display: block; font-family: "Instrument Serif"; font-size: 34px; margin-top: 8px; }
@@ -205,6 +205,14 @@ progress { accent-color: var(--orange); width: 100%; }
 .employee-board { display: grid; gap: 14px; grid-template-columns: repeat(2, 1fr); margin-bottom: 12px; }
 .employee-board article span { align-items: center; background: var(--orange); border-radius: 50%; color: white; display: flex; height: 44px; justify-content: center; width: 44px; }
 .employee-board small { color: var(--muted); display: block; margin: 8px 0; }
+.message-list { display: grid; gap: 14px; }
+.message-card { background: rgba(255,255,255,.9); border: 1px solid #ead8bd; border-radius: 28px; box-shadow: 0 24px 70px -54px rgba(219,97,149,.55); padding: 22px; }
+.message-head { align-items: start; display: flex; gap: 18px; justify-content: space-between; }
+.message-head span, .message-card footer { color: var(--muted); font-size: 13px; }
+.message-head button { background: #fff7ed; border: 1px solid #fed7aa; border-radius: 999px; color: #c2410c; font-size: 11px; font-weight: 900; letter-spacing: .12em; padding: 8px 12px; text-transform: uppercase; }
+.message-card p { color: #3f3f46; line-height: 1.75; }
+.message-card footer { border-top: 1px solid #f1dfc9; display: flex; justify-content: space-between; padding-top: 14px; }
+.contact-success { align-items: center; color: #059669; display: flex; gap: 8px; font-size: 13px; font-weight: 800; margin: 0; }
 .not-found { display: grid; min-height: 100vh; place-content: center; text-align: center; }
 
 .static-page { background: #fbfcff; overflow-x: hidden; }
@@ -236,6 +244,7 @@ progress { accent-color: var(--orange); width: 100%; }
 .about-band { align-items: center; background: #0ea5e9; color: white; display: grid; gap: 22px; grid-template-columns: auto 1fr auto; padding: 52px 48px; }
 .about-band h2 { font-size: clamp(1.8rem, 3vw, 3.4rem); line-height: 1.08; text-align: center; }
 .about-band svg { height: 38px; width: 38px; }
+.about-band-track { overflow: hidden; }
 
 .contact-hero { align-items: center; min-height: 68vh; }
 .contact-card { background: linear-gradient(135deg, #0ea5e9, #22c55e); border-radius: 38px; color: white; justify-self: end; max-width: 380px; padding: 34px; }
@@ -283,12 +292,26 @@ progress { accent-color: var(--orange); width: 100%; }
   .admin-main { padding: 22px; }
   .admin-top, .history-row { align-items: start; grid-template-columns: 1fr; }
   .admin-top { display: grid; }
+  .message-card footer, .message-head { display: grid; }
   .about-hero, .contact-hero, .about-story, .contact-layout, .about-values { grid-template-columns: 1fr; padding-left: 22px; padding-right: 22px; }
   .about-hero, .contact-hero { min-height: auto; padding-top: 118px; }
-  .about-collage img, .about-collage img:nth-child(2) { height: 300px; margin-top: 0; }
-  .about-collage div { left: 18px; width: 190px; }
+  .about-collage { grid-template-columns: 1.08fr .92fr; gap: 10px; }
+  .about-collage img { border-radius: 24px; height: 360px; }
+  .about-collage img:nth-child(2) { height: 250px; margin-top: 72px; }
+  .about-collage div { border-radius: 20px; bottom: 20px; left: 20px; padding: 14px; width: 142px; }
+  .about-collage div svg { height: 18px; width: 18px; }
+  .about-collage strong { font-size: 30px; }
+  .about-collage span { font-size: 9px; letter-spacing: .1em; }
   .about-story > div:first-child { margin-left: 0; }
-  .about-band { grid-template-columns: 1fr; text-align: center; }
+  .about-band { gap: 12px; grid-template-columns: auto 1fr auto; overflow: hidden; padding: 14px 16px; text-align: left; }
+  .about-band svg { height: 22px; width: 22px; }
+  .about-band-track { display: flex; min-width: 0; overflow: hidden; white-space: nowrap; }
+  .about-band-track h2 { animation: ticker 13s linear infinite; flex: 0 0 auto; font-family: Manrope, system-ui, sans-serif; font-size: 13px; font-weight: 900; letter-spacing: .12em; line-height: 1; padding-right: 34px; text-transform: uppercase; }
   .contact-card { justify-self: stretch; max-width: none; }
   .contact-form div { grid-template-columns: 1fr; }
+}
+
+@keyframes ticker {
+  from { transform: translateX(0); }
+  to { transform: translateX(-100%); }
 }

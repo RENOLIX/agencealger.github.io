@@ -1,8 +1,33 @@
-import { CalendarDays, Mail, MapPin, MessageCircle, Phone, Send, ShieldCheck } from "lucide-react";
+import { FormEvent, useState } from "react";
+import { CalendarDays, CheckCircle, Mail, MapPin, MessageCircle, Phone, Send, ShieldCheck } from "lucide-react";
 import Navbar from "./_components/Navbar";
 import Footer from "./_components/Footer";
+import { readStore, writeStore, type ContactMessage } from "../lib/data";
 
 export default function Contact() {
+  const [sent, setSent] = useState(false);
+  const [form, setForm] = useState({
+    fullName: "",
+    phone: "",
+    email: "",
+    destination: "",
+    message: "",
+  });
+
+  function submit(event: FormEvent) {
+    event.preventDefault();
+    const nextMessage: ContactMessage = {
+      id: crypto.randomUUID(),
+      ...form,
+      status: "Nouveau",
+      createdAt: new Date().toISOString(),
+    };
+    const messages = readStore<ContactMessage[]>("hv-contact-messages", []);
+    writeStore("hv-contact-messages", [nextMessage, ...messages]);
+    setForm({ fullName: "", phone: "", email: "", destination: "", message: "" });
+    setSent(true);
+  }
+
   return (
     <main className="static-page contact-page">
       <Navbar />
@@ -20,12 +45,16 @@ export default function Contact() {
       </section>
 
       <section className="contact-layout">
-        <form className="contact-form" onSubmit={(event) => event.preventDefault()}>
-          <div><label>Nom complet<input placeholder="Votre nom" /></label><label>Telephone<input placeholder="+33 ..." /></label></div>
-          <label>Email<input type="email" placeholder="vous@email.com" /></label>
-          <label>Destination souhaitee<input placeholder="Bali, Maldives, Japon..." /></label>
-          <label>Message<textarea placeholder="Dates, nombre de voyageurs, budget, style de voyage..." /></label>
+        <form className="contact-form" onSubmit={submit}>
+          <div>
+            <label>Nom complet<input required value={form.fullName} onChange={(event) => setForm({ ...form, fullName: event.target.value })} placeholder="Votre nom" /></label>
+            <label>Telephone<input required value={form.phone} onChange={(event) => setForm({ ...form, phone: event.target.value })} placeholder="+33 ..." /></label>
+          </div>
+          <label>Email<input required type="email" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} placeholder="vous@email.com" /></label>
+          <label>Destination souhaitee<input value={form.destination} onChange={(event) => setForm({ ...form, destination: event.target.value })} placeholder="Bali, Maldives, Japon..." /></label>
+          <label>Message<textarea required value={form.message} onChange={(event) => setForm({ ...form, message: event.target.value })} placeholder="Dates, nombre de voyageurs, budget, style de voyage..." /></label>
           <button><Send size={17} /> Envoyer la demande</button>
+          {sent && <p className="contact-success"><CheckCircle size={17} /> Message envoye dans l'espace admin.</p>}
         </form>
 
         <aside className="contact-info">

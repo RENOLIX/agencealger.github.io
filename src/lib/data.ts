@@ -45,6 +45,17 @@ export type Reservation = {
   createdAt: string;
 };
 
+export type ContactMessage = {
+  id: string;
+  fullName: string;
+  phone: string;
+  email: string;
+  destination: string;
+  message: string;
+  status: "Nouveau" | "Lu";
+  createdAt: string;
+};
+
 export const users: User[] = [
   { id: "admin", name: "Nora Admin", email: "admin@hamdi.local", password: "admin123", role: "admin", avatar: "NA" },
   { id: "sara", name: "Sara Benali", email: "sara@hamdi.local", password: "voyage123", role: "employee", avatar: "SB" },

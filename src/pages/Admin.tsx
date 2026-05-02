@@ -1,9 +1,9 @@
 import { FormEvent, useMemo, useState } from "react";
-import { LogOut, Plus, ReceiptText, Save, ShieldCheck, Sparkles, UserRound, WalletCards } from "lucide-react";
+import { LogOut, Mail, Plus, ReceiptText, ShieldCheck, Sparkles, UserRound, WalletCards } from "lucide-react";
 import { useAuth } from "../components/providers/auth";
-import { benefitIcons, benefitOptions, readStore, seedTravels, users, writeStore, type BenefitKey, type Reservation, type Travel } from "../lib/data";
+import { benefitIcons, benefitOptions, readStore, seedTravels, users, writeStore, type BenefitKey, type ContactMessage, type Reservation, type Travel } from "../lib/data";
 
-type Tab = "reservations" | "voyages" | "historique";
+type Tab = "reservations" | "voyages" | "historique" | "messages";
 
 const emptyTravel: Omit<Travel, "id" | "ticketsLeft" | "rating"> = {
   name: "",
@@ -24,6 +24,7 @@ export default function Admin() {
   const [tab, setTab] = useState<Tab>("reservations");
   const [travels, setTravels] = useState<Travel[]>(() => readStore("hv-travels", seedTravels));
   const [reservations, setReservations] = useState<Reservation[]>(() => readStore("hv-reservations", []));
+  const [messages, setMessages] = useState<ContactMessage[]>(() => readStore("hv-contact-messages", []));
   const [travelForm, setTravelForm] = useState(emptyTravel);
   const [reservationForm, setReservationForm] = useState({ travelId: travels[0]?.id ?? "", clientName: "", clientPhone: "", quantity: 1 });
 
@@ -38,6 +39,11 @@ export default function Admin() {
   function persistReservations(next: Reservation[]) {
     setReservations(next);
     writeStore("hv-reservations", next);
+  }
+
+  function persistMessages(next: ContactMessage[]) {
+    setMessages(next);
+    writeStore("hv-contact-messages", next);
   }
 
   function createReservation(event: FormEvent) {
@@ -85,12 +91,13 @@ export default function Admin() {
         <button className={tab === "reservations" ? "active" : ""} onClick={() => setTab("reservations")}><ReceiptText /> Reservations</button>
         <button className={tab === "voyages" ? "active" : ""} onClick={() => setTab("voyages")}><WalletCards /> Voyages</button>
         <button className={tab === "historique" ? "active" : ""} onClick={() => setTab("historique")}><UserRound /> Historique</button>
+        <button className={tab === "messages" ? "active" : ""} onClick={() => setTab("messages")}><Mail /> Messages</button>
         <button onClick={logout}><LogOut /> Deconnexion</button>
       </aside>
 
       <section className="admin-main">
         <header className="admin-top">
-          <div><span className="label">Back office</span><h1>{tab === "voyages" ? "Gestion des voyages" : tab === "historique" ? "Historique commercial" : "Creer une reservation"}</h1></div>
+          <div><span className="label">Back office</span><h1>{tab === "voyages" ? "Gestion des voyages" : tab === "historique" ? "Historique commercial" : tab === "messages" ? "Messages clients" : "Creer une reservation"}</h1></div>
           <div className="profile"><span>{user?.avatar}</span><div><strong>{user?.name}</strong><small>{user?.role === "admin" ? "Administrateur" : "Employe"}</small></div></div>
         </header>
 
@@ -98,6 +105,7 @@ export default function Admin() {
           <article><span>Reservations visibles</span><strong>{visibleReservations.length}</strong></article>
           <article><span>Chiffre realise</span><strong>{totalSales.toLocaleString("fr-FR")} EUR</strong></article>
           <article><span>Billets disponibles</span><strong>{travels.reduce((sum, item) => sum + item.ticketsLeft, 0)}</strong></article>
+          <article><span>Messages clients</span><strong>{messages.length}</strong></article>
         </div>
 
         {tab === "reservations" && (
@@ -142,6 +150,23 @@ export default function Admin() {
           <div className="history-list">
             {user?.role === "admin" && <EmployeeBoard reservations={reservations} />}
             {visibleReservations.map((reservation) => <article key={reservation.id} className="history-row"><div><strong>{reservation.clientName}</strong><span>{reservation.travelName} par {reservation.employeeName}</span></div><div><strong>{reservation.quantity} billet(s)</strong><span>{new Date(reservation.createdAt).toLocaleString("fr-FR")}</span></div><strong>{reservation.total.toLocaleString("fr-FR")} EUR</strong></article>)}
+          </div>
+        )}
+
+        {tab === "messages" && (
+          <div className="message-list">
+            {messages.length === 0 ? (
+              <div className="admin-card"><h2>Aucun message</h2><p>Les demandes envoyees depuis la page Contact apparaitront ici.</p></div>
+            ) : messages.map((message) => (
+              <article key={message.id} className="message-card">
+                <div className="message-head">
+                  <div><strong>{message.fullName}</strong><span>{message.email} · {message.phone}</span></div>
+                  <button onClick={() => persistMessages(messages.map((item) => item.id === message.id ? { ...item, status: "Lu" } : item))}>{message.status}</button>
+                </div>
+                <p>{message.message}</p>
+                <footer><span>{message.destination || "Destination non precisee"}</span><span>{new Date(message.createdAt).toLocaleString("fr-FR")}</span></footer>
+              </article>
+            ))}
           </div>
         )}
       </section>
