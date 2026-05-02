@@ -5,7 +5,7 @@ alter table public.travels
   add column if not exists has_baby_price boolean default false,
   add column if not exists hotels jsonb default '[]'::jsonb,
   add column if not exists flight_mode text default 'direct',
-  add column if not exists airlines text[] default '{"Air Algérie"}';
+  add column if not exists airlines text[] default '{"Air Algerie"}';
 
 update public.travels
 set
@@ -14,7 +14,7 @@ set
   has_baby_price = coalesce(has_baby_price, false),
   hotels = coalesce(hotels, '[]'::jsonb),
   flight_mode = coalesce(flight_mode, 'direct'),
-  airlines = coalesce(airlines, '{"Air Algérie"}')
+  airlines = coalesce(airlines, '{"Air Algerie"}')
 where true;
 
 alter table public.travels
@@ -28,7 +28,7 @@ alter table public.travels
   alter column hotels set not null,
   alter column flight_mode set default 'direct',
   alter column flight_mode set not null,
-  alter column airlines set default '{"Air Algérie"}',
+  alter column airlines set default '{"Air Algerie"}',
   alter column airlines set not null;
 
 alter table public.travels

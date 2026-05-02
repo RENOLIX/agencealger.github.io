@@ -61,7 +61,11 @@ export default function AdminReservationCatalog() {
           <article><span>الموافق عليها</span><strong>{employeeReservations.filter((reservation) => reservation.status === "Confirmee").length}</strong></article>
         </div>
 
-        <div className="tour-grid admin-tour-grid">
+        <section className="section pale admin-catalog-public">
+        <div className="section-head tours-head admin-catalog-head">
+          <div><span className="label">رحلاتنا</span><h2>برامج العمرة<br /><em>المتاحة</em></h2></div>
+        </div>
+        <div className="tour-grid">
           {travels.map((tour) => (
             <article className="tour-card" key={tour.id}>
               <div className="tour-image">
@@ -98,6 +102,7 @@ export default function AdminReservationCatalog() {
             </article>
           ))}
         </div>
+        </section>
       </section>
     </main>
   );

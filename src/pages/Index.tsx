@@ -22,8 +22,8 @@ export default function Index() {
           <HeroSection />
           <DestinationsSection />
           <WhyChooseUs />
-          <TeamSection />
           <PopularTours />
+          <TeamSection />
           <Testimonials />
           <NewsletterSection />
           <Footer />

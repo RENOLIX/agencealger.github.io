@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { CalendarDays, CheckCircle2, ChevronLeft, FileText, MapPin, Phone, Upload, UserPlus, Users } from "lucide-react";
+import { CalendarDays, CheckCircle2, ChevronLeft, FileText, Landmark, Luggage, MapPin, Plane, Ticket, Upload, UserPlus, Users } from "lucide-react";
 import { Link, Navigate, useLocation, useNavigate, useParams } from "react-router-dom";
 import Navbar from "./_components/Navbar";
 import Footer from "./_components/Footer";
@@ -26,6 +26,9 @@ function createPassenger(type: PassengerType): ReservationPassenger {
     firstName: "",
     lastName: "",
     phone: "",
+    address: "",
+    fatherName: "",
+    motherName: "",
     birthPlace: "",
     birthDate: "",
     passportNumber: "",
@@ -45,10 +48,6 @@ export default function TravelDetail() {
 
   const [adults, setAdults] = useState(1);
   const [children, setChildren] = useState(0);
-  const [customerFirstName, setCustomerFirstName] = useState("");
-  const [customerLastName, setCustomerLastName] = useState("");
-  const [customerAddress, setCustomerAddress] = useState("");
-  const [customerPhone, setCustomerPhone] = useState("");
   const [generalNotes, setGeneralNotes] = useState("");
   const [attachments, setAttachments] = useState<ReservationAttachment[]>([]);
   const [passengers, setPassengers] = useState<ReservationPassenger[]>([createPassenger("adult")]);
@@ -127,6 +126,9 @@ export default function TravelDetail() {
       passenger.firstName.trim() &&
       passenger.lastName.trim() &&
       passenger.phone.trim() &&
+      passenger.address.trim() &&
+      passenger.fatherName.trim() &&
+      passenger.motherName.trim() &&
       passenger.birthPlace.trim() &&
       passenger.birthDate &&
       passenger.passportNumber.trim() &&
@@ -139,6 +141,7 @@ export default function TravelDetail() {
     setSubmitError("");
     if (quantity < 1 || quantity > currentTravel.ticketsLeft) return;
     if (passengers.length !== quantity || passengers.some((passenger) => !isPassengerComplete(passenger))) return;
+    const primaryPassenger = passengers[0];
 
     const nextReservation: Reservation = {
       id: crypto.randomUUID(),
@@ -146,10 +149,10 @@ export default function TravelDetail() {
       travelName: currentTravel.name,
       employeeId: user?.id ?? null,
       employeeName: user?.name ?? "Demande interne",
-      customerFirstName: customerFirstName.trim(),
-      customerLastName: customerLastName.trim(),
-      customerAddress: customerAddress.trim(),
-      customerPhone: customerPhone.trim(),
+      customerFirstName: primaryPassenger.firstName.trim(),
+      customerLastName: primaryPassenger.lastName.trim(),
+      customerAddress: primaryPassenger.address.trim(),
+      customerPhone: primaryPassenger.phone.trim(),
       adults,
       children,
       quantity,
@@ -164,10 +167,6 @@ export default function TravelDetail() {
     try {
       await createReservationInSupabase(nextReservation);
       setSubmittedId(nextReservation.id);
-      setCustomerFirstName("");
-      setCustomerLastName("");
-      setCustomerAddress("");
-      setCustomerPhone("");
       setGeneralNotes("");
       setAdults(1);
       setChildren(0);
@@ -211,15 +210,15 @@ export default function TravelDetail() {
             <span><Users size={15} /> {travel.guides.length} مرشد</span>
           </div>
 
-          <div className="travel-inline-facts">
-            <div><small>المدة</small><strong>{travel.duration}</strong></div>
-            <div><small>الفئة</small><strong>{categoryLabels[travel.category]}</strong></div>
-            <div><small>الرحلة الجوية</small><strong>{travel.flightMode === "escale" ? "مع توقف" : "مباشرة"}</strong></div>
-            <div><small>الشركة</small><strong>{(travel.airlines ?? ["Air Algérie"]).join(" - ")}</strong></div>
-            <div><small>سعر البالغ (ADT)</small><strong>{travel.price.toLocaleString("fr-FR")} دج</strong></div>
-            {travel.hasChildPrice && <div><small>سعر الطفل (CLD)</small><strong>{Number(travel.childPrice ?? 0).toLocaleString("fr-FR")} دج</strong></div>}
-            {travel.hasBabyPrice && <div><small>سعر الرضيع (INF)</small><strong>{Number(travel.babyPrice ?? 0).toLocaleString("fr-FR")} دج</strong></div>}
-            <div><small>المقاعد المتوفرة</small><strong>{travel.ticketsLeft}</strong></div>
+          <div className="travel-inline-facts vertical-facts">
+            <div><CalendarDays size={16} /><small>المدة</small><strong>{travel.duration}</strong></div>
+            <div><Landmark size={16} /><small>الفئة</small><strong>{categoryLabels[travel.category]}</strong></div>
+            <div><Plane size={16} /><small>الرحلة الجوية</small><strong>{travel.flightMode === "escale" ? "مع توقف" : "مباشرة"}</strong></div>
+            <div><Ticket size={16} /><small>الشركة</small><strong>{(travel.airlines ?? ["Air Algerie"]).join(" - ")}</strong></div>
+            <div><Users size={16} /><small>سعر البالغ (ADT)</small><strong>{travel.price.toLocaleString("fr-FR")} دج</strong></div>
+            {travel.hasChildPrice && <div><Users size={16} /><small>سعر الطفل (CLD)</small><strong>{Number(travel.childPrice ?? 0).toLocaleString("fr-FR")} دج</strong></div>}
+            {travel.hasBabyPrice && <div><Users size={16} /><small>سعر الرضيع (INF)</small><strong>{Number(travel.babyPrice ?? 0).toLocaleString("fr-FR")} دج</strong></div>}
+            <div><Luggage size={16} /><small>المقاعد المتوفرة</small><strong>{travel.ticketsLeft}</strong></div>
           </div>
 
           {travel.departures && travel.departures.length > 0 && (
@@ -299,7 +298,7 @@ export default function TravelDetail() {
         </div>
 
         <form className="reservation-form" onSubmit={submitReservation}>
-          <div className="reservation-top-grid">
+          <div className="reservation-top-grid reservation-top-grid-simple">
             <label>
               عدد البالغين
               <select value={adults} onChange={(event) => {
@@ -319,22 +318,6 @@ export default function TravelDetail() {
                   <option key={count} value={count}>{count}</option>
                 ))}
               </select>
-            </label>
-            <label>
-              الاسم
-              <input required value={customerFirstName} onChange={(event) => setCustomerFirstName(event.target.value)} />
-            </label>
-            <label>
-              اللقب
-              <input required value={customerLastName} onChange={(event) => setCustomerLastName(event.target.value)} />
-            </label>
-            <label className="span-two">
-              العنوان
-              <input required value={customerAddress} onChange={(event) => setCustomerAddress(event.target.value)} />
-            </label>
-            <label>
-              رقم الهاتف
-              <input required value={customerPhone} onChange={(event) => setCustomerPhone(event.target.value)} placeholder="+213 ..." />
             </label>
           </div>
 
@@ -360,7 +343,10 @@ export default function TravelDetail() {
                 <div className="traveler-grid">
                   <label>الاسم<input required value={passenger.firstName} onChange={(event) => updatePassenger(passenger.id, "firstName", event.target.value)} /></label>
                   <label>اللقب<input required value={passenger.lastName} onChange={(event) => updatePassenger(passenger.id, "lastName", event.target.value)} /></label>
+                  <label>اسم الأب<input required value={passenger.fatherName} onChange={(event) => updatePassenger(passenger.id, "fatherName", event.target.value)} /></label>
+                  <label>اسم الأم<input required value={passenger.motherName} onChange={(event) => updatePassenger(passenger.id, "motherName", event.target.value)} /></label>
                   <label>رقم الهاتف<input required value={passenger.phone} onChange={(event) => updatePassenger(passenger.id, "phone", event.target.value)} /></label>
+                  <label className="span-two">العنوان<input required value={passenger.address} onChange={(event) => updatePassenger(passenger.id, "address", event.target.value)} /></label>
                   <label>مكان الميلاد<input required value={passenger.birthPlace} onChange={(event) => updatePassenger(passenger.id, "birthPlace", event.target.value)} /></label>
                   <label>تاريخ الميلاد<input required type="date" value={passenger.birthDate} onChange={(event) => updatePassenger(passenger.id, "birthDate", event.target.value)} /></label>
                   <label>رقم جواز السفر<input required value={passenger.passportNumber} onChange={(event) => updatePassenger(passenger.id, "passportNumber", event.target.value)} /></label>

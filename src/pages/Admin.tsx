@@ -57,7 +57,7 @@ type TravelFormState = {
   guides: string[];
   hotels: TravelHotel[];
   flightMode: "direct" | "escale";
-  airlines: Array<"Air Algérie" | "MS" | "TK">;
+  airlines: Array<"Air Algerie" | "MS" | "TK">;
   category: Travel["category"];
   benefits: BenefitKey[];
   ticketsTotal: number;
@@ -82,7 +82,7 @@ const emptyTravelForm: TravelFormState = {
   guides: [],
   hotels: [],
   flightMode: "direct",
-  airlines: ["Air Algérie"],
+  airlines: ["Air Algerie"],
   category: "Culture",
   benefits: ["Vol", "Hotel", "Repas", "Guide", "Transfert"],
   ticketsTotal: 20,
@@ -240,7 +240,7 @@ export default function Admin() {
       guides: travel.guides,
       hotels: travel.hotels ?? [],
       flightMode: travel.flightMode ?? "direct",
-      airlines: travel.airlines ?? ["Air Algérie"],
+      airlines: travel.airlines ?? ["Air Algerie"],
       category: travel.category,
       benefits: travel.benefits,
       ticketsTotal: travel.ticketsTotal,
@@ -343,7 +343,7 @@ export default function Admin() {
     }));
   }
 
-  function toggleAirline(airline: "Air Algérie" | "MS" | "TK", checked: boolean) {
+  function toggleAirline(airline: "Air Algerie" | "MS" | "TK", checked: boolean) {
     setTravelForm((current) => ({
       ...current,
       airlines: checked
@@ -366,7 +366,7 @@ export default function Admin() {
     const hotels = travelForm.hotels
       .map((hotel) => ({ ...hotel, name: hotel.name.trim(), photos: hotel.photos.filter(Boolean) }))
       .filter((hotel) => hotel.name);
-    const airlines: TravelFormState["airlines"] = travelForm.airlines.length > 0 ? travelForm.airlines : ["Air Algérie"];
+    const airlines: TravelFormState["airlines"] = travelForm.airlines.length > 0 ? travelForm.airlines : ["Air Algerie"];
 
     const baseTravel: Travel = {
       id: editingTravelId ?? crypto.randomUUID(),
@@ -636,7 +636,7 @@ export default function Admin() {
                     </select>
                   </label>
                   <div className="guide-picker-grid flight-picker-grid">
-                    {(["Air Algérie", "MS", "TK"] as const).map((airline) => (
+                    {(["Air Algerie", "MS", "TK"] as const).map((airline) => (
                       <label key={airline} className="guide-option">
                         <span>{airline}</span>
                         <input type="checkbox" checked={travelForm.airlines.includes(airline)} onChange={(event) => toggleAirline(airline, event.target.checked)} />

@@ -612,3 +612,58 @@ progress { accent-color: var(--orange); width: 100%; }
   .travel-inline-facts div { justify-content: space-between; }
   .travel-hero-compact { padding: 116px 16px 36px; }
 }
+
+/* fine polish */
+.tours-head { align-items: flex-start; direction: ltr; }
+.tours-head > div:first-child, .admin-catalog-head > div:first-child { direction: rtl; margin-left: auto; text-align: right; }
+.tours-head .filters { margin-right: auto; }
+.admin-catalog-public { margin-top: 8px; padding: 0; }
+
+.travel-editor, .travel-editor * { direction: rtl; }
+.travel-editor { text-align: right; }
+.travel-editor input, .travel-editor textarea, .travel-editor select { text-align: right; }
+.travel-editor .editor-head, .travel-editor .guide-picker-head, .travel-editor .editor-subhead, .travel-editor .hotel-editor-head { direction: rtl; }
+.travel-editor .secondary-button, .travel-editor .danger-icon { flex-shrink: 0; }
+.travel-editor .form-two, .travel-editor .pricing-grid { align-items: start; }
+
+.pricing-grid { gap: 18px; }
+.pricing-grid > label, .price-optional { background: #fff; border: 1px solid #e2e8f0; border-radius: 18px; box-shadow: 0 10px 30px -24px rgba(15,23,42,.18); display: grid; gap: 12px; min-height: 100%; padding: 16px; }
+.price-optional input[type="number"], .pricing-grid > label input, .pricing-grid > label select { min-height: 48px; }
+
+.guide-picker-grid, .benefit-picker { display: grid; gap: 12px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.guide-option, .benefit-picker label { align-items: center; background: white; border: 1px solid #e2e8f0; border-radius: 16px; box-shadow: 0 10px 24px -22px rgba(15,23,42,.15); display: grid; gap: 12px; grid-template-columns: auto 1fr; padding: 14px 16px; }
+.guide-option input, .benefit-picker label input { grid-column: 1; margin: 0; }
+.guide-option span, .benefit-picker label span { grid-column: 2; justify-content: flex-start; text-align: right; }
+.benefit-picker label span { display: flex; flex-direction: row-reverse; gap: 8px; }
+.flight-picker-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+.departure-row { background: #fff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 10px; }
+.departure-row input { border: 0; min-height: 44px; }
+
+.upload-cta { align-items: center; background: linear-gradient(135deg, #f97316, #ea580c); border: 0; border-radius: 14px; color: white; cursor: pointer; display: inline-flex; font-weight: 800; gap: 10px; min-height: 48px; padding: 0 18px; }
+.upload-cta input { display: none; }
+.upload-cta svg { color: white; }
+
+.reservation-top-grid-simple { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.reservation-top-grid-simple label { background: #fff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 14px; }
+
+.travel-inline-facts.vertical-facts { display: grid; gap: 14px; }
+.travel-inline-facts.vertical-facts div { align-items: center; border-bottom: 1px solid #edf2f7; display: grid; gap: 8px; grid-template-columns: 20px 150px 1fr; padding: 0 0 12px; }
+.travel-inline-facts.vertical-facts div:last-child { border-bottom: 0; padding-bottom: 0; }
+.travel-inline-facts.vertical-facts svg { color: #f97316; }
+.travel-inline-facts.vertical-facts small { margin: 0; }
+.travel-inline-facts.vertical-facts strong { justify-self: start; text-align: right; }
+
+.travel-feature-list { gap: 10px 18px; }
+.travel-feature-item { background: transparent; border: 0; border-radius: 0; box-shadow: none; padding: 4px 0; }
+.travel-feature-item span { background: transparent; border-radius: 0; color: #f97316; height: auto; width: auto; }
+
+.travel-subsection .travel-chip-grid span { background: #f8fafc; }
+
+@media (max-width: 900px) {
+  .tours-head { align-items: stretch; display: grid; }
+  .tours-head .filters { margin-right: 0; }
+  .guide-picker-grid, .benefit-picker, .flight-picker-grid, .reservation-top-grid-simple { grid-template-columns: 1fr; }
+  .travel-inline-facts.vertical-facts div { grid-template-columns: 20px 1fr; }
+  .travel-inline-facts.vertical-facts strong { grid-column: 2; }
+}

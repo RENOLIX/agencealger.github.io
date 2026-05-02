@@ -80,7 +80,7 @@ export type TravelHotel = {
 };
 
 export type FlightMode = "direct" | "escale";
-export type AirlineCode = "Air Algérie" | "MS" | "TK";
+export type AirlineCode = "Air Algerie" | "MS" | "TK";
 
 export type Travel = {
   id: string;
@@ -127,6 +127,9 @@ export type ReservationPassenger = {
   firstName: string;
   lastName: string;
   phone: string;
+  address: string;
+  fatherName: string;
+  motherName: string;
   birthPlace: string;
   birthDate: string;
   passportNumber: string;
@@ -713,6 +716,30 @@ type ReservationPassengerRow = {
   notes: string | null;
 };
 
+function serializePassengerNotes(passenger: ReservationPassenger) {
+  return JSON.stringify({
+    notes: passenger.notes || "",
+    address: passenger.address || "",
+    fatherName: passenger.fatherName || "",
+    motherName: passenger.motherName || "",
+  });
+}
+
+function parsePassengerNotes(raw: string | null) {
+  if (!raw) return { notes: "", address: "", fatherName: "", motherName: "" };
+  try {
+    const parsed = JSON.parse(raw) as Partial<ReservationPassenger>;
+    return {
+      notes: typeof parsed.notes === "string" ? parsed.notes : "",
+      address: typeof parsed.address === "string" ? parsed.address : "",
+      fatherName: typeof parsed.fatherName === "string" ? parsed.fatherName : "",
+      motherName: typeof parsed.motherName === "string" ? parsed.motherName : "",
+    };
+  } catch {
+    return { notes: raw, address: "", fatherName: "", motherName: "" };
+  }
+}
+
 type ReservationAttachmentRow = {
   id: string;
   reservation_id: string;
@@ -750,7 +777,7 @@ function normalizeTravel(travel: Travel): Travel {
       }))
       : [],
     flightMode: travel.flightMode ?? "direct",
-    airlines: Array.isArray(travel.airlines) && travel.airlines.length > 0 ? travel.airlines : ["Air Algérie"],
+    airlines: Array.isArray(travel.airlines) && travel.airlines.length > 0 ? travel.airlines : ["Air Algerie"],
   };
 }
 
@@ -786,7 +813,7 @@ function mapTravelRow(row: TravelRow): Travel {
     guides,
     hotels: Array.isArray(row.hotels) ? row.hotels : [],
     flightMode: row.flight_mode ?? "direct",
-    airlines: Array.isArray(row.airlines) ? row.airlines : ["Air Algérie"],
+    airlines: Array.isArray(row.airlines) ? row.airlines : ["Air Algerie"],
     category,
     benefits,
     ticketsTotal: Number(row.tickets_total ?? 0),
@@ -818,7 +845,7 @@ function mapTravelToRow(travel: Travel) {
     guides: normalized.guides,
     hotels: normalized.hotels ?? [],
     flight_mode: normalized.flightMode ?? "direct",
-    airlines: normalized.airlines ?? ["Air Algérie"],
+    airlines: normalized.airlines ?? ["Air Algerie"],
     category: normalized.category,
     benefits: normalized.benefits,
     tickets_total: normalized.ticketsTotal,
@@ -878,18 +905,24 @@ function mapReservationRows(
     total: Number(row.total_amount),
     passengers: passengerRows
       .filter((passenger) => passenger.reservation_id === row.id)
-      .map((passenger) => ({
-        id: passenger.id,
-        type: passenger.passenger_type,
-        firstName: passenger.first_name,
-        lastName: passenger.last_name,
-        phone: passenger.phone,
-        birthPlace: passenger.birth_place,
-        birthDate: passenger.birth_date,
-        passportNumber: passenger.passport_number,
-        passportExpiry: passenger.passport_expiry,
-        notes: passenger.notes ?? "",
-      })),
+      .map((passenger) => {
+        const meta = parsePassengerNotes(passenger.notes);
+        return {
+          id: passenger.id,
+          type: passenger.passenger_type,
+          firstName: passenger.first_name,
+          lastName: passenger.last_name,
+          phone: passenger.phone,
+          address: meta.address,
+          fatherName: meta.fatherName,
+          motherName: meta.motherName,
+          birthPlace: passenger.birth_place,
+          birthDate: passenger.birth_date,
+          passportNumber: passenger.passport_number,
+          passportExpiry: passenger.passport_expiry,
+          notes: meta.notes,
+        };
+      }),
     attachments: attachmentRows
       .filter((attachment) => attachment.reservation_id === row.id)
       .map((attachment) => ({
@@ -1152,7 +1185,7 @@ export async function createReservationInSupabase(reservation: Reservation) {
           birth_date: passenger.birthDate,
           passport_number: passenger.passportNumber,
           passport_expiry: passenger.passportExpiry,
-          notes: passenger.notes || null,
+          notes: serializePassengerNotes(passenger),
         })),
       );
 
