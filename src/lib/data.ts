@@ -118,6 +118,12 @@ export type ContactMessage = {
   createdAt: string;
 };
 
+export type TeamGroup = {
+  id: string;
+  title: string;
+  members: string[];
+};
+
 export const seedUsers: User[] = [
   { id: "admin", name: "Nora Admin", email: "admin@hamdi.local", password: "admin123", role: "admin", avatar: "NA" },
   { id: "sara", name: "Sara Benali", email: "sara@hamdi.local", password: "voyage123", role: "employee", avatar: "SB" },
@@ -130,6 +136,129 @@ export function getUsers() {
 
 export function saveUsers(nextUsers: User[]) {
   writeStore("hv-users", nextUsers);
+}
+
+export const seedTeamGroups: TeamGroup[] = [
+  {
+    id: "general-director",
+    title: "المدير العام للمجموعة",
+    members: ["حمدي نبيل"],
+  },
+  {
+    id: "branch-directors",
+    title: "مدراء الفروع",
+    members: [
+      "شلغوم عبد القادر - قصر البخاري",
+      "حماني محمد - الرغاية",
+      "العمري كمال - البرواقية",
+      "رضا قنان - خميس الخشنة",
+      "عبد الحميد قسول - العطاف",
+      "عبد الحميد تعوينات - بجاية",
+    ],
+  },
+  {
+    id: "subcontracted-agencies",
+    title: "مدراء الوكالات المناولة",
+    members: [
+      "أمين فريحة - فريحة",
+      "كمال قرمي - البراق",
+      "عجاج عبد العزيز - عجاج",
+      "على لحمر جمال - صفانا",
+      "عماد الدين أكليل - أمجد",
+    ],
+  },
+  {
+    id: "umrah-guides",
+    title: "مرشد حج وعمرة",
+    members: [
+      "كمال رايب",
+      "مهدي عجرود",
+      "حامي إبراهيم",
+      "بويعلة إبراهيم",
+      "ناصر صغير",
+      "تجني إبراهيم",
+      "دحون حمزة",
+      "طاهر هني",
+      "رعاد نوفل",
+      "ضيف شرف",
+      "عيسى التير",
+      "مصعب هني",
+      "العربي شلف",
+      "خليفة حسين",
+      "عبد العزيز حيدة",
+      "محند غدو الطيب",
+      "بوشملة عبد الله",
+    ],
+  },
+  {
+    id: "sales-marketing",
+    title: "موظف تسويق ومبيعات",
+    members: [
+      "عيسى العمري",
+      "ايوب أحمد ناصر",
+      "حسام الدين شلغوم",
+      "حسين لعور",
+    ],
+  },
+  {
+    id: "guide-nurse",
+    title: "مرشد وممرض",
+    members: [
+      "عبد المالك بوقادة",
+      "قنان عز الدين",
+      "خالد عايس",
+      "بن عيشة محمد",
+    ],
+  },
+  {
+    id: "religious-guide-imam",
+    title: "مرشد ديني وإمام",
+    members: [
+      "المحفوظ بن صدقة",
+      "السعيد دباح",
+    ],
+  },
+  {
+    id: "catering-manager",
+    title: "مشرف إعاشة وإطعام",
+    members: ["عمر درموش"],
+  },
+  {
+    id: "umrah-system-manager",
+    title: "مشرف سيستم عمرة",
+    members: ["بن سرحان مروان"],
+  },
+  {
+    id: "airport-installation-manager",
+    title: "مشرف مطار وتركيب",
+    members: ["محروق محي الدين"],
+  },
+  {
+    id: "assistant-guide",
+    title: "مساعد مرشد",
+    members: [
+      "سمير التير",
+      "عبد القادر سياح",
+    ],
+  },
+  {
+    id: "intern",
+    title: "متربص بالمعهد والوكالة",
+    members: ["بركي زكرياء"],
+  },
+  {
+    id: "tourism-supervisor",
+    title: "مشرف عام للسياحة",
+    members: ["عبد المحيد عمير"],
+  },
+];
+
+export function getTeamGroups() {
+  return readStore<TeamGroup[]>("hv-team-groups", seedTeamGroups);
+}
+
+export function saveTeamGroups(nextGroups: TeamGroup[]) {
+  writeStore("hv-team-groups", nextGroups);
 }
 
 export const benefitIcons: Record<BenefitKey, ElementType> = {

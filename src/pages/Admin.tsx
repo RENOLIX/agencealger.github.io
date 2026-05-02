@@ -1,9 +1,9 @@
 import { FormEvent, useMemo, useState } from "react";
-import { ArrowLeft, Edit3, LogOut, Mail, Plus, ReceiptText, Save, ShieldCheck, Trash2, UserRound, Users, WalletCards } from "lucide-react";
+import { ArrowLeft, Edit3, LogOut, Mail, Plus, ReceiptText, Save, Search, ShieldCheck, Trash2, UserRound, Users, WalletCards } from "lucide-react";
 import { useAuth } from "../components/providers/auth";
-import { benefitIcons, benefitLabels, benefitOptions, categoryLabels, getUsers, readStore, saveUsers, seedTravels, writeStore, type BenefitKey, type ContactMessage, type Reservation, type Travel, type User } from "../lib/data";
+import { benefitIcons, benefitLabels, benefitOptions, categoryLabels, getTeamGroups, getUsers, readStore, saveTeamGroups, saveUsers, seedTravels, writeStore, type BenefitKey, type ContactMessage, type Reservation, type TeamGroup, type Travel, type User } from "../lib/data";
 
-type Tab = "reservations" | "voyages" | "historique" | "messages" | "users";
+type Tab = "reservations" | "voyages" | "historique" | "messages" | "users" | "team";
 
 const emptyTravel: Omit<Travel, "id" | "ticketsLeft" | "rating"> = {
   name: "",
@@ -28,7 +28,10 @@ export default function Admin() {
   const [reservations, setReservations] = useState<Reservation[]>(() => readStore("hv-reservations", []));
   const [messages, setMessages] = useState<ContactMessage[]>(() => readStore("hv-contact-messages", []));
   const [adminUsers, setAdminUsers] = useState<User[]>(() => getUsers());
+  const [teamGroups, setTeamGroups] = useState<TeamGroup[]>(() => getTeamGroups());
   const [userForm, setUserForm] = useState({ name: "", email: "", password: "", role: "employee" as User["role"] });
+  const [teamRoleForm, setTeamRoleForm] = useState("");
+  const [teamMemberDrafts, setTeamMemberDrafts] = useState<Record<string, string>>({});
   const [travelForm, setTravelForm] = useState(emptyTravel);
   const [travelMode, setTravelMode] = useState<"list" | "form">("list");
   const [editingTravelId, setEditingTravelId] = useState<string | null>(null);
@@ -55,6 +58,11 @@ export default function Admin() {
   function persistUsers(next: User[]) {
     setAdminUsers(next);
     saveUsers(next);
+  }
+
+  function persistTeamGroups(next: TeamGroup[]) {
+    setTeamGroups(next);
+    saveTeamGroups(next);
   }
 
   function createUser(event: FormEvent) {
@@ -190,6 +198,40 @@ export default function Admin() {
     }
   }
 
+  function createTeamRole(event: FormEvent) {
+    event.preventDefault();
+    const title = teamRoleForm.trim();
+    if (!title) return;
+    persistTeamGroups([{ id: crypto.randomUUID(), title, members: [] }, ...teamGroups]);
+    setTeamRoleForm("");
+  }
+
+  function addMemberToGroup(groupId: string) {
+    const name = teamMemberDrafts[groupId]?.trim();
+    if (!name) return;
+    persistTeamGroups(teamGroups.map((group) => (
+      group.id === groupId && !group.members.includes(name)
+        ? { ...group, members: [...group.members, name] }
+        : group
+    )));
+    setTeamMemberDrafts((current) => ({ ...current, [groupId]: "" }));
+  }
+
+  function removeMemberFromGroup(groupId: string, memberName: string) {
+    persistTeamGroups(teamGroups.map((group) => (
+      group.id === groupId
+        ? { ...group, members: group.members.filter((member) => member !== memberName) }
+        : group
+    )));
+  }
+
+  function deleteTeamGroup(groupId: string) {
+    if (!window.confirm("حذف هذا المنصب؟")) return;
+    persistTeamGroups(teamGroups.filter((group) => group.id !== groupId));
+  }
+
+  const allTeamNames = Array.from(new Set(teamGroups.flatMap((group) => group.members))).sort((a, b) => a.localeCompare(b, "ar"));
+
   return (
     <main className="admin-shell">
       <aside className="admin-side">
@@ -198,13 +240,14 @@ export default function Admin() {
         <button className={tab === "voyages" ? "active" : ""} onClick={() => setTab("voyages")}><WalletCards /> الرحلات</button>
         <button className={tab === "historique" ? "active" : ""} onClick={() => setTab("historique")}><UserRound /> السجل</button>
         <button className={tab === "messages" ? "active" : ""} onClick={() => setTab("messages")}><Mail /> الرسائل</button>
+        {user?.role === "admin" && <button className={tab === "team" ? "active" : ""} onClick={() => setTab("team")}><Users /> الطاقم</button>}
         {user?.role === "admin" && <button className={tab === "users" ? "active" : ""} onClick={() => setTab("users")}><Users /> المستخدمون</button>}
         <button onClick={logout}><LogOut /> تسجيل الخروج</button>
       </aside>
 
       <section className="admin-main">
         <header className="admin-top">
-          <div><span className="label">لوحة التحكم</span><h1>{tab === "voyages" ? "إدارة الرحلات" : tab === "historique" ? "السجل التجاري" : tab === "messages" ? "رسائل العملاء" : tab === "users" ? "المستخدمون" : "إنشاء حجز"}</h1></div>
+          <div><span className="label">لوحة التحكم</span><h1>{tab === "voyages" ? "إدارة الرحلات" : tab === "historique" ? "السجل التجاري" : tab === "messages" ? "رسائل العملاء" : tab === "users" ? "المستخدمون" : tab === "team" ? "إدارة الطاقم" : "إنشاء حجز"}</h1></div>
           <div className="profile"><span>{user?.avatar}</span><div><strong>{user?.name}</strong><small>{user?.role === "admin" ? "مدير" : "موظف"}</small></div></div>
         </header>
 
@@ -338,6 +381,56 @@ export default function Admin() {
                 <footer><span>{message.destination || "وجهة غير محددة"}</span><span>{new Date(message.createdAt).toLocaleString("fr-FR")}</span></footer>
               </article>
             ))}
+          </div>
+        )}
+
+        {tab === "team" && user?.role === "admin" && (
+          <div className="team-admin-layout">
+            <form className="admin-card form-grid" onSubmit={createTeamRole}>
+              <h2>إضافة منصب جديد</h2>
+              <label>اسم المنصب<input required value={teamRoleForm} onChange={(event) => setTeamRoleForm(event.target.value)} placeholder="مثال: مشرف إعاشة وإطعام" /></label>
+              <button><Plus /> إضافة المنصب</button>
+            </form>
+            <div className="team-admin-grid">
+              {teamGroups.map((group) => (
+                <article key={group.id} className="admin-card team-admin-card">
+                  <div className="team-admin-head">
+                    <div>
+                      <h2>{group.title}</h2>
+                      <small>{group.members.length} اسم</small>
+                    </div>
+                    <button className="danger-icon" type="button" onClick={() => deleteTeamGroup(group.id)} title="حذف المنصب">
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                  <div className="team-admin-input">
+                    <div className="team-search-box">
+                      <Search size={16} />
+                      <input
+                        list={`team-names-${group.id}`}
+                        value={teamMemberDrafts[group.id] ?? ""}
+                        onChange={(event) => setTeamMemberDrafts((current) => ({ ...current, [group.id]: event.target.value }))}
+                        placeholder={`ابحث عن اسم أو أضف اسما إلى ${group.title}`}
+                      />
+                      <datalist id={`team-names-${group.id}`}>
+                        {allTeamNames.map((name) => <option key={`${group.id}-${name}`} value={name} />)}
+                      </datalist>
+                    </div>
+                    <button type="button" onClick={() => addMemberToGroup(group.id)}><Plus /> إضافة</button>
+                  </div>
+                  <div className="team-admin-members">
+                    {group.members.map((member) => (
+                      <div key={`${group.id}-${member}`} className="team-admin-member">
+                        <span>{member}</span>
+                        <button type="button" onClick={() => removeMemberFromGroup(group.id, member)} title="حذف الاسم">
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </article>
+              ))}
+            </div>
           </div>
         )}
 

@@ -5,6 +5,7 @@ import Navbar from "./_components/Navbar";
 import HeroSection from "./_components/HeroSection";
 import DestinationsSection from "./_components/DestinationsSection";
 import WhyChooseUs from "./_components/WhyChooseUs";
+import TeamSection from "./_components/TeamSection";
 import PopularTours from "./_components/PopularTours";
 import Testimonials from "./_components/Testimonials";
 import NewsletterSection from "./_components/NewsletterSection";
@@ -21,6 +22,7 @@ export default function Index() {
           <HeroSection />
           <DestinationsSection />
           <WhyChooseUs />
+          <TeamSection />
           <PopularTours />
           <Testimonials />
           <NewsletterSection />

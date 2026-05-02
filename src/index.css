@@ -127,6 +127,19 @@ em { color: var(--orange); }
 .feature h3 { font-family: Manrope; font-size: 15px; font-weight: 800; }
 .feature p { color: #64717a; font-size: 13px; line-height: 1.6; }
 
+.team-section { background: linear-gradient(135deg, #fffaf2 0%, #f8fbff 48%, #eefbf4 100%); }
+.team-search { align-items: center; background: white; border: 1px solid rgba(15,23,42,.08); border-radius: 999px; display: flex; gap: 10px; min-width: min(100%, 360px); padding: 14px 18px; }
+.team-search input { background: transparent; border: 0; flex: 1; font-size: 14px; font-weight: 800; outline: 0; text-align: right; }
+.team-grid { display: grid; gap: 18px; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: auto; max-width: 1180px; }
+.team-card { background: rgba(255,255,255,.88); border: 1px solid rgba(15,23,42,.08); border-radius: 28px; box-shadow: 0 24px 70px -58px rgba(14,165,233,.24); direction: rtl; padding: 24px; text-align: right; }
+.team-card-head { align-items: center; display: flex; flex-direction: row-reverse; gap: 14px; margin-bottom: 18px; }
+.team-card-head > span { align-items: center; background: linear-gradient(135deg, #f97316, #facc15); border-radius: 16px; color: white; display: flex; height: 44px; justify-content: center; width: 44px; }
+.team-card-head h3 { font-size: 28px; margin-bottom: 4px; }
+.team-card-head small { color: var(--muted); font-weight: 800; }
+.team-members { display: grid; gap: 10px; }
+.team-member { align-items: center; background: #f8fafc; border: 1px solid #e5edf3; border-radius: 16px; display: flex; flex-direction: row-reverse; gap: 10px; padding: 12px 14px; }
+.team-member span { flex: 1; font-size: 14px; font-weight: 800; }
+
 .testimonials { background: linear-gradient(135deg, #ffffff 0%, #f4fbff 45%, #fff7ed 100%); color: var(--ink); padding: 98px 48px; }
 .testimonial-nav { align-items: center; display: flex; gap: 12px; }
 .testimonial-nav button { background: white; border: 1px solid rgba(15,23,42,.1); border-radius: 50%; color: var(--ink); height: 44px; width: 44px; }
@@ -221,6 +234,7 @@ em { color: var(--orange); }
 .travel-manage-card footer { border-top: 1px solid #f1dfc9; display: grid; gap: 10px; grid-template-columns: 1fr 1fr; padding: 14px; }
 .travel-manage-card footer button { align-items: center; background: #fff7ed; border: 1px solid #fed7aa; color: #9a3412; display: flex; font-weight: 950; gap: 8px; justify-content: center; padding: 12px; }
 .travel-manage-card footer button.danger { background: #fff1f2; border-color: #fecdd3; color: #be123c; }
+.danger-icon { align-items: center; background: #fff1f2 !important; border: 1px solid #fecdd3 !important; border-radius: 50%; color: #be123c !important; display: flex; height: 36px; justify-content: center; padding: 0 !important; width: 36px; }
 .image-uploader { display: grid; gap: 14px; }
 .upload-zone { align-items: center; background: #fffaf2; border: 1px dashed #d8b98d; border-radius: 22px; cursor: pointer; display: grid !important; gap: 5px !important; justify-items: center; padding: 30px !important; text-align: center; }
 .upload-zone input { display: none; }
@@ -252,6 +266,19 @@ progress { accent-color: var(--orange); width: 100%; }
 .message-card p { color: #3f3f46; line-height: 1.75; }
 .message-card footer { border-top: 1px solid #f1dfc9; display: flex; justify-content: space-between; padding-top: 14px; }
 .contact-success { align-items: center; color: #059669; display: flex; gap: 8px; font-size: 13px; font-weight: 800; margin: 0; }
+.team-admin-layout { display: grid; gap: 20px; }
+.team-admin-grid { display: grid; gap: 18px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.team-admin-card { direction: rtl; text-align: right; }
+.team-admin-head { align-items: center; display: flex; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+.team-admin-head h2 { margin: 0; }
+.team-admin-head small { color: var(--muted); font-weight: 800; }
+.team-admin-input { display: grid; gap: 12px; grid-template-columns: 1fr auto; margin-bottom: 16px; }
+.team-search-box { align-items: center; background: #fffaf2; border: 1px solid #ead8bd; border-radius: 18px; display: flex; gap: 10px; padding: 0 14px; }
+.team-search-box input { background: transparent; border: 0; flex: 1; font-size: 14px; font-weight: 800; min-height: 48px; outline: 0; text-align: right; }
+.team-admin-members { display: grid; gap: 10px; }
+.team-admin-member { align-items: center; background: #f8fafc; border: 1px solid #e5edf3; border-radius: 16px; display: grid; gap: 12px; grid-template-columns: 1fr auto; padding: 12px 14px; }
+.team-admin-member span { font-size: 14px; font-weight: 800; }
+.team-admin-member button { align-items: center; background: #fff7ed; border: 1px solid #fed7aa; border-radius: 50%; color: #c2410c; display: flex; height: 30px; justify-content: center; padding: 0; width: 30px; }
 .user-list { display: grid; gap: 12px; align-content: start; }
 .user-list article { align-items: center; border-top: 1px solid #f1dfc9; display: grid; gap: 12px; grid-template-columns: 46px 1fr auto; padding-top: 14px; }
 .user-list article > span { align-items: center; background: var(--orange); border-radius: 50%; color: white; display: flex; font-weight: 900; height: 42px; justify-content: center; width: 42px; }
@@ -322,7 +349,7 @@ progress { accent-color: var(--orange); width: 100%; }
   .hero, .section, .testimonials { padding-left: 22px; padding-right: 22px; }
   .hero { padding-top: 100px; }
   .stats, .section-head, .contact-strip { align-items: start; flex-direction: column; }
-  .search-bar, .destination-grid, .tour-grid, .why, .footer-grid, .auth-panel, .admin-shell, .admin-grid, .metric-grid, .employee-board { grid-template-columns: 1fr; }
+  .search-bar, .destination-grid, .tour-grid, .why, .footer-grid, .auth-panel, .admin-shell, .admin-grid, .metric-grid, .employee-board, .team-grid, .team-admin-grid { grid-template-columns: 1fr; }
   .search-bar label { border-bottom: 1px solid var(--line); border-right: 0; }
   .search-bar button { min-height: 58px; }
   .destination-card.tall { min-height: 330px; }
