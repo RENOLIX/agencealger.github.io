@@ -1,10 +1,14 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { BriefcaseBusiness, Search, Users } from "lucide-react";
-import { getTeamGroups } from "../../lib/data";
+import { getTeamGroups, syncTeamGroupsFromSupabase, type TeamGroup } from "../../lib/data";
 
 export default function TeamSection() {
   const [query, setQuery] = useState("");
-  const groups = getTeamGroups();
+  const [groups, setGroups] = useState<TeamGroup[]>(() => getTeamGroups());
+
+  useEffect(() => {
+    void syncTeamGroupsFromSupabase().then(setGroups).catch(() => undefined);
+  }, []);
 
   const filteredGroups = useMemo(() => {
     const needle = query.trim().toLowerCase();

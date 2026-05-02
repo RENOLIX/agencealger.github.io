@@ -26,6 +26,7 @@ import {
   Wifi,
   Waves,
 } from "lucide-react";
+import { hasSupabaseConfig, supabase } from "./supabase";
 
 export type UserRole = "admin" | "employee";
 
@@ -545,6 +546,509 @@ export function getContactMessages() {
 
 export function saveContactMessages(nextMessages: ContactMessage[]) {
   writeStore("hv-contact-messages", nextMessages);
+}
+
+const RESERVATION_BUCKET = "reservation-documents";
+
+type TravelRow = {
+  id: string;
+  name: string;
+  destination: string;
+  country: string;
+  image_url: string;
+  image_urls: string[] | null;
+  banner_url: string;
+  departure_date: string;
+  duration: string;
+  adult_price: number | string;
+  child_price: number | string;
+  short_description: string;
+  long_description: string;
+  guides: string[] | null;
+  category: TravelCategory;
+  benefits: string[] | null;
+  tickets_total: number;
+  tickets_left: number;
+  rating: number | string;
+};
+
+type TeamGroupRow = {
+  id: string;
+  title: string;
+  display_order: number;
+};
+
+type TeamMemberRow = {
+  id: string;
+  team_group_id: string;
+  full_name: string;
+  display_order: number;
+};
+
+type ContactMessageRow = {
+  id: string;
+  full_name: string;
+  phone: string;
+  email: string;
+  destination: string | null;
+  message: string;
+  status: "Nouveau" | "Lu";
+  created_at: string;
+};
+
+type ReservationRequestRow = {
+  id: string;
+  travel_id: string;
+  employee_id: string | null;
+  employee_name: string;
+  customer_first_name: string;
+  customer_last_name: string;
+  customer_address: string;
+  customer_phone: string;
+  adults_count: number;
+  children_count: number;
+  quantity: number;
+  total_amount: number | string;
+  notes: string | null;
+  status: ReservationStatus;
+  created_at: string;
+};
+
+type ReservationPassengerRow = {
+  id: string;
+  reservation_id: string;
+  passenger_type: PassengerType;
+  first_name: string;
+  last_name: string;
+  phone: string;
+  birth_place: string;
+  birth_date: string;
+  passport_number: string;
+  passport_expiry: string;
+  notes: string | null;
+};
+
+type ReservationAttachmentRow = {
+  id: string;
+  reservation_id: string;
+  file_name: string;
+  mime_type: string;
+  storage_path: string;
+  public_url: string | null;
+};
+
+function mapTravelRow(row: TravelRow): Travel {
+  return {
+    id: row.id,
+    name: row.name,
+    destination: row.destination,
+    country: row.country,
+    image: row.image_url,
+    images: row.image_urls?.length ? row.image_urls : [row.image_url],
+    banner: row.banner_url,
+    date: row.departure_date,
+    duration: row.duration,
+    price: Number(row.adult_price),
+    childPrice: Number(row.child_price),
+    description: row.short_description,
+    longDescription: row.long_description,
+    guides: row.guides ?? [],
+    category: row.category,
+    benefits: (row.benefits ?? []) as BenefitKey[],
+    ticketsTotal: row.tickets_total,
+    ticketsLeft: row.tickets_left,
+    rating: Number(row.rating),
+  };
+}
+
+function mapTravelToRow(travel: Travel) {
+  return {
+    id: travel.id,
+    name: travel.name,
+    destination: travel.destination,
+    country: travel.country,
+    image_url: travel.image,
+    image_urls: travel.images,
+    banner_url: travel.banner,
+    departure_date: travel.date,
+    duration: travel.duration,
+    adult_price: travel.price,
+    child_price: travel.childPrice,
+    short_description: travel.description,
+    long_description: travel.longDescription,
+    guides: travel.guides,
+    category: travel.category,
+    benefits: travel.benefits,
+    tickets_total: travel.ticketsTotal,
+    tickets_left: travel.ticketsLeft,
+    rating: travel.rating,
+    active: true,
+  };
+}
+
+function mapContactMessageRow(row: ContactMessageRow): ContactMessage {
+  return {
+    id: row.id,
+    fullName: row.full_name,
+    phone: row.phone,
+    email: row.email,
+    destination: row.destination ?? "",
+    message: row.message,
+    status: row.status,
+    createdAt: row.created_at,
+  };
+}
+
+function mapTeamRows(groupRows: TeamGroupRow[], memberRows: TeamMemberRow[]): TeamGroup[] {
+  return groupRows
+    .sort((a, b) => a.display_order - b.display_order)
+    .map((group) => ({
+      id: group.id,
+      title: group.title,
+      members: memberRows
+        .filter((member) => member.team_group_id === group.id)
+        .sort((a, b) => a.display_order - b.display_order)
+        .map((member) => member.full_name),
+    }));
+}
+
+function mapReservationRows(
+  requestRows: ReservationRequestRow[],
+  passengerRows: ReservationPassengerRow[],
+  attachmentRows: ReservationAttachmentRow[],
+  travels: Travel[],
+): Reservation[] {
+  const travelNames = new globalThis.Map(travels.map((travel) => [travel.id, travel.name]));
+
+  return requestRows.map((row) => ({
+    id: row.id,
+    travelId: row.travel_id,
+    travelName: travelNames.get(row.travel_id) ?? "رحلة",
+    employeeId: row.employee_id,
+    employeeName: row.employee_name,
+    customerFirstName: row.customer_first_name,
+    customerLastName: row.customer_last_name,
+    customerAddress: row.customer_address,
+    customerPhone: row.customer_phone,
+    adults: row.adults_count,
+    children: row.children_count,
+    quantity: row.quantity,
+    total: Number(row.total_amount),
+    passengers: passengerRows
+      .filter((passenger) => passenger.reservation_id === row.id)
+      .map((passenger) => ({
+        id: passenger.id,
+        type: passenger.passenger_type,
+        firstName: passenger.first_name,
+        lastName: passenger.last_name,
+        phone: passenger.phone,
+        birthPlace: passenger.birth_place,
+        birthDate: passenger.birth_date,
+        passportNumber: passenger.passport_number,
+        passportExpiry: passenger.passport_expiry,
+        notes: passenger.notes ?? "",
+      })),
+    attachments: attachmentRows
+      .filter((attachment) => attachment.reservation_id === row.id)
+      .map((attachment) => ({
+        id: attachment.id,
+        name: attachment.file_name,
+        mimeType: attachment.mime_type,
+        dataUrl: attachment.public_url ?? attachment.storage_path,
+      })),
+    notes: row.notes ?? "",
+    status: row.status,
+    createdAt: row.created_at,
+  }));
+}
+
+async function uploadReservationAttachment(reservationId: string, attachment: ReservationAttachment) {
+  const response = await fetch(attachment.dataUrl);
+  const blob = await response.blob();
+  const extension = attachment.name.includes(".") ? "" : attachment.mimeType === "application/pdf" ? ".pdf" : "";
+  const path = `reservations/${reservationId}/${attachment.id}-${attachment.name.replace(/[^\w.-]+/g, "-")}${extension}`;
+  const { error: uploadError } = await supabase.storage.from(RESERVATION_BUCKET).upload(path, blob, {
+    upsert: true,
+    contentType: attachment.mimeType,
+  });
+
+  if (uploadError) throw uploadError;
+
+  const { data } = supabase.storage.from(RESERVATION_BUCKET).getPublicUrl(path);
+  return { path, publicUrl: data.publicUrl };
+}
+
+export async function syncTravelsFromSupabase() {
+  if (!hasSupabaseConfig) return getTravels();
+
+  const { data, error } = await supabase
+    .from("travels")
+    .select("*")
+    .eq("active", true)
+    .order("departure_date", { ascending: true });
+
+  if (error) throw error;
+
+  const travels = (data as TravelRow[]).map(mapTravelRow);
+  saveTravels(travels);
+  return travels;
+}
+
+export async function saveTravelToSupabase(travel: Travel) {
+  if (!hasSupabaseConfig) {
+    const nextTravels = [travel, ...getTravels().filter((item) => item.id !== travel.id)];
+    saveTravels(nextTravels);
+    return nextTravels;
+  }
+
+  const { error } = await supabase.from("travels").upsert(mapTravelToRow(travel), { onConflict: "id" });
+  if (error) throw error;
+  return syncTravelsFromSupabase();
+}
+
+export async function deleteTravelFromSupabase(travelId: string) {
+  if (!hasSupabaseConfig) {
+    const nextTravels = getTravels().filter((travel) => travel.id !== travelId);
+    saveTravels(nextTravels);
+    return nextTravels;
+  }
+
+  const { error } = await supabase.from("travels").delete().eq("id", travelId);
+  if (error) throw error;
+  return syncTravelsFromSupabase();
+}
+
+export async function syncTeamGroupsFromSupabase() {
+  if (!hasSupabaseConfig) return getTeamGroups();
+
+  const [{ data: groupsData, error: groupsError }, { data: membersData, error: membersError }] = await Promise.all([
+    supabase.from("team_groups").select("id, title, display_order").order("display_order", { ascending: true }),
+    supabase.from("team_members").select("id, team_group_id, full_name, display_order").order("display_order", { ascending: true }),
+  ]);
+
+  if (groupsError) throw groupsError;
+  if (membersError) throw membersError;
+
+  const teamGroups = mapTeamRows(groupsData as TeamGroupRow[], membersData as TeamMemberRow[]);
+  saveTeamGroups(teamGroups);
+  return teamGroups;
+}
+
+export async function replaceTeamGroupsInSupabase(groups: TeamGroup[]) {
+  if (!hasSupabaseConfig) {
+    saveTeamGroups(groups);
+    return groups;
+  }
+
+  const { error: deleteMembersError } = await supabase.from("team_members").delete().gte("display_order", 0);
+  if (deleteMembersError) throw deleteMembersError;
+
+  const { error: deleteGroupsError } = await supabase.from("team_groups").delete().gte("display_order", 0);
+  if (deleteGroupsError) throw deleteGroupsError;
+
+  const groupRows = groups.map((group, index) => ({
+    id: group.id,
+    title: group.title,
+    display_order: index + 1,
+  }));
+
+  if (groupRows.length > 0) {
+    const { error: insertGroupsError } = await supabase.from("team_groups").insert(groupRows);
+    if (insertGroupsError) throw insertGroupsError;
+  }
+
+  const memberRows = groups.flatMap((group) => group.members.map((member, index) => ({
+    team_group_id: group.id,
+    full_name: member,
+    display_order: index + 1,
+  })));
+
+  if (memberRows.length > 0) {
+    const { error: insertMembersError } = await supabase.from("team_members").insert(memberRows);
+    if (insertMembersError) throw insertMembersError;
+  }
+
+  return syncTeamGroupsFromSupabase();
+}
+
+export async function syncContactMessagesFromSupabase() {
+  if (!hasSupabaseConfig) return getContactMessages();
+
+  const { data, error } = await supabase
+    .from("contact_messages")
+    .select("id, full_name, phone, email, destination, message, status, created_at")
+    .order("created_at", { ascending: false });
+
+  if (error) throw error;
+
+  const messages = (data as ContactMessageRow[]).map(mapContactMessageRow);
+  saveContactMessages(messages);
+  return messages;
+}
+
+export async function createContactMessageInSupabase(message: ContactMessage) {
+  const fallback = () => {
+    const nextMessages = [message, ...getContactMessages()];
+    saveContactMessages(nextMessages);
+    return nextMessages;
+  };
+
+  if (!hasSupabaseConfig) return fallback();
+
+  try {
+    const { error } = await supabase.from("contact_messages").insert({
+      id: message.id,
+      full_name: message.fullName,
+      phone: message.phone,
+      email: message.email,
+      destination: message.destination || null,
+      message: message.message,
+      status: message.status,
+      created_at: message.createdAt,
+    });
+
+    if (error) throw error;
+    return await syncContactMessagesFromSupabase();
+  } catch {
+    return fallback();
+  }
+}
+
+export async function markContactMessageAsReadInSupabase(messageId: string) {
+  if (!hasSupabaseConfig) {
+    const nextMessages = getContactMessages().map((message) => message.id === messageId ? { ...message, status: "Lu" as const } : message);
+    saveContactMessages(nextMessages);
+    return nextMessages;
+  }
+
+  const { error } = await supabase.from("contact_messages").update({ status: "Lu" }).eq("id", messageId);
+  if (error) throw error;
+  return syncContactMessagesFromSupabase();
+}
+
+export async function syncReservationsFromSupabase() {
+  if (!hasSupabaseConfig) return getReservations();
+
+  const { data: reservationData, error: reservationError } = await supabase
+    .from("reservation_requests")
+    .select("id, travel_id, employee_id, employee_name, customer_first_name, customer_last_name, customer_address, customer_phone, adults_count, children_count, quantity, total_amount, notes, status, created_at")
+    .order("created_at", { ascending: false });
+
+  if (reservationError) throw reservationError;
+
+  const reservations = reservationData as ReservationRequestRow[];
+  const reservationIds = reservations.map((reservation) => reservation.id);
+  const travelIds = Array.from(new Set(reservations.map((reservation) => reservation.travel_id)));
+
+  const [passengerResult, attachmentResult, travelResult] = await Promise.all([
+    reservationIds.length > 0
+      ? supabase.from("reservation_passengers").select("id, reservation_id, passenger_type, first_name, last_name, phone, birth_place, birth_date, passport_number, passport_expiry, notes").in("reservation_id", reservationIds)
+      : Promise.resolve({ data: [], error: null }),
+    reservationIds.length > 0
+      ? supabase.from("reservation_attachments").select("id, reservation_id, file_name, mime_type, storage_path, public_url").in("reservation_id", reservationIds)
+      : Promise.resolve({ data: [], error: null }),
+    travelIds.length > 0
+      ? supabase.from("travels").select("id, name, destination, country, image_url, image_urls, banner_url, departure_date, duration, adult_price, child_price, short_description, long_description, guides, category, benefits, tickets_total, tickets_left, rating").in("id", travelIds)
+      : Promise.resolve({ data: [], error: null }),
+  ]);
+
+  if (passengerResult.error) throw passengerResult.error;
+  if (attachmentResult.error) throw attachmentResult.error;
+  if (travelResult.error) throw travelResult.error;
+
+  const mappedReservations = mapReservationRows(
+    reservations,
+    passengerResult.data as ReservationPassengerRow[],
+    attachmentResult.data as ReservationAttachmentRow[],
+    (travelResult.data as TravelRow[]).map(mapTravelRow),
+  );
+
+  saveReservations(mappedReservations);
+  return mappedReservations;
+}
+
+export async function createReservationInSupabase(reservation: Reservation) {
+  const fallback = () => {
+    const nextReservations = [reservation, ...getReservations()];
+    saveReservations(nextReservations);
+    return nextReservations;
+  };
+
+  if (!hasSupabaseConfig) return fallback();
+
+  try {
+    const { error: reservationError } = await supabase.from("reservation_requests").insert({
+      id: reservation.id,
+      travel_id: reservation.travelId,
+      employee_id: reservation.employeeId,
+      employee_name: reservation.employeeName,
+      customer_first_name: reservation.customerFirstName,
+      customer_last_name: reservation.customerLastName,
+      customer_address: reservation.customerAddress,
+      customer_phone: reservation.customerPhone,
+      adults_count: reservation.adults,
+      children_count: reservation.children,
+      quantity: reservation.quantity,
+      total_amount: reservation.total,
+      notes: reservation.notes || null,
+      status: reservation.status,
+      created_at: reservation.createdAt,
+    });
+
+    if (reservationError) throw reservationError;
+
+    if (reservation.passengers.length > 0) {
+      const { error: passengersError } = await supabase.from("reservation_passengers").insert(
+        reservation.passengers.map((passenger) => ({
+          id: passenger.id,
+          reservation_id: reservation.id,
+          passenger_type: passenger.type,
+          first_name: passenger.firstName,
+          last_name: passenger.lastName,
+          phone: passenger.phone,
+          birth_place: passenger.birthPlace,
+          birth_date: passenger.birthDate,
+          passport_number: passenger.passportNumber,
+          passport_expiry: passenger.passportExpiry,
+          notes: passenger.notes || null,
+        })),
+      );
+
+      if (passengersError) throw passengersError;
+    }
+
+    if (reservation.attachments.length > 0) {
+      const uploaded = await Promise.all(reservation.attachments.map((attachment) => uploadReservationAttachment(reservation.id, attachment)));
+      const { error: attachmentsError } = await supabase.from("reservation_attachments").insert(
+        reservation.attachments.map((attachment, index) => ({
+          id: attachment.id,
+          reservation_id: reservation.id,
+          file_name: attachment.name,
+          mime_type: attachment.mimeType,
+          storage_path: uploaded[index].path,
+          public_url: uploaded[index].publicUrl,
+        })),
+      );
+
+      if (attachmentsError) throw attachmentsError;
+    }
+
+    return await syncReservationsFromSupabase();
+  } catch {
+    return fallback();
+  }
+}
+
+export async function updateReservationStatusInSupabase(reservationId: string, status: ReservationStatus) {
+  if (!hasSupabaseConfig) {
+    const nextReservations = getReservations().map((reservation) => reservation.id === reservationId ? { ...reservation, status } : reservation);
+    saveReservations(nextReservations);
+    return nextReservations;
+  }
+
+  const { error } = await supabase.from("reservation_requests").update({ status }).eq("id", reservationId);
+  if (error) throw error;
+  return syncReservationsFromSupabase();
 }
 
 export function readStore<T>(key: string, fallback: T): T {

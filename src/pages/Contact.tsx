@@ -2,13 +2,13 @@ import { FormEvent, useState } from "react";
 import { CalendarDays, CheckCircle, Mail, MapPin, MessageCircle, Phone, Send, ShieldCheck } from "lucide-react";
 import Navbar from "./_components/Navbar";
 import Footer from "./_components/Footer";
-import { readStore, writeStore, type ContactMessage } from "../lib/data";
+import { createContactMessageInSupabase, type ContactMessage } from "../lib/data";
 
 export default function Contact() {
   const [sent, setSent] = useState(false);
   const [form, setForm] = useState({ fullName: "", phone: "", email: "", destination: "", message: "" });
 
-  function submit(event: FormEvent) {
+  async function submit(event: FormEvent) {
     event.preventDefault();
     const nextMessage: ContactMessage = {
       id: crypto.randomUUID(),
@@ -16,8 +16,7 @@ export default function Contact() {
       status: "Nouveau",
       createdAt: new Date().toISOString(),
     };
-    const messages = readStore<ContactMessage[]>("hv-contact-messages", []);
-    writeStore("hv-contact-messages", [nextMessage, ...messages]);
+    await createContactMessageInSupabase(nextMessage);
     setForm({ fullName: "", phone: "", email: "", destination: "", message: "" });
     setSent(true);
   }

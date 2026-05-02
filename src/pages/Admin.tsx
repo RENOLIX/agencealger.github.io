@@ -1,4 +1,4 @@
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import { Edit3, LogOut, Mail, Plus, ReceiptText, Save, Search, ShieldCheck, Trash2, Users, WalletCards } from "lucide-react";
 import { useAuth } from "../components/providers/auth";
 import {
@@ -6,24 +6,33 @@ import {
   benefitLabels,
   benefitOptions,
   categoryLabels,
+  deleteTravelFromSupabase,
   getContactMessages,
   getReservations,
   getTeamGroups,
   getTravels,
   getUsers,
+  markContactMessageAsReadInSupabase,
   passengerTypeLabels,
+  replaceTeamGroupsInSupabase,
   reservationStatusLabels,
+  saveTravelToSupabase,
   saveContactMessages,
   saveReservations,
   saveTeamGroups,
   saveTravels,
   saveUsers,
+  syncContactMessagesFromSupabase,
+  syncReservationsFromSupabase,
+  syncTeamGroupsFromSupabase,
+  syncTravelsFromSupabase,
   type BenefitKey,
   type ContactMessage,
   type Reservation,
   type ReservationStatus,
   type TeamGroup,
   type Travel,
+  updateReservationStatusInSupabase,
   type User,
 } from "../lib/data";
 
@@ -63,6 +72,13 @@ export default function Admin() {
   const [teamRoleForm, setTeamRoleForm] = useState("");
   const [teamMemberDrafts, setTeamMemberDrafts] = useState<Record<string, string>>({});
   const [reservationQuery, setReservationQuery] = useState("");
+
+  useEffect(() => {
+    void syncTravelsFromSupabase().then(setTravels).catch(() => undefined);
+    void syncReservationsFromSupabase().then(setReservations).catch(() => undefined);
+    void syncContactMessagesFromSupabase().then(setMessages).catch(() => undefined);
+    void syncTeamGroupsFromSupabase().then(setTeamGroups).catch(() => undefined);
+  }, []);
 
   const filteredReservations = useMemo(() => {
     const needle = reservationQuery.trim().toLowerCase();
@@ -106,6 +122,15 @@ export default function Admin() {
   function persistTeamGroups(next: TeamGroup[]) {
     setTeamGroups(next);
     saveTeamGroups(next);
+  }
+
+  async function persistTeamGroupsWithSync(next: TeamGroup[]) {
+    persistTeamGroups(next);
+    try {
+      setTeamGroups(await replaceTeamGroupsInSupabase(next));
+    } catch (error) {
+      console.error(error);
+    }
   }
 
   function createUser(event: FormEvent) {
@@ -183,7 +208,7 @@ export default function Admin() {
     });
   }
 
-  function saveTravel(event: FormEvent) {
+  async function saveTravel(event: FormEvent) {
     event.preventDefault();
     const fallbackImage = travelForm.image || travelForm.banner || "https://images.pexels.com/photos/32525647/pexels-photo-32525647.jpeg?auto=compress&cs=tinysrgb&w=1400";
     const images = travelForm.images.length ? travelForm.images : [fallbackImage];
@@ -217,6 +242,11 @@ export default function Admin() {
         rating: currentTravel?.rating ?? 4.8,
       };
       persistTravels(travels.map((travel) => travel.id === editingTravelId ? nextTravel : travel));
+      try {
+        setTravels(await saveTravelToSupabase(nextTravel));
+      } catch (error) {
+        console.error(error);
+      }
     } else {
       const nextTravel: Travel = {
         id: crypto.randomUUID(),
@@ -240,6 +270,11 @@ export default function Admin() {
         rating: 4.8,
       };
       persistTravels([nextTravel, ...travels]);
+      try {
+        setTravels(await saveTravelToSupabase(nextTravel));
+      } catch (error) {
+        console.error(error);
+      }
     }
 
     setTravelForm(emptyTravelForm);
@@ -247,12 +282,17 @@ export default function Admin() {
     setTravelMode("list");
   }
 
-  function deleteTravel(travelId: string) {
+  async function deleteTravel(travelId: string) {
     if (!window.confirm("حذف هذه الرحلة؟")) return;
     persistTravels(travels.filter((travel) => travel.id !== travelId));
+    try {
+      setTravels(await deleteTravelFromSupabase(travelId));
+    } catch (error) {
+      console.error(error);
+    }
   }
 
-  function updateReservationStatus(reservationId: string, nextStatus: ReservationStatus) {
+  async function updateReservationStatus(reservationId: string, nextStatus: ReservationStatus) {
     const currentReservation = reservations.find((reservation) => reservation.id === reservationId);
     if (!currentReservation) return;
 
@@ -275,30 +315,41 @@ export default function Admin() {
     }
 
     persistReservations(reservations.map((reservation) => reservation.id === reservationId ? { ...reservation, status: nextStatus } : reservation));
+
+    try {
+      const [remoteReservations, remoteTravels] = await Promise.all([
+        updateReservationStatusInSupabase(reservationId, nextStatus),
+        syncTravelsFromSupabase(),
+      ]);
+      setReservations(remoteReservations);
+      setTravels(remoteTravels);
+    } catch (error) {
+      console.error(error);
+    }
   }
 
   function createTeamRole(event: FormEvent) {
     event.preventDefault();
     const title = teamRoleForm.trim();
     if (!title) return;
-    persistTeamGroups([{ id: crypto.randomUUID(), title, members: [] }, ...teamGroups]);
+    void persistTeamGroupsWithSync([{ id: crypto.randomUUID(), title, members: [] }, ...teamGroups]);
     setTeamRoleForm("");
   }
 
   function addMemberToGroup(groupId: string) {
     const name = teamMemberDrafts[groupId]?.trim();
     if (!name) return;
-    persistTeamGroups(teamGroups.map((group) => group.id === groupId && !group.members.includes(name) ? { ...group, members: [...group.members, name] } : group));
+    void persistTeamGroupsWithSync(teamGroups.map((group) => group.id === groupId && !group.members.includes(name) ? { ...group, members: [...group.members, name] } : group));
     setTeamMemberDrafts((current) => ({ ...current, [groupId]: "" }));
   }
 
   function removeMemberFromGroup(groupId: string, memberName: string) {
-    persistTeamGroups(teamGroups.map((group) => group.id === groupId ? { ...group, members: group.members.filter((member) => member !== memberName) } : group));
+    void persistTeamGroupsWithSync(teamGroups.map((group) => group.id === groupId ? { ...group, members: group.members.filter((member) => member !== memberName) } : group));
   }
 
   function deleteTeamGroup(groupId: string) {
     if (!window.confirm("حذف هذا المنصب؟")) return;
-    persistTeamGroups(teamGroups.filter((group) => group.id !== groupId));
+    void persistTeamGroupsWithSync(teamGroups.filter((group) => group.id !== groupId));
   }
 
   const allTeamNames = Array.from(new Set(teamGroups.flatMap((group) => group.members))).sort((a, b) => a.localeCompare(b, "ar"));
@@ -583,7 +634,13 @@ export default function Admin() {
                     <strong>{message.fullName}</strong>
                     <span>{message.email} - {message.phone}</span>
                   </div>
-                  <button onClick={() => persistMessages(messages.map((item) => item.id === message.id ? { ...item, status: "Lu" } : item))}>
+                  <button onClick={() => {
+                    const nextMessages = messages.map((item) => item.id === message.id ? { ...item, status: "Lu" as const } : item);
+                    persistMessages(nextMessages);
+                    void markContactMessageAsReadInSupabase(message.id)
+                      .then(setMessages)
+                      .catch((error) => console.error(error));
+                  }}>
                     {message.status === "Lu" ? "مقروء" : "جديد"}
                   </button>
                 </div>

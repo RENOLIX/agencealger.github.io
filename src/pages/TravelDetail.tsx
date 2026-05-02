@@ -3,7 +3,7 @@ import { CalendarDays, CheckCircle2, ChevronLeft, FileText, MapPin, Phone, Plane
 import { Link, Navigate, useParams } from "react-router-dom";
 import Navbar from "./_components/Navbar";
 import Footer from "./_components/Footer";
-import { getReservations, getTravels, reservationStatusLabels, saveReservations, type PassengerType, type Reservation, type ReservationAttachment, type ReservationPassenger } from "../lib/data";
+import { createReservationInSupabase, getTravels, reservationStatusLabels, syncTravelsFromSupabase, type PassengerType, type Reservation, type ReservationAttachment, type ReservationPassenger, type Travel } from "../lib/data";
 import { useAuth } from "../components/providers/auth";
 
 function createPassenger(type: PassengerType): ReservationPassenger {
@@ -24,7 +24,7 @@ function createPassenger(type: PassengerType): ReservationPassenger {
 export default function TravelDetail() {
   const { travelId } = useParams();
   const { user } = useAuth();
-  const travel = getTravels().find((item) => item.id === travelId);
+  const [travel, setTravel] = useState<Travel | null>(() => getTravels().find((item) => item.id === travelId) ?? null);
 
   const [adults, setAdults] = useState(1);
   const [children, setChildren] = useState(0);
@@ -39,6 +39,12 @@ export default function TravelDetail() {
 
   const quantity = adults + children;
   const maxTickets = travel?.ticketsLeft ?? 0;
+
+  useEffect(() => {
+    void syncTravelsFromSupabase()
+      .then((travels) => setTravel(travels.find((item) => item.id === travelId) ?? null))
+      .catch(() => undefined);
+  }, [travelId]);
 
   useEffect(() => {
     const total = adults + children;
@@ -106,7 +112,7 @@ export default function TravelDetail() {
     );
   }
 
-  function submitReservation(event: FormEvent) {
+  async function submitReservation(event: FormEvent) {
     event.preventDefault();
     if (quantity < 1 || quantity > currentTravel.ticketsLeft) return;
     if (passengers.length !== quantity || passengers.some((passenger) => !isPassengerComplete(passenger))) return;
@@ -132,8 +138,7 @@ export default function TravelDetail() {
       createdAt: new Date().toISOString(),
     };
 
-    const current = getReservations();
-    saveReservations([nextReservation, ...current]);
+    await createReservationInSupabase(nextReservation);
     setSubmittedId(nextReservation.id);
     setCustomerFirstName("");
     setCustomerLastName("");

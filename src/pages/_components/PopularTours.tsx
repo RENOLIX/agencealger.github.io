@@ -1,14 +1,18 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Clock, MapPin, Star, Users } from "lucide-react";
 import { Link } from "react-router-dom";
-import { benefitIcons, benefitLabels, categoryLabels, getTravels, type Travel } from "../../lib/data";
+import { benefitIcons, benefitLabels, categoryLabels, getTravels, syncTravelsFromSupabase, type Travel } from "../../lib/data";
 
 const categories = ["Tous", "Plage", "Aventure", "Culture", "Luxe"] as const;
 
 export default function PopularTours() {
   const [active, setActive] = useState<(typeof categories)[number]>("Tous");
-  const travels = getTravels();
+  const [travels, setTravels] = useState<Travel[]>(() => getTravels());
   const filtered = useMemo(() => active === "Tous" ? travels : travels.filter((tour) => tour.category === active), [active, travels]);
+
+  useEffect(() => {
+    void syncTravelsFromSupabase().then(setTravels).catch(() => undefined);
+  }, []);
 
   return (
     <section id="tours" className="section pale">

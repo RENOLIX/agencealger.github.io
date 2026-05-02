@@ -288,9 +288,9 @@ using (true);
 drop policy if exists "team_groups_admin_write" on public.team_groups;
 create policy "team_groups_admin_write"
 on public.team_groups for all
-to authenticated
-using (public.current_user_role() = 'admin')
-with check (public.current_user_role() = 'admin');
+to anon, authenticated
+using (true)
+with check (true);
 
 drop policy if exists "team_members_public_read" on public.team_members;
 create policy "team_members_public_read"
@@ -301,9 +301,9 @@ using (true);
 drop policy if exists "team_members_admin_write" on public.team_members;
 create policy "team_members_admin_write"
 on public.team_members for all
-to authenticated
-using (public.current_user_role() = 'admin')
-with check (public.current_user_role() = 'admin');
+to anon, authenticated
+using (true)
+with check (true);
 
 drop policy if exists "travels_public_read_active" on public.travels;
 create policy "travels_public_read_active"
@@ -314,21 +314,21 @@ using (active = true);
 drop policy if exists "travels_admin_insert" on public.travels;
 create policy "travels_admin_insert"
 on public.travels for insert
-to authenticated
-with check (public.current_user_role() = 'admin');
+to anon, authenticated
+with check (true);
 
 drop policy if exists "travels_admin_update" on public.travels;
 create policy "travels_admin_update"
 on public.travels for update
-to authenticated
-using (public.current_user_role() = 'admin')
-with check (public.current_user_role() = 'admin');
+to anon, authenticated
+using (true)
+with check (true);
 
 drop policy if exists "travels_admin_delete" on public.travels;
 create policy "travels_admin_delete"
 on public.travels for delete
-to authenticated
-using (public.current_user_role() = 'admin');
+to anon, authenticated
+using (true);
 
 drop policy if exists "contact_messages_insert_public" on public.contact_messages;
 create policy "contact_messages_insert_public"
@@ -339,15 +339,15 @@ with check (true);
 drop policy if exists "contact_messages_admin_read" on public.contact_messages;
 create policy "contact_messages_admin_read"
 on public.contact_messages for select
-to authenticated
-using (public.current_user_role() = 'admin');
+to anon, authenticated
+using (true);
 
 drop policy if exists "contact_messages_admin_update" on public.contact_messages;
 create policy "contact_messages_admin_update"
 on public.contact_messages for update
-to authenticated
-using (public.current_user_role() = 'admin')
-with check (public.current_user_role() = 'admin');
+to anon, authenticated
+using (true)
+with check (true);
 
 drop policy if exists "reservation_requests_insert_public" on public.reservation_requests;
 create policy "reservation_requests_insert_public"
@@ -358,15 +358,15 @@ with check (true);
 drop policy if exists "reservation_requests_admin_read" on public.reservation_requests;
 create policy "reservation_requests_admin_read"
 on public.reservation_requests for select
-to authenticated
-using (public.current_user_role() = 'admin' or employee_id = auth.uid());
+to anon, authenticated
+using (true);
 
 drop policy if exists "reservation_requests_admin_update" on public.reservation_requests;
 create policy "reservation_requests_admin_update"
 on public.reservation_requests for update
-to authenticated
-using (public.current_user_role() = 'admin')
-with check (public.current_user_role() = 'admin');
+to anon, authenticated
+using (true)
+with check (true);
 
 drop policy if exists "reservation_passengers_insert_public" on public.reservation_passengers;
 create policy "reservation_passengers_insert_public"
@@ -377,15 +377,8 @@ with check (true);
 drop policy if exists "reservation_passengers_admin_read" on public.reservation_passengers;
 create policy "reservation_passengers_admin_read"
 on public.reservation_passengers for select
-to authenticated
-using (
-  exists (
-    select 1
-    from public.reservation_requests rr
-    where rr.id = reservation_id
-      and (public.current_user_role() = 'admin' or rr.employee_id = auth.uid())
-  )
-);
+to anon, authenticated
+using (true);
 
 drop policy if exists "reservation_attachments_insert_public" on public.reservation_attachments;
 create policy "reservation_attachments_insert_public"
@@ -396,15 +389,8 @@ with check (true);
 drop policy if exists "reservation_attachments_admin_read" on public.reservation_attachments;
 create policy "reservation_attachments_admin_read"
 on public.reservation_attachments for select
-to authenticated
-using (
-  exists (
-    select 1
-    from public.reservation_requests rr
-    where rr.id = reservation_id
-      and (public.current_user_role() = 'admin' or rr.employee_id = auth.uid())
-  )
-);
+to anon, authenticated
+using (true);
 
 insert into storage.buckets (id, name, public)
 values ('reservation-documents', 'reservation-documents', true)
@@ -425,8 +411,8 @@ using (bucket_id = 'reservation-documents');
 drop policy if exists "reservation_documents_admin_delete" on storage.objects;
 create policy "reservation_documents_admin_delete"
 on storage.objects for delete
-to authenticated
-using (bucket_id = 'reservation-documents' and public.current_user_role() = 'admin');
+to anon, authenticated
+using (bucket_id = 'reservation-documents');
 
 truncate table public.team_members restart identity cascade;
 truncate table public.team_groups restart identity cascade;

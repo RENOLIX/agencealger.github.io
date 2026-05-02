@@ -1,7 +1,23 @@
+import { useEffect, useMemo, useState } from "react";
 import { ArrowUpRight } from "lucide-react";
-import { destinations } from "../../lib/data";
+import { getTravels, syncTravelsFromSupabase, type Travel } from "../../lib/data";
 
 export default function DestinationsSection() {
+  const [travels, setTravels] = useState<Travel[]>(() => getTravels());
+
+  useEffect(() => {
+    void syncTravelsFromSupabase().then(setTravels).catch(() => undefined);
+  }, []);
+
+  const destinations = useMemo(() => travels.map((travel, index) => ({
+    name: travel.name,
+    country: travel.destination,
+    image: travel.image,
+    trips: travel.ticketsLeft,
+    tag: `${travel.date} - ${travel.duration}`,
+    tall: index === 0 || index === travels.length - 1,
+  })), [travels]);
+
   return (
     <section id="destinations" className="section pale">
       <div className="section-head">
