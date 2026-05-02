@@ -24,7 +24,6 @@ em { color: var(--orange); }
 
 .intro { align-items: center; background: #000; display: flex; inset: 0; justify-content: center; overflow: hidden; position: fixed; z-index: 100; }
 .intro-video, .intro-shade { height: 100%; inset: 0; object-fit: cover; position: absolute; width: 100%; }
-.intro-video-mobile { display: none; }
 .intro-shade { background: linear-gradient(90deg, rgba(0,0,0,.34), rgba(0,0,0,0) 55%, rgba(0,0,0,.22)); pointer-events: none; }
 .intro-brand { color: white; position: relative; text-align: center; z-index: 3; }
 .intro-brand p { color: rgba(255,255,255,.55); font-size: 12px; letter-spacing: .55em; margin: 0 0 24px; text-transform: uppercase; }
@@ -297,8 +296,6 @@ progress { accent-color: var(--orange); width: 100%; }
 .whatsapp-box p { color: #64717a; line-height: 1.65; }
 
 @media (max-width: 900px) {
-  .intro-video-desktop { display: none; }
-  .intro-video-mobile { display: block; }
   .nav { height: 64px; padding: 0 20px; }
   .desktop-links, .nav-actions { display: none; }
   .menu-btn { background: transparent; border: 0; color: inherit; display: block; }
@@ -340,11 +337,6 @@ progress { accent-color: var(--orange); width: 100%; }
   .about-band-track h2 { animation: ticker 13s linear infinite; flex: 0 0 auto; font-family: Manrope, system-ui, sans-serif; font-size: 13px; font-weight: 900; letter-spacing: .12em; line-height: 1; padding-right: 34px; text-transform: uppercase; }
   .contact-card { justify-self: stretch; max-width: none; }
   .contact-form div { grid-template-columns: 1fr; }
-}
-
-@media (pointer: coarse), (hover: none) {
-  .intro-video-desktop { display: none; }
-  .intro-video-mobile { display: block; }
 }
 
 @keyframes ticker {

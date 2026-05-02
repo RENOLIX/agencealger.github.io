@@ -1,82 +1,88 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "motion/react";
 
+function getIntroVideoSrc() {
+  if (typeof window === "undefined") {
+    return "/agencedevoyage.github.io/pc1.mp4";
+  }
+
+  const isPhone =
+    window.innerWidth <= 900 ||
+    window.matchMedia("(pointer: coarse)").matches ||
+    window.matchMedia("(hover: none)").matches;
+
+  return isPhone
+    ? "/agencedevoyage.github.io/pc2.mp4"
+    : "/agencedevoyage.github.io/pc1.mp4";
+}
+
 export default function VideoIntro({ onComplete }: { onComplete: () => void }) {
-  const [fadeOut, setFadeOut] = useState(false);
-  const desktopVideoRef = useRef<HTMLVideoElement | null>(null);
-  const mobileVideoRef = useRef<HTMLVideoElement | null>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
   const completedRef = useRef(false);
+  const [fadeOut, setFadeOut] = useState(false);
+  const videoSrc = useMemo(getIntroVideoSrc, []);
 
   useEffect(() => {
     const finish = () => {
       if (completedRef.current) return;
       completedRef.current = true;
       setFadeOut(true);
-      window.setTimeout(onComplete, 260);
+      window.setTimeout(onComplete, 220);
     };
 
-    const getActiveVideo = () => {
-      const isMobile = window.matchMedia("(max-width: 760px), (pointer: coarse)").matches;
-      return isMobile ? mobileVideoRef.current : desktopVideoRef.current;
-    };
+    const video = videoRef.current;
+    video?.load();
+    void video?.play().catch(() => undefined);
 
-    const activeVideo = getActiveVideo();
+    video?.addEventListener("ended", finish);
 
-    activeVideo?.addEventListener("ended", finish);
-    activeVideo?.load();
-    void activeVideo?.play().catch(() => undefined);
-
-    const replayOnFirstTouch = () => {
-      const video = getActiveVideo();
+    const retryPlay = () => {
       void video?.play().catch(() => undefined);
     };
 
-    window.addEventListener("touchstart", replayOnFirstTouch, { once: true, passive: true });
-    window.addEventListener("click", replayOnFirstTouch, { once: true });
+    window.addEventListener("touchstart", retryPlay, { once: true, passive: true });
+    window.addEventListener("click", retryPlay, { once: true });
 
-    const maxTimer = window.setTimeout(finish, 9000);
-    const safetyTimer = window.setTimeout(() => {
-      if (!activeVideo || activeVideo.readyState === 0) finish();
-    }, 3200);
+    const timer = window.setTimeout(finish, 11000);
 
     return () => {
-      window.clearTimeout(maxTimer);
-      window.clearTimeout(safetyTimer);
-      activeVideo?.removeEventListener("ended", finish);
-      window.removeEventListener("touchstart", replayOnFirstTouch);
-      window.removeEventListener("click", replayOnFirstTouch);
+      window.clearTimeout(timer);
+      video?.removeEventListener("ended", finish);
+      window.removeEventListener("touchstart", retryPlay);
+      window.removeEventListener("click", retryPlay);
     };
   }, [onComplete]);
 
   return (
-    <motion.div className="intro" animate={{ opacity: fadeOut ? 0 : 1 }} transition={{ duration: 0.24, ease: "easeOut" }}>
+    <motion.div
+      className="intro"
+      animate={{ opacity: fadeOut ? 0 : 1 }}
+      transition={{ duration: 0.22, ease: "easeOut" }}
+    >
       <video
-        ref={desktopVideoRef}
-        className="intro-video intro-video-desktop"
-        src="/agencedevoyage.github.io/pc1.mp4"
+        ref={videoRef}
+        className="intro-video"
+        src={videoSrc}
         autoPlay
         muted
         playsInline
         preload="auto"
-        onError={() => window.setTimeout(onComplete, 700)}
-      />
-      <video
-        ref={mobileVideoRef}
-        className="intro-video intro-video-mobile"
-        src="/agencedevoyage.github.io/pc2.mp4"
-        autoPlay
-        muted
-        playsInline
-        preload="auto"
-        onError={() => window.setTimeout(onComplete, 700)}
       />
       <div className="intro-shade" />
       <div className="intro-brand">
-        <motion.p initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>Bienvenue chez</motion.p>
-        <motion.h1 initial={{ opacity: 0, scale: 0.94 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.8, duration: 1.1 }}>Hamdi</motion.h1>
-        <motion.h2 initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.15 }}>Voyage</motion.h2>
+        <motion.p initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
+          Bienvenue chez
+        </motion.p>
+        <motion.h1 initial={{ opacity: 0, scale: 0.94 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.8, duration: 1.1 }}>
+          Hamdi
+        </motion.h1>
+        <motion.h2 initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.15 }}>
+          Voyage
+        </motion.h2>
         <motion.span initial={{ scaleX: 0 }} animate={{ scaleX: 1 }} transition={{ delay: 1.5, duration: 1 }} />
-        <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.8 }}>Le monde vous attend</motion.p>
+        <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.8 }}>
+          Le monde vous attend
+        </motion.p>
       </div>
     </motion.div>
   );
