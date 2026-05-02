@@ -118,7 +118,7 @@ export default function Admin() {
   const reservationScope = useMemo(() => (
     user?.role === "admin"
       ? reservations
-      : reservations.filter((reservation) => reservation.employeeId === user?.id)
+      : reservations.filter((reservation) => reservation.employeeId === user?.id || reservation.employeeName === user?.name)
   ), [reservations, user]);
 
   const filteredReservations = useMemo(() => {

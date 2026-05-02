@@ -28,7 +28,7 @@ export default function AdminReservationCatalog() {
   }, []);
 
   const employeeReservations = useMemo(() => (
-    reservations.filter((reservation) => reservation.employeeId === user?.id)
+    reservations.filter((reservation) => reservation.employeeId === user?.id || reservation.employeeName === user?.name)
   ), [reservations, user]);
 
   if (!user) return <Navigate to="/auth" replace />;

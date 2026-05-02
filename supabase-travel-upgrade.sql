@@ -32,5 +32,8 @@ alter table public.travels
   alter column airlines set not null;
 
 alter table public.travels
+  drop constraint if exists travels_flight_mode_check;
+
+alter table public.travels
   add constraint travels_flight_mode_check
   check (flight_mode in ('direct', 'escale'));

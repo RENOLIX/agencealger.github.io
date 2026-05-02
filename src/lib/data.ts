@@ -740,6 +740,11 @@ function parsePassengerNotes(raw: string | null) {
   }
 }
 
+function isUuidLike(value: string | null | undefined) {
+  if (!value) return false;
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+}
+
 type ReservationAttachmentRow = {
   id: string;
   reservation_id: string;
@@ -1152,10 +1157,11 @@ export async function createReservationInSupabase(reservation: Reservation) {
   if (!hasSupabaseConfig) return fallback();
 
   try {
+    const employeeId = isUuidLike(reservation.employeeId) ? reservation.employeeId : null;
     const { error: reservationError } = await supabase.from("reservation_requests").insert({
       id: reservation.id,
       travel_id: reservation.travelId,
-      employee_id: reservation.employeeId,
+      employee_id: employeeId,
       employee_name: reservation.employeeName,
       customer_first_name: reservation.customerFirstName,
       customer_last_name: reservation.customerLastName,
