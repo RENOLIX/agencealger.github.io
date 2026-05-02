@@ -225,7 +225,16 @@ export default function Admin() {
                 <div className="benefit-picker">
                   {benefitOptions.map((benefit) => {
                     const Icon = benefitIcons[benefit];
-                    return <label key={benefit}><input type="checkbox" checked={travelForm.benefits.includes(benefit)} onChange={(event) => setTravelForm({ ...travelForm, benefits: event.target.checked ? Array.from(new Set([...travelForm.benefits, benefit])) : travelForm.benefits.filter((x: BenefitKey) => x !== benefit) })} /><Icon size={16} /> <span>{benefit}</span></label>;
+                    return (
+                      <label key={benefit}>
+                        <span><Icon size={16} /> {benefit}</span>
+                        <input
+                          type="checkbox"
+                          checked={travelForm.benefits.includes(benefit)}
+                          onChange={(event) => setTravelForm({ ...travelForm, benefits: event.target.checked ? Array.from(new Set([...travelForm.benefits, benefit])) : travelForm.benefits.filter((x: BenefitKey) => x !== benefit) })}
+                        />
+                      </label>
+                    );
                   })}
                 </div>
                 <button><Save /> {editingTravelId ? "Enregistrer les modifications" : "Ajouter le voyage"}</button>
