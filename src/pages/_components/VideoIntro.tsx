@@ -3,56 +3,76 @@ import { motion } from "motion/react";
 
 export default function VideoIntro({ onComplete }: { onComplete: () => void }) {
   const [fadeOut, setFadeOut] = useState(false);
-  const videoRef = useRef<HTMLVideoElement | null>(null);
-  const [videoSrc, setVideoSrc] = useState("/agencedevoyage.github.io/pc1.mp4");
-
-  useEffect(() => {
-    const pickVideo = () => {
-      const isMobile = window.matchMedia("(max-width: 760px), (pointer: coarse)").matches;
-      setVideoSrc(isMobile ? "/agencedevoyage.github.io/pc2.mp4" : "/agencedevoyage.github.io/pc1.mp4");
-    };
-
-    pickVideo();
-    window.addEventListener("resize", pickVideo);
-    return () => window.removeEventListener("resize", pickVideo);
-  }, []);
+  const [ready, setReady] = useState(false);
+  const desktopVideoRef = useRef<HTMLVideoElement | null>(null);
+  const mobileVideoRef = useRef<HTMLVideoElement | null>(null);
+  const completedRef = useRef(false);
 
   useEffect(() => {
     const finish = () => {
+      if (completedRef.current) return;
+      completedRef.current = true;
       setFadeOut(true);
       window.setTimeout(onComplete, 260);
     };
 
-    const video = videoRef.current;
-    video?.addEventListener("ended", finish);
-    video?.load();
-    void video?.play().catch(() => {
-      window.setTimeout(finish, 900);
-    });
+    const getActiveVideo = () => {
+      const isMobile = window.matchMedia("(max-width: 760px), (pointer: coarse)").matches;
+      return isMobile ? mobileVideoRef.current : desktopVideoRef.current;
+    };
 
-    const timer = window.setTimeout(() => {
-      finish();
-    }, 9000);
+    const activeVideo = getActiveVideo();
+    const markReady = () => setReady(true);
+
+    activeVideo?.addEventListener("loadeddata", markReady);
+    activeVideo?.addEventListener("canplay", markReady);
+    activeVideo?.addEventListener("playing", markReady);
+    activeVideo?.addEventListener("ended", finish);
+    activeVideo?.load();
+    void activeVideo?.play().catch(() => undefined);
+
+    const replayOnFirstTouch = () => {
+      const video = getActiveVideo();
+      void video?.play().catch(() => undefined);
+    };
+
+    window.addEventListener("touchstart", replayOnFirstTouch, { once: true, passive: true });
+    window.addEventListener("click", replayOnFirstTouch, { once: true });
+
+    const maxTimer = window.setTimeout(finish, 14000);
 
     return () => {
-      window.clearTimeout(timer);
-      video?.removeEventListener("ended", finish);
+      window.clearTimeout(maxTimer);
+      activeVideo?.removeEventListener("loadeddata", markReady);
+      activeVideo?.removeEventListener("canplay", markReady);
+      activeVideo?.removeEventListener("playing", markReady);
+      activeVideo?.removeEventListener("ended", finish);
+      window.removeEventListener("touchstart", replayOnFirstTouch);
+      window.removeEventListener("click", replayOnFirstTouch);
     };
-  }, [onComplete, videoSrc]);
+  }, [onComplete]);
 
   return (
     <motion.div className="intro" animate={{ opacity: fadeOut ? 0 : 1 }} transition={{ duration: 0.24, ease: "easeOut" }}>
       <video
-        ref={videoRef}
-        className="intro-video"
-        src={videoSrc}
+        ref={desktopVideoRef}
+        className="intro-video intro-video-desktop"
+        src="/agencedevoyage.github.io/pc1.mp4"
         autoPlay
         muted
         playsInline
         preload="auto"
-        onError={() => window.setTimeout(onComplete, 450)}
       />
-      <div className="intro-shade" />
+      <video
+        ref={mobileVideoRef}
+        className="intro-video intro-video-mobile"
+        src="/agencedevoyage.github.io/pc2.mp4"
+        autoPlay
+        muted
+        playsInline
+        preload="auto"
+      />
+      <div className={`intro-shade ${ready ? "ready" : ""}`} />
       <div className="intro-brand">
         <motion.p initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>Bienvenue chez</motion.p>
         <motion.h1 initial={{ opacity: 0, scale: 0.94 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.8, duration: 1.1 }}>Hamdi</motion.h1>
