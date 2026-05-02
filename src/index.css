@@ -103,6 +103,7 @@ em { color: var(--orange); }
 .tour-foot strong { display: block; font-family: "Instrument Serif"; font-size: 28px; }
 .tour-foot span { align-items: center; color: var(--muted); display: flex; font-size: 12px; gap: 5px; }
 .low-stock { color: #dc2626 !important; }
+.reserve-link { align-items: center; background: #111827; color: white; display: inline-flex; font-size: 12px; font-weight: 900; justify-content: center; margin-top: 16px; min-height: 48px; width: 100%; }
 
 .why { background: linear-gradient(135deg, #eef9ff 0%, #fff8ee 52%, #f2fff7 100%); color: var(--ink); display: grid; gap: 70px; grid-template-columns: .85fr 1.15fr; overflow: hidden; padding: 110px 48px; position: relative; }
 .why::before { background: linear-gradient(135deg, rgba(14,165,233,.14), rgba(249,115,22,.12)); border-radius: 999px; content: ""; height: 420px; position: absolute; right: -120px; top: -160px; width: 420px; }
@@ -279,6 +280,88 @@ progress { accent-color: var(--orange); width: 100%; }
 .team-admin-member { align-items: center; background: #f8fafc; border: 1px solid #e5edf3; border-radius: 16px; display: grid; gap: 12px; grid-template-columns: 1fr auto; padding: 12px 14px; }
 .team-admin-member span { font-size: 14px; font-weight: 800; }
 .team-admin-member button { align-items: center; background: #fff7ed; border: 1px solid #fed7aa; border-radius: 50%; color: #c2410c; display: flex; height: 30px; justify-content: center; padding: 0; width: 30px; }
+.travel-page { background: linear-gradient(180deg, #f6f8fb 0%, #ffffff 28%, #f9fafc 100%); }
+.travel-hero { background-position: center; background-size: cover; color: white; min-height: 80vh; padding: 160px 48px 70px; }
+.travel-hero-shell { direction: rtl; margin: 0 auto; max-width: 1180px; text-align: right; }
+.travel-back { align-items: center; color: rgba(255,255,255,.92); display: inline-flex; gap: 8px; margin-bottom: 18px; }
+.travel-hero h1 { font-size: clamp(3.8rem, 8vw, 7rem); line-height: .9; max-width: 720px; }
+.travel-hero p { color: rgba(255,255,255,.74); font-size: 18px; line-height: 1.8; max-width: 680px; }
+.travel-hero-meta { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 28px; }
+.travel-hero-meta span { align-items: center; background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.16); display: inline-flex; gap: 8px; padding: 12px 16px; }
+.travel-overview { align-items: start; display: grid; gap: 28px; grid-template-columns: 1.05fr .95fr; margin: -86px auto 0; max-width: 1180px; padding: 0 48px; position: relative; z-index: 2; }
+.travel-media img { border-radius: 26px; box-shadow: 0 35px 90px -55px rgba(15,23,42,.55); min-height: 520px; object-fit: cover; width: 100%; }
+.travel-summary { background: rgba(255,255,255,.9); border: 1px solid rgba(15,23,42,.08); border-radius: 30px; box-shadow: 0 30px 80px -58px rgba(15,23,42,.26); direction: rtl; padding: 34px; text-align: right; }
+.compact-head { margin-bottom: 22px; }
+.travel-chip-row { display: flex; flex-wrap: wrap; gap: 10px; margin: 22px 0 28px; }
+.travel-chip-row span { align-items: center; background: #f8fafc; border: 1px solid #e5edf3; border-radius: 999px; display: inline-flex; gap: 8px; padding: 10px 14px; }
+.travel-tariffs { display: grid; gap: 14px; grid-template-columns: repeat(3, 1fr); }
+.travel-tariffs article { background: #fffaf2; border: 1px solid #ead8bd; border-radius: 22px; padding: 18px; }
+.travel-tariffs small { color: var(--muted); display: block; font-size: 12px; font-weight: 900; margin-bottom: 10px; }
+.travel-tariffs strong { font-family: "Instrument Serif"; font-size: 32px; }
+.travel-divider { margin: 56px auto 0; max-width: 1180px; padding: 0 48px; }
+.travel-divider-line { background: linear-gradient(90deg, transparent, rgba(15,23,42,.18), transparent); height: 1px; width: 100%; }
+.reservation-section { padding: 54px 48px 104px; }
+.reservation-shell { display: grid; gap: 28px; grid-template-columns: .7fr 1.3fr; margin: 0 auto; max-width: 1180px; }
+.reservation-copy { direction: rtl; padding-top: 18px; text-align: right; }
+.reservation-copy h2 { font-size: clamp(2.3rem, 4vw, 4rem); line-height: 1.02; }
+.reservation-copy p { color: #64717a; line-height: 1.8; }
+.reservation-form { background: rgba(255,255,255,.92); border: 1px solid rgba(15,23,42,.08); border-radius: 32px; box-shadow: 0 30px 90px -62px rgba(2,132,199,.4); direction: rtl; display: grid; gap: 20px; padding: 32px; text-align: right; }
+.reservation-top-grid, .traveler-grid { display: grid; gap: 14px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.reservation-form label { color: #52616b; display: grid; gap: 8px; font-size: 12px; font-weight: 900; letter-spacing: .08em; }
+.reservation-form input, .reservation-form select, .reservation-form textarea { background: #f8fafc; border: 1px solid #e5edf3; color: #111827; min-height: 50px; outline: 0; padding: 14px; width: 100%; }
+.reservation-form textarea { min-height: 120px; resize: vertical; }
+.span-two { grid-column: 1 / -1; }
+.reservation-line { background: linear-gradient(90deg, transparent, rgba(15,23,42,.14), transparent); height: 1px; width: 100%; }
+.traveler-header { align-items: center; display: flex; justify-content: space-between; gap: 14px; }
+.traveler-header h3 { font-size: 30px; }
+.traveler-header p { color: var(--muted); margin: 4px 0 0; }
+.secondary-button { align-items: center; background: #fff7ed; border: 1px solid #fed7aa; color: #9a3412; display: inline-flex; gap: 8px; justify-content: center; min-height: 44px; padding: 0 16px; }
+.traveler-card-list { display: grid; gap: 16px; }
+.traveler-card { background: #fbfdff; border: 1px solid #e5edf3; border-radius: 26px; padding: 22px; }
+.traveler-card-head { align-items: center; display: flex; justify-content: space-between; margin-bottom: 16px; }
+.traveler-card-head span { background: #eff6ff; color: #1d4ed8; font-size: 12px; font-weight: 900; padding: 8px 12px; }
+.documents-block { display: grid; gap: 14px; }
+.upload-cta { align-items: center; background: #111827; color: white; cursor: pointer; display: inline-flex !important; gap: 8px; justify-content: center; min-height: 46px; padding: 0 16px; }
+.upload-cta input { display: none; }
+.attachment-list { display: grid; gap: 10px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.attachment-item { align-items: center; background: #f8fafc; border: 1px solid #e5edf3; border-radius: 16px; display: flex; gap: 10px; min-height: 46px; padding: 0 14px; }
+.attachment-item span { flex: 1; font-size: 13px; font-weight: 800; }
+.attachment-item button { background: transparent; border: 0; color: #be123c; font-weight: 900; }
+.reservation-recap { display: grid; gap: 14px; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.reservation-recap div { background: linear-gradient(135deg, #fff8ee, #f8fbff); border: 1px solid #ead8bd; border-radius: 22px; padding: 18px; }
+.reservation-recap span { color: var(--muted); display: block; font-size: 12px; font-weight: 900; margin-bottom: 8px; }
+.reservation-recap strong { font-family: "Instrument Serif"; font-size: 30px; }
+.primary-reservation-button { align-items: center; background: #111827; border: 0; color: white; display: inline-flex; gap: 10px; justify-content: center; min-height: 54px; }
+.reservation-success { background: #ecfdf5; border: 1px solid #bbf7d0; color: #166534; display: grid; gap: 6px; padding: 18px; }
+.reservation-warning { color: #b45309; font-size: 13px; font-weight: 900; margin: 0; }
+.admin-shell-modern { background: linear-gradient(180deg, #eef4fb 0%, #f8fbff 22%, #ffffff 100%); }
+.admin-side-modern { background: rgba(255,255,255,.84); border-right: 1px solid rgba(15,23,42,.08); backdrop-filter: blur(18px); }
+.admin-main-modern { padding: 38px; }
+.admin-top-modern { margin-bottom: 30px; }
+.reservation-admin-shell { display: grid; gap: 18px; }
+.reservation-admin-search { align-items: center; background: white; border: 1px solid rgba(15,23,42,.08); border-radius: 999px; display: flex; gap: 10px; max-width: 460px; padding: 0 18px; }
+.reservation-admin-search input { background: transparent; border: 0; flex: 1; min-height: 50px; outline: 0; }
+.reservation-admin-list { display: grid; gap: 18px; }
+.reservation-request-card { direction: rtl; text-align: right; }
+.reservation-request-top { align-items: start; display: flex; gap: 18px; justify-content: space-between; margin-bottom: 18px; }
+.status-pill { display: inline-flex; font-size: 11px; font-weight: 900; margin-bottom: 12px; padding: 8px 12px; }
+.status-nouvelle { background: #eff6ff; color: #1d4ed8; }
+.status-en-etude { background: #fff7ed; color: #c2410c; }
+.status-confirmee { background: #ecfdf5; color: #15803d; }
+.status-annulee { background: #fef2f2; color: #b91c1c; }
+.status-select { color: var(--muted); display: grid; gap: 8px; font-size: 12px; font-weight: 900; min-width: 180px; }
+.status-select select { background: #f8fafc; border: 1px solid #e5edf3; min-height: 46px; padding: 0 14px; }
+.reservation-request-metrics { display: grid; gap: 12px; grid-template-columns: repeat(4, minmax(0, 1fr)); margin-bottom: 18px; }
+.reservation-request-metrics div { background: #f8fafc; border: 1px solid #e5edf3; border-radius: 18px; padding: 16px; }
+.reservation-request-metrics small { color: var(--muted); display: block; font-size: 12px; font-weight: 900; margin-bottom: 8px; }
+.reservation-request-metrics strong { font-family: "Instrument Serif"; font-size: 28px; }
+.reservation-request-grid { display: grid; gap: 18px; grid-template-columns: repeat(2, minmax(0, 1fr)); margin-bottom: 18px; }
+.reservation-request-grid h3, .reservation-request-files h3 { font-size: 26px; margin-bottom: 12px; }
+.reservation-request-grid p { color: #475569; line-height: 1.7; margin: 6px 0; }
+.reservation-passenger-list { display: grid; gap: 10px; }
+.reservation-passenger-item { background: #f8fafc; border: 1px solid #e5edf3; border-radius: 16px; display: grid; gap: 4px; padding: 14px; }
+.reservation-passenger-item small { color: var(--muted); }
+.travel-banner-preview { border-radius: 22px; max-height: 280px; object-fit: cover; width: 100%; }
 .user-list { display: grid; gap: 12px; align-content: start; }
 .user-list article { align-items: center; border-top: 1px solid #f1dfc9; display: grid; gap: 12px; grid-template-columns: 46px 1fr auto; padding-top: 14px; }
 .user-list article > span { align-items: center; background: var(--orange); border-radius: 50%; color: white; display: flex; font-weight: 900; height: 42px; justify-content: center; width: 42px; }
@@ -349,7 +432,7 @@ progress { accent-color: var(--orange); width: 100%; }
   .hero, .section, .testimonials { padding-left: 22px; padding-right: 22px; }
   .hero { padding-top: 100px; }
   .stats, .section-head, .contact-strip { align-items: start; flex-direction: column; }
-  .search-bar, .destination-grid, .tour-grid, .why, .footer-grid, .auth-panel, .admin-shell, .admin-grid, .metric-grid, .employee-board, .team-grid, .team-admin-grid { grid-template-columns: 1fr; }
+  .search-bar, .destination-grid, .tour-grid, .why, .footer-grid, .auth-panel, .admin-shell, .admin-grid, .metric-grid, .employee-board, .team-grid, .team-admin-grid, .travel-overview, .reservation-shell, .attachment-list, .reservation-recap, .reservation-request-metrics, .reservation-request-grid { grid-template-columns: 1fr; }
   .search-bar label { border-bottom: 1px solid var(--line); border-right: 0; }
   .search-bar button { min-height: 58px; }
   .destination-card.tall { min-height: 330px; }
@@ -357,6 +440,15 @@ progress { accent-color: var(--orange); width: 100%; }
   .feature-grid { grid-template-columns: 1fr; }
   .newsletter form { display: grid; }
   .newsletter button { justify-content: center; min-height: 54px; }
+  .travel-hero { min-height: auto; padding: 120px 22px 42px; }
+  .travel-overview { margin-top: -44px; padding: 0 22px; }
+  .travel-media img { min-height: 300px; }
+  .travel-summary { padding: 24px; }
+  .travel-tariffs, .reservation-top-grid, .traveler-grid { grid-template-columns: 1fr; }
+  .travel-divider { padding: 0 22px; }
+  .reservation-section { padding: 42px 22px 88px; }
+  .traveler-header, .reservation-request-top { align-items: stretch; display: grid; }
+  .reservation-admin-search { max-width: none; }
   .auth-visual { min-height: 360px; padding: 32px; }
   .auth-form { padding: 32px; }
   .admin-side { height: auto; position: static; }

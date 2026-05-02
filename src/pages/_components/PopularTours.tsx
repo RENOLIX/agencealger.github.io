@@ -1,12 +1,13 @@
 import { useMemo, useState } from "react";
 import { Clock, MapPin, Star, Users } from "lucide-react";
-import { benefitIcons, benefitLabels, categoryLabels, readStore, seedTravels, type Travel } from "../../lib/data";
+import { Link } from "react-router-dom";
+import { benefitIcons, benefitLabels, categoryLabels, getTravels, type Travel } from "../../lib/data";
 
 const categories = ["Tous", "Plage", "Aventure", "Culture", "Luxe"] as const;
 
 export default function PopularTours() {
   const [active, setActive] = useState<(typeof categories)[number]>("Tous");
-  const travels = readStore<Travel[]>("hv-travels", seedTravels);
+  const travels = getTravels();
   const filtered = useMemo(() => active === "Tous" ? travels : travels.filter((tour) => tour.category === active), [active, travels]);
 
   return (
@@ -37,6 +38,7 @@ export default function PopularTours() {
                 <div><strong>{tour.price.toLocaleString("fr-FR")} دج</strong><span>للشخص</span></div>
                 <span className={tour.ticketsLeft < 8 ? "low-stock" : ""}><Users size={13} /> {tour.ticketsLeft}/{tour.ticketsTotal} مكان</span>
               </div>
+              <Link className="reserve-link" to={`/voyages/${tour.id}`}>حجز هذه الرحلة</Link>
             </div>
           </article>
         ))}
