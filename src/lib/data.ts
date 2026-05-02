@@ -236,6 +236,9 @@ export const benefitOptions: BenefitKey[] = [
   "Experience locale",
 ];
 
+const benefitOptionSet = new Set<string>(benefitOptions);
+const travelCategorySet = new Set<TravelCategory>(["Plage", "Aventure", "Culture", "Luxe"]);
+
 export const benefitLabels: Record<BenefitKey, string> = {
   Vol: "الطيران",
   Hotel: "الفندق",
@@ -638,26 +641,36 @@ type ReservationAttachmentRow = {
 };
 
 function mapTravelRow(row: TravelRow): Travel {
+  const image = row.image_url || "https://images.pexels.com/photos/32525647/pexels-photo-32525647.jpeg?auto=compress&cs=tinysrgb&w=1400";
+  const images = Array.isArray(row.image_urls) && row.image_urls.length > 0
+    ? row.image_urls.filter(Boolean)
+    : [image];
+  const guides = Array.isArray(row.guides) ? row.guides.filter(Boolean) : [];
+  const benefits = Array.isArray(row.benefits)
+    ? row.benefits.filter((benefit): benefit is BenefitKey => benefitOptionSet.has(benefit))
+    : [];
+  const category = travelCategorySet.has(row.category) ? row.category : "Culture";
+
   return {
     id: row.id,
-    name: row.name,
-    destination: row.destination,
-    country: row.country,
-    image: row.image_url,
-    images: row.image_urls?.length ? row.image_urls : [row.image_url],
-    banner: row.banner_url,
-    date: row.departure_date,
-    duration: row.duration,
-    price: Number(row.adult_price),
-    childPrice: Number(row.child_price),
-    description: row.short_description,
-    longDescription: row.long_description,
-    guides: row.guides ?? [],
-    category: row.category,
-    benefits: (row.benefits ?? []) as BenefitKey[],
-    ticketsTotal: row.tickets_total,
-    ticketsLeft: row.tickets_left,
-    rating: Number(row.rating),
+    name: row.name || "رحلة عمرة",
+    destination: row.destination || "مكة المكرمة",
+    country: row.country || "السعودية",
+    image,
+    images,
+    banner: row.banner_url || image,
+    date: row.departure_date || new Date().toISOString().slice(0, 10),
+    duration: row.duration || "30 يوم",
+    price: Number(row.adult_price ?? 0),
+    childPrice: Number(row.child_price ?? 0),
+    description: row.short_description || "برنامج عمرة منظم.",
+    longDescription: row.long_description || row.short_description || "برنامج عمرة منظم مع متابعة كاملة.",
+    guides,
+    category,
+    benefits,
+    ticketsTotal: Number(row.tickets_total ?? 0),
+    ticketsLeft: Number(row.tickets_left ?? 0),
+    rating: Number(row.rating ?? 4.8),
   };
 }
 

@@ -1,5 +1,6 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { Edit3, LogOut, Mail, Plus, ReceiptText, Save, Search, ShieldCheck, Trash2, Users, WalletCards } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../components/providers/auth";
 import {
   benefitIcons,
@@ -18,7 +19,6 @@ import {
   reservationStatusLabels,
   saveTravelToSupabase,
   saveContactMessages,
-  saveReservations,
   saveTeamGroups,
   saveTravels,
   saveUsers,
@@ -29,10 +29,8 @@ import {
   type BenefitKey,
   type ContactMessage,
   type Reservation,
-  type ReservationStatus,
   type TeamGroup,
   type Travel,
-  updateReservationStatusInSupabase,
   type User,
 } from "../lib/data";
 
@@ -59,6 +57,7 @@ const emptyTravelForm = {
 
 export default function Admin() {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const [tab, setTab] = useState<Tab>("reservations");
   const [travels, setTravels] = useState<Travel[]>(() => getTravels());
   const [reservations, setReservations] = useState<Reservation[]>(() => getReservations());
@@ -80,10 +79,16 @@ export default function Admin() {
     void syncTeamGroupsFromSupabase().then(setTeamGroups).catch(() => undefined);
   }, []);
 
+  const visibleReservations = useMemo(() => (
+    user?.role === "admin"
+      ? reservations
+      : reservations.filter((reservation) => reservation.employeeId === user?.id)
+  ), [reservations, user]);
+
   const filteredReservations = useMemo(() => {
     const needle = reservationQuery.trim().toLowerCase();
-    if (!needle) return reservations;
-    return reservations.filter((reservation) => {
+    if (!needle) return visibleReservations;
+    return visibleReservations.filter((reservation) => {
       return [
         reservation.travelName,
         reservation.customerFirstName,
@@ -92,7 +97,7 @@ export default function Admin() {
         reservation.employeeName,
       ].some((value) => value.toLowerCase().includes(needle));
     });
-  }, [reservationQuery, reservations]);
+  }, [reservationQuery, visibleReservations]);
 
   const totalPending = reservations.filter((reservation) => reservation.status === "Nouvelle" || reservation.status === "En etude").length;
   const confirmedRevenue = reservations
@@ -102,11 +107,6 @@ export default function Admin() {
   function persistTravels(next: Travel[]) {
     setTravels(next);
     saveTravels(next);
-  }
-
-  function persistReservations(next: Reservation[]) {
-    setReservations(next);
-    saveReservations(next);
   }
 
   function persistMessages(next: ContactMessage[]) {
@@ -292,42 +292,6 @@ export default function Admin() {
     }
   }
 
-  async function updateReservationStatus(reservationId: string, nextStatus: ReservationStatus) {
-    const currentReservation = reservations.find((reservation) => reservation.id === reservationId);
-    if (!currentReservation) return;
-
-    if (currentReservation.status === nextStatus) return;
-
-    const relatedTravel = travels.find((travel) => travel.id === currentReservation.travelId);
-
-    if (relatedTravel) {
-      if (nextStatus === "Confirmee" && currentReservation.status !== "Confirmee") {
-        if (relatedTravel.ticketsLeft < currentReservation.quantity) {
-          window.alert("لا توجد أماكن كافية لتأكيد هذه الطلبية.");
-          return;
-        }
-        persistTravels(travels.map((travel) => travel.id === relatedTravel.id ? { ...travel, ticketsLeft: travel.ticketsLeft - currentReservation.quantity } : travel));
-      }
-
-      if (currentReservation.status === "Confirmee" && nextStatus !== "Confirmee") {
-        persistTravels(travels.map((travel) => travel.id === relatedTravel.id ? { ...travel, ticketsLeft: travel.ticketsLeft + currentReservation.quantity } : travel));
-      }
-    }
-
-    persistReservations(reservations.map((reservation) => reservation.id === reservationId ? { ...reservation, status: nextStatus } : reservation));
-
-    try {
-      const [remoteReservations, remoteTravels] = await Promise.all([
-        updateReservationStatusInSupabase(reservationId, nextStatus),
-        syncTravelsFromSupabase(),
-      ]);
-      setReservations(remoteReservations);
-      setTravels(remoteTravels);
-    } catch (error) {
-      console.error(error);
-    }
-  }
-
   function createTeamRole(event: FormEvent) {
     event.preventDefault();
     const title = teamRoleForm.trim();
@@ -360,7 +324,8 @@ export default function Admin() {
         <div className="admin-logo">
           <img src="/agencealger.github.io/logo-normal.png" alt="Hamdi Voyage" />
         </div>
-        <button className={tab === "reservations" ? "active" : ""} onClick={() => setTab("reservations")}><ReceiptText /> الطلبات</button>
+        {user?.role === "admin" && <button onClick={() => navigate("/admin/approvals")}><ShieldCheck /> الحجوزات للموافقة</button>}
+        <button className={tab === "reservations" ? "active" : ""} onClick={() => setTab("reservations")}><ReceiptText /> سجل الحجوزات</button>
         <button className={tab === "voyages" ? "active" : ""} onClick={() => setTab("voyages")}><WalletCards /> الرحلات</button>
         <button className={tab === "team" ? "active" : ""} onClick={() => setTab("team")}><Users /> الطاقم</button>
         <button className={tab === "messages" ? "active" : ""} onClick={() => setTab("messages")}><Mail /> الرسائل</button>
@@ -372,7 +337,7 @@ export default function Admin() {
         <header className="admin-top admin-top-modern">
           <div>
             <span className="label">لوحة الوكالة</span>
-            <h1>{tab === "reservations" ? "إدارة طلبات الحجز" : tab === "voyages" ? "إدارة الرحلات" : tab === "team" ? "إدارة الطاقم" : tab === "messages" ? "رسائل العملاء" : "الحسابات"}</h1>
+            <h1>{tab === "reservations" ? "متابعة سجل الحجوزات" : tab === "voyages" ? "إدارة الرحلات" : tab === "team" ? "إدارة الطاقم" : tab === "messages" ? "رسائل العملاء" : "الحسابات"}</h1>
           </div>
           <div className="profile">
             <span>{user?.avatar}</span>
@@ -407,14 +372,14 @@ export default function Admin() {
                       <h2>{reservation.travelName}</h2>
                       <p>{reservation.customerFirstName} {reservation.customerLastName} - {reservation.customerPhone}</p>
                     </div>
-                    <label className="status-select">
-                      الحالة
-                      <select value={reservation.status} onChange={(event) => updateReservationStatus(reservation.id, event.target.value as ReservationStatus)}>
-                        {Object.keys(reservationStatusLabels).map((status) => (
-                          <option key={status} value={status}>{reservationStatusLabels[status as ReservationStatus]}</option>
-                        ))}
-                      </select>
-                    </label>
+                    <div className="history-side">
+                      <strong>{reservationStatusLabels[reservation.status]}</strong>
+                      {user?.role === "admin" && (reservation.status === "Nouvelle" || reservation.status === "En etude") && (
+                        <button type="button" className="secondary-button" onClick={() => navigate("/admin/approvals")}>
+                          فتح صفحة الموافقة
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   <div className="reservation-request-metrics">

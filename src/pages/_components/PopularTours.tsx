@@ -34,10 +34,11 @@ export default function PopularTours() {
               <div className="benefits">
                 {tour.benefits.map((benefit) => {
                   const Icon = benefitIcons[benefit];
-                  return <span key={benefit}><Icon size={12} /> {benefitLabels[benefit]}</span>;
+                  if (!Icon) return null;
+                  return <span key={benefit}><Icon size={12} /> {benefitLabels[benefit] ?? benefit}</span>;
                 })}
               </div>
-              <p className="tour-desc">المرشدون: {tour.guides}</p>
+              <p className="tour-desc">المرشدون: {tour.guides.join(" - ")}</p>
               <div className="tour-foot">
                 <div><strong>{tour.price.toLocaleString("fr-FR")} دج</strong><span>للشخص</span></div>
                 <span className={tour.ticketsLeft < 8 ? "low-stock" : ""}><Users size={13} /> {tour.ticketsLeft}/{tour.ticketsTotal} مكان</span>

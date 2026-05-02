@@ -5,6 +5,7 @@ import { AuthProvider, useAuth } from "./components/providers/auth";
 import Index from "./pages/Index";
 import SignIn from "./pages/auth/SignIn";
 import Admin from "./pages/Admin";
+import ApprovalReservations from "./pages/ApprovalReservations";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
 import NotFound from "./pages/NotFound";
@@ -15,6 +16,12 @@ import "./index.css";
 function Protected({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   return user ? children : <Navigate to="/auth" replace />;
+}
+
+function AdminOnly({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth();
+  if (!user) return <Navigate to="/auth" replace />;
+  return user.role === "admin" ? children : <Navigate to="/admin" replace />;
 }
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
@@ -29,6 +36,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
           <Route path="/voyages/:travelId" element={<TravelDetail />} />
           <Route path="/auth" element={<SignIn />} />
           <Route path="/admin" element={<Protected><Admin /></Protected>} />
+          <Route path="/admin/approvals" element={<AdminOnly><ApprovalReservations /></AdminOnly>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </AuthProvider>

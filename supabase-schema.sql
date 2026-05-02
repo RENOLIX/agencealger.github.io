@@ -32,6 +32,25 @@ create table if not exists public.profiles (
   created_at timestamptz not null default now()
 );
 
+alter table public.profiles
+  add column if not exists full_name text,
+  add column if not exists role public.app_role,
+  add column if not exists avatar text,
+  add column if not exists created_at timestamptz default now();
+
+update public.profiles
+set
+  full_name = coalesce(nullif(full_name, ''), 'Utilisateur'),
+  role = coalesce(role, 'employee'::public.app_role),
+  created_at = coalesce(created_at, now());
+
+alter table public.profiles
+  alter column full_name set not null,
+  alter column role set default 'employee',
+  alter column role set not null,
+  alter column created_at set default now(),
+  alter column created_at set not null;
+
 create table if not exists public.team_groups (
   id uuid primary key default gen_random_uuid(),
   title text not null unique,
@@ -73,6 +92,88 @@ create table if not exists public.travels (
   updated_at timestamptz not null default now(),
   constraint tickets_left_lte_total check (tickets_left <= tickets_total)
 );
+
+alter table public.travels
+  add column if not exists name text,
+  add column if not exists destination text,
+  add column if not exists country text,
+  add column if not exists image_url text,
+  add column if not exists image_urls text[] default '{}',
+  add column if not exists banner_url text,
+  add column if not exists departure_date date,
+  add column if not exists duration text,
+  add column if not exists adult_price numeric(12,2),
+  add column if not exists child_price numeric(12,2),
+  add column if not exists short_description text,
+  add column if not exists long_description text,
+  add column if not exists guides text[] default '{}',
+  add column if not exists category public.travel_category,
+  add column if not exists benefits text[] default '{}',
+  add column if not exists tickets_total integer,
+  add column if not exists tickets_left integer,
+  add column if not exists rating numeric(2,1) default 4.8,
+  add column if not exists active boolean default true,
+  add column if not exists created_by uuid references public.profiles(id) on delete set null,
+  add column if not exists created_at timestamptz default now(),
+  add column if not exists updated_at timestamptz default now();
+
+update public.travels
+set
+  name = coalesce(name, 'رحلة'),
+  destination = coalesce(destination, 'مكة المكرمة'),
+  country = coalesce(country, 'السعودية'),
+  image_url = coalesce(image_url, 'https://images.pexels.com/photos/32525647/pexels-photo-32525647.jpeg?auto=compress&cs=tinysrgb&w=1400'),
+  image_urls = coalesce(image_urls, array[coalesce(image_url, 'https://images.pexels.com/photos/32525647/pexels-photo-32525647.jpeg?auto=compress&cs=tinysrgb&w=1400')]),
+  banner_url = coalesce(banner_url, image_url, 'https://images.pexels.com/photos/32525647/pexels-photo-32525647.jpeg?auto=compress&cs=tinysrgb&w=1920'),
+  departure_date = coalesce(departure_date, current_date),
+  duration = coalesce(duration, '30 يوم'),
+  adult_price = coalesce(adult_price, 0),
+  child_price = coalesce(child_price, 0),
+  short_description = coalesce(short_description, 'برنامج عمرة منظم'),
+  long_description = coalesce(long_description, short_description, 'برنامج عمرة منظم'),
+  guides = coalesce(guides, '{}'),
+  benefits = coalesce(benefits, '{}'),
+  tickets_total = coalesce(tickets_total, 0),
+  tickets_left = coalesce(tickets_left, 0),
+  rating = coalesce(rating, 4.8),
+  active = coalesce(active, true),
+  created_at = coalesce(created_at, now()),
+  updated_at = coalesce(updated_at, now())
+where true;
+
+update public.travels
+set category = 'Culture'::public.travel_category
+where category is null;
+
+alter table public.travels
+  alter column name set not null,
+  alter column destination set not null,
+  alter column country set not null,
+  alter column image_url set not null,
+  alter column image_urls set default '{}',
+  alter column image_urls set not null,
+  alter column banner_url set not null,
+  alter column departure_date set not null,
+  alter column duration set not null,
+  alter column adult_price set not null,
+  alter column child_price set not null,
+  alter column short_description set not null,
+  alter column long_description set not null,
+  alter column guides set default '{}',
+  alter column guides set not null,
+  alter column category set not null,
+  alter column benefits set default '{}',
+  alter column benefits set not null,
+  alter column tickets_total set not null,
+  alter column tickets_left set not null,
+  alter column rating set default 4.8,
+  alter column rating set not null,
+  alter column active set default true,
+  alter column active set not null,
+  alter column created_at set default now(),
+  alter column created_at set not null,
+  alter column updated_at set default now(),
+  alter column updated_at set not null;
 
 create table if not exists public.contact_messages (
   id uuid primary key default gen_random_uuid(),
