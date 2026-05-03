@@ -8,6 +8,7 @@ import {
   benefitLabels,
   benefitOptions,
   categoryLabels,
+  defaultRoomPrices,
   deleteTravelFromSupabase,
   getContactMessages,
   getReservations,
@@ -18,6 +19,8 @@ import {
   passengerTypeLabels,
   replaceTeamGroupsInSupabase,
   reservationStatusLabels,
+  roomCapacities,
+  roomTypeLabels,
   saveContactMessages,
   saveTeamGroups,
   saveTravelToSupabase,
@@ -33,10 +36,11 @@ import {
   type TeamGroup,
   type Travel,
   type TravelHotel,
+  type TravelRoomPrices,
   type User,
 } from "../lib/data";
 
-type AdminTab = "dashboard" | "reservations" | "history" | "voyages" | "team" | "messages" | "users";
+type AdminTab = "dashboard" | "reservations" | "housing" | "history" | "voyages" | "team" | "messages" | "users";
 
 type TravelFormState = {
   name: string;
@@ -49,6 +53,7 @@ type TravelFormState = {
   duration: string;
   price: number;
   commission: number;
+  roomPrices: TravelRoomPrices;
   hasChildPrice: boolean;
   childPrice: number;
   hasBabyPrice: boolean;
@@ -71,6 +76,7 @@ const airlineOptions = [
   { value: "MS", label: "MS" },
   { value: "TK", label: "TK" },
 ] as const;
+const roomPriceKeys = Object.keys(roomTypeLabels) as Array<keyof TravelRoomPrices>;
 
 const emptyTravelForm: TravelFormState = {
   name: "",
@@ -83,6 +89,7 @@ const emptyTravelForm: TravelFormState = {
   duration: "30 يوم",
   price: 185000,
   commission: 0,
+  roomPrices: { double: 205000, triple: 195000, quad: 190000, quint: 185000 },
   hasChildPrice: true,
   childPrice: 145000,
   hasBabyPrice: false,
@@ -116,6 +123,7 @@ export default function Admin() {
   const [reservationQuery, setReservationQuery] = useState("");
   const [employeeQuery, setEmployeeQuery] = useState("");
   const [historyQuery, setHistoryQuery] = useState("");
+  const [housingQuery, setHousingQuery] = useState("");
   const [guideQuery, setGuideQuery] = useState("");
   const [openReservationId, setOpenReservationId] = useState("");
 
@@ -256,6 +264,35 @@ export default function Admin() {
     .reduce((sum, reservation) => sum + reservation.quantity, 0);
   const employeeCommissionTotal = reservationScope.reduce((sum, reservation) => sum + getReservationCommission(reservation), 0);
   const totalConfirmedCommission = reservations.reduce((sum, reservation) => sum + getReservationCommission(reservation), 0);
+  const pendingApprovalCount = reservations.filter((reservation) => reservation.status === "Nouvelle" || reservation.status === "En etude").length;
+  const housingEntries = useMemo(() => {
+    const source = isAdmin ? reservations : reservationScope;
+    return source.flatMap((reservation) => {
+      const rooms = reservation.rooms?.length
+        ? reservation.rooms
+        : [{ id: `${reservation.id}-room`, type: "quint" as const, capacity: reservation.quantity, price: 0 }];
+      return rooms.map((room, index) => ({
+        id: `${reservation.id}-${room.id}-${index}`,
+        reservation,
+        room,
+      }));
+    });
+  }, [isAdmin, reservationScope, reservations]);
+  const filteredHousingEntries = useMemo(() => {
+    const needle = housingQuery.trim().toLowerCase();
+    if (!needle) return housingEntries;
+    return housingEntries.filter(({ reservation, room }) => (
+      [
+        reservation.id,
+        reservation.travelName,
+        reservation.customerFirstName,
+        reservation.customerLastName,
+        reservation.customerPhone,
+        reservation.employeeName,
+        roomTypeLabels[room.type],
+      ].some((value) => value.toLowerCase().includes(needle))
+    ));
+  }, [housingEntries, housingQuery]);
   const allTeamNames = Array.from(new Set(teamGroups.flatMap((group) => group.members))).sort((a, b) => a.localeCompare(b, "ar"));
 
   function persistTravels(nextTravels: Travel[]) {
@@ -333,6 +370,7 @@ export default function Admin() {
       duration: travel.duration,
       price: travel.price,
       commission: Number(travel.commission ?? 0),
+      roomPrices: { ...defaultRoomPrices, ...(travel.roomPrices ?? {}), quint: Number(travel.roomPrices?.quint ?? travel.price) },
       hasChildPrice: travel.hasChildPrice ?? travel.childPrice != null,
       childPrice: travel.childPrice ?? 0,
       hasBabyPrice: travel.hasBabyPrice ?? travel.babyPrice != null,
@@ -481,8 +519,9 @@ export default function Admin() {
       date: departures[0],
       departures,
       duration: travelForm.duration.trim(),
-      price: Number(travelForm.price),
+      price: Number(travelForm.roomPrices.quint || travelForm.price),
       commission: Number(travelForm.commission),
+      roomPrices: travelForm.roomPrices,
       hasChildPrice: travelForm.hasChildPrice,
       childPrice: travelForm.hasChildPrice ? Number(travelForm.childPrice) : null,
       hasBabyPrice: travelForm.hasBabyPrice,
@@ -573,6 +612,7 @@ export default function Admin() {
           items={[
             { key: "dashboard", label: "لوحة المتابعة", active: tab === "dashboard", onClick: () => setTab("dashboard") },
             { key: "reservations", label: "سجل الحجوزات", active: tab === "reservations", onClick: () => setTab("reservations") },
+            { key: "housing", label: "تسكين", active: tab === "housing", onClick: () => setTab("housing") },
             { key: "history", label: "الأرشيف", active: tab === "history", onClick: () => setTab("history") },
             { key: "voyages", label: "الرحلات", active: tab === "voyages", onClick: () => setTab("voyages"), visible: isAdmin },
             { key: "team", label: "الطاقم", active: tab === "team", onClick: () => setTab("team"), visible: isAdmin },
@@ -581,6 +621,7 @@ export default function Admin() {
           ]}
           onCreateReservation={() => navigate("/admin/reservations/new")}
           onOpenApprovals={isAdmin ? () => navigate("/admin/approvals") : undefined}
+          approvalsBadge={pendingApprovalCount}
           onLogout={logout}
         />
 
@@ -590,6 +631,7 @@ export default function Admin() {
             <h1>
               {tab === "dashboard" ? (isAdmin ? "لوحة الأداء والمبيعات" : "لوحة الأداء الخاصة بك") :
                 tab === "reservations" ? "متابعة سجل الحجوزات" :
+                  tab === "housing" ? "تسكين الحجوزات" :
                   tab === "history" ? "الأرشيف الكامل للحجوزات" :
                 tab === "voyages" ? "إدارة الرحلات" :
                   tab === "team" ? "إدارة الطاقم" :
@@ -779,6 +821,15 @@ export default function Admin() {
                           <p><strong>العنوان:</strong> {reservation.customerAddress}</p>
                           <p><strong>الهاتف:</strong> {reservation.customerPhone}</p>
                           <p><strong>تاريخ الطلب:</strong> {new Date(reservation.createdAt).toLocaleString("fr-FR")}</p>
+                          <p><strong>رقم الحجز:</strong> {reservation.id}</p>
+                          <p><strong>الموظف:</strong> {reservation.employeeName}</p>
+                          <p><strong>عدد البالغين:</strong> {reservation.adults}</p>
+                          <p><strong>عدد الأطفال:</strong> {reservation.children}</p>
+                          <p><strong>عدد الرضع:</strong> {reservation.babies ?? 0}</p>
+                          <p><strong>المقاعد:</strong> {reservation.quantity}</p>
+                          <p><strong>الإجمالي:</strong> {reservation.total.toLocaleString("fr-FR")} دج</p>
+                          <p><strong>الغرف:</strong> {reservation.rooms?.length ? reservation.rooms.map((room) => `${roomTypeLabels[room.type]} (${room.capacity})`).join(" - ") : "غير محدد"}</p>
+                          <p><strong>المرفقات:</strong> {reservation.attachments.length}</p>
                           {reservation.notes && <p><strong>ملاحظة:</strong> {reservation.notes}</p>}
                           {isAdmin && (reservation.status === "Nouvelle" || reservation.status === "En etude") && (
                             <button type="button" className="secondary-button" onClick={() => navigate("/admin/approvals")}>
@@ -793,7 +844,12 @@ export default function Admin() {
                               <div key={passenger.id} className="reservation-passenger-item">
                                 <strong>{passenger.firstName} {passenger.lastName}</strong>
                                 <small>{passengerTypeLabels[passenger.type]} - {passenger.passportNumber}</small>
+                                <small>الهاتف: {passenger.phone} - العنوان: {passenger.address}</small>
+                                <small>الأب: {passenger.fatherName} - الجد: {passenger.grandfatherName || "غير مسجل"}</small>
+                                <small>الأم: {passenger.motherName}</small>
                                 <small>{passenger.birthPlace} - {passenger.birthDate}</small>
+                                <small>انتهاء صلاحية جواز السفر: {passenger.passportExpiry}</small>
+                                {passenger.notes && <small>ملاحظة: {passenger.notes}</small>}
                               </div>
                             ))}
                           </div>
@@ -817,6 +873,50 @@ export default function Admin() {
                 </article>
               ))}
             </div>
+          </div>
+        )}
+
+        {tab === "housing" && (
+          <div className="housing-admin-shell">
+            <div className="reservation-admin-toolbar">
+              <div className="reservation-admin-search">
+                <Search size={18} />
+                <input value={housingQuery} onChange={(event) => setHousingQuery(event.target.value)} placeholder="ابحث باسم المسافر أو رقم الحجز أو نوع الغرفة" />
+              </div>
+            </div>
+
+            <div className="housing-grid">
+              {filteredHousingEntries.map(({ id, reservation, room }) => (
+                <article key={id} className="housing-card">
+                  <header>
+                    <strong>{roomTypeLabels[room.type]}</strong>
+                    <span>{room.capacity} مقاعد</span>
+                  </header>
+                  <div className="housing-card-body">
+                    <small>رقم الحجز</small>
+                    <h2>#{reservation.id.slice(0, 8)}</h2>
+                    <p>{reservation.travelName}</p>
+                    <p>{new Date(reservation.createdAt).toLocaleDateString("fr-FR")}</p>
+                    <div className="housing-passengers">
+                      {reservation.passengers.map((passenger) => (
+                        <span key={passenger.id}>{passenger.firstName} {passenger.lastName}</span>
+                      ))}
+                    </div>
+                  </div>
+                  <footer>
+                    <span>{reservation.employeeName}</span>
+                    <span className={`status-pill status-${reservation.status.replace(/\s+/g, "-").toLowerCase()}`}>{reservationStatusLabels[reservation.status]}</span>
+                  </footer>
+                </article>
+              ))}
+            </div>
+
+            {filteredHousingEntries.length === 0 && (
+              <article className="admin-card">
+                <h2>لا توجد غرف</h2>
+                <p>كل الغرف المرتبطة بالحجوزات ستظهر هنا بعد إنشاء الطلبات.</p>
+              </article>
+            )}
           </div>
         )}
 
@@ -901,6 +1001,32 @@ export default function Admin() {
               </div>
               <div className="commission-row">
                 <label>العمولة لكل مقعد<input type="number" min={0} value={travelForm.commission} onChange={(event) => setTravelForm({ ...travelForm, commission: Number(event.target.value) })} /></label>
+              </div>
+
+              <div className="room-price-block">
+                <div className="editor-subhead">
+                  <div>
+                    <strong>أسعار الغرف</strong>
+                    <span>السعر المنشور للعميل يكون حسب غرفة خماسية، وكل غرفة تحسب عدد مقاعدها تلقائيا.</span>
+                  </div>
+                </div>
+                <div className="room-price-grid">
+                  {roomPriceKeys.map((roomType) => (
+                    <label key={roomType}>
+                      <span>{roomTypeLabels[roomType]}</span>
+                      <input
+                        type="number"
+                        min={0}
+                        value={travelForm.roomPrices[roomType]}
+                        onChange={(event) => setTravelForm({
+                          ...travelForm,
+                          roomPrices: { ...travelForm.roomPrices, [roomType]: Number(event.target.value) },
+                        })}
+                      />
+                      <small>{roomCapacities[roomType]} مقاعد</small>
+                    </label>
+                  ))}
+                </div>
               </div>
 
               <label>وصف مختصر<textarea required value={travelForm.description} onChange={(event) => setTravelForm({ ...travelForm, description: event.target.value })} /></label>
@@ -1028,6 +1154,7 @@ export default function Admin() {
                       <p>المرشدون: {travel.guides.join(" - ")}</p>
                       <strong>{travel.price.toLocaleString("fr-FR")} دج</strong>
                       <small>{travel.ticketsLeft}/{travel.ticketsTotal} مكان متاح</small>
+                      {travel.ticketsLeft <= 10 && <p className="admin-low-stock">تنبيه: بقي {travel.ticketsLeft} مقاعد فقط</p>}
                     </div>
                     <footer>
                       <button onClick={() => openEditTravel(travel)}><Edit3 size={15} /> تعديل</button>

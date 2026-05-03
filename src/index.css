@@ -1140,6 +1140,375 @@ input[type="number"]::-webkit-inner-spin-button {
   white-space: normal;
 }
 
+/* Final admin and reservation polish */
+.mobile-loop-copy { display: none; }
+
+@keyframes ticker {
+  from { transform: translateX(0); }
+  to { transform: translateX(100%); }
+}
+
+.admin-shell-modern {
+  background: #fffaf2;
+  isolation: isolate;
+  position: relative;
+}
+
+.admin-shell-modern::before {
+  background: url("/agencealger.github.io/admin/admin-pattern.jpg") center/cover fixed !important;
+  content: "" !important;
+  inset: 0 !important;
+  opacity: .8 !important;
+  pointer-events: none;
+  position: fixed !important;
+  z-index: -2 !important;
+}
+
+.admin-shell-modern::after {
+  background: rgba(255,255,255,.64);
+  content: "";
+  inset: 0;
+  pointer-events: none;
+  position: fixed;
+  z-index: -1;
+}
+
+.admin-main-modern,
+.admin-main-modern label,
+.admin-main-modern input,
+.admin-main-modern select,
+.admin-main-modern textarea,
+.admin-card,
+.reservation-line-card,
+.history-card,
+.travel-manage-card {
+  direction: rtl;
+  text-align: right;
+}
+
+.admin-appbar {
+  direction: ltr;
+}
+
+.admin-appbar-brand {
+  order: 1;
+}
+
+.admin-topnav {
+  order: 2;
+}
+
+.admin-appbar .profile {
+  direction: rtl;
+  order: 3;
+  text-align: right;
+}
+
+.admin-menu-backdrop {
+  display: none;
+}
+
+.nav-badge {
+  align-items: center;
+  background: #dc2626;
+  border-radius: 999px;
+  color: white;
+  display: inline-flex;
+  font-size: 11px;
+  font-weight: 950;
+  height: 22px;
+  justify-content: center;
+  line-height: 1;
+  min-width: 22px;
+  padding: 0 7px;
+}
+
+.room-price-block {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 22px;
+  display: grid;
+  gap: 16px;
+  padding: 20px;
+}
+
+.room-price-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.room-price-grid label {
+  background: white;
+  border: 1px solid #e5edf3;
+  border-radius: 18px;
+  box-shadow: 0 18px 48px -42px rgba(15,23,42,.28);
+  display: grid;
+  gap: 8px;
+  padding: 16px;
+}
+
+.room-price-grid label span,
+.room-price-grid label small {
+  color: #334155;
+  font-weight: 900;
+}
+
+.room-price-grid input {
+  border-radius: 14px !important;
+  font-size: 18px !important;
+}
+
+.room-selector-block {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 24px;
+  display: grid;
+  gap: 16px;
+  padding: 20px;
+}
+
+.room-choice-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.room-choice-grid button {
+  background: white;
+  border: 1px solid #e5edf3;
+  border-radius: 18px;
+  color: #0f172a;
+  display: grid;
+  gap: 4px;
+  min-height: 104px;
+  padding: 14px;
+  text-align: right;
+}
+
+.room-choice-grid button:disabled {
+  cursor: not-allowed;
+  opacity: .45;
+}
+
+.room-choice-grid small,
+.room-choice-grid span {
+  color: #64748b;
+  font-weight: 800;
+}
+
+.selected-room-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.selected-room-list button {
+  background: #111827;
+  border: 0;
+  border-radius: 999px;
+  color: white;
+  font-weight: 900;
+  padding: 10px 14px;
+}
+
+.housing-admin-shell {
+  display: grid;
+  gap: 18px;
+}
+
+.housing-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.housing-card {
+  aspect-ratio: 1 / .86;
+  background: rgba(255,255,255,.94);
+  border: 1px solid #e5edf3;
+  border-radius: 24px;
+  box-shadow: 0 24px 70px -56px rgba(15,23,42,.34);
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  overflow: hidden;
+}
+
+.housing-card header {
+  align-items: center;
+  background: #111827;
+  color: white;
+  display: flex;
+  justify-content: space-between;
+  padding: 13px 16px;
+}
+
+.housing-card header span {
+  color: rgba(255,255,255,.72);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.housing-card-body {
+  display: grid;
+  gap: 7px;
+  padding: 16px;
+}
+
+.housing-card-body h2 {
+  font-size: 25px;
+}
+
+.housing-card-body p,
+.housing-card-body small {
+  color: #64748b;
+  margin: 0;
+}
+
+.housing-passengers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.housing-passengers span {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+  color: #334155;
+  font-size: 12px;
+  font-weight: 900;
+  padding: 6px 10px;
+}
+
+.housing-card footer {
+  align-items: center;
+  border-top: 1px solid #e5edf3;
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 16px;
+}
+
+.admin-low-stock {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 14px;
+  color: #dc2626 !important;
+  font-weight: 950 !important;
+  margin: 12px 0 0;
+  padding: 10px 12px;
+}
+
+.reservation-line-details p {
+  color: #334155;
+  margin: 6px 0;
+}
+
+.reservation-passenger-item {
+  align-items: start;
+}
+
+.reservation-passenger-item small {
+  line-height: 1.6;
+}
+
+.about-photo-story {
+  align-items: start;
+  grid-auto-rows: auto !important;
+}
+
+.about-photo-story img,
+.about-photo-story img:nth-child(2),
+.about-photo-story .about-photo-wide,
+.about-photo-story .about-photo-portrait {
+  background: #f8fafc;
+  height: auto !important;
+  max-height: none !important;
+  object-fit: contain !important;
+  width: 100%;
+}
+
+.about-photo-story .about-photo-wide,
+.about-photo-story .about-photo-portrait {
+  grid-row: auto !important;
+}
+
+@media (max-width: 900px) {
+  .admin-menu-backdrop {
+    background: transparent;
+    border: 0;
+    display: block;
+    inset: 0;
+    padding: 0;
+    position: fixed;
+    z-index: 18;
+  }
+
+  .admin-appbar.menu-open .admin-menu-toggle {
+    display: none;
+  }
+
+  .admin-topnav.open {
+    position: relative;
+    z-index: 22;
+  }
+
+  .admin-topnav.open button {
+    justify-content: flex-end !important;
+    text-align: right !important;
+  }
+
+  .feature {
+    text-align: center !important;
+  }
+
+  .feature span {
+    margin: 0 auto 18px !important;
+  }
+
+  .feature h3,
+  .feature p {
+    text-align: center !important;
+  }
+
+  .about-band-track {
+    display: flex;
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+
+  .about-band-track h2 {
+    animation: ticker 13s linear infinite;
+    flex: 0 0 auto;
+    padding-inline: 28px;
+    white-space: nowrap;
+  }
+
+  .mobile-loop-copy {
+    display: block;
+  }
+
+  .room-price-grid,
+  .room-choice-grid,
+  .housing-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .housing-card {
+    aspect-ratio: auto;
+    min-height: 245px;
+  }
+
+  .admin-appbar .profile {
+    order: -1;
+  }
+
+  .about-photo-story {
+    grid-template-columns: 1fr !important;
+  }
+}
+
 .about-band-track h2 {
   animation: none;
   padding-right: 0;

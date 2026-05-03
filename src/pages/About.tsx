@@ -57,6 +57,7 @@ export default function About() {
         <Plane />
         <div className="about-band-track">
           <h2>6 رحلات شهرية إلى مكة، وهدف واحد: أن يشعر العميل أن كل شيء تحت السيطرة.</h2>
+          <h2 className="mobile-loop-copy" aria-hidden="true">6 رحلات شهرية إلى مكة، وهدف واحد: أن يشعر العميل أن كل شيء تحت السيطرة.</h2>
         </div>
         <Globe2 />
       </section>

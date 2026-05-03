@@ -81,6 +81,37 @@ export type TravelHotel = {
 
 export type FlightMode = "direct" | "escale";
 export type AirlineCode = "Air Algerie" | "SV" | "MS" | "TK";
+export type RoomType = "double" | "triple" | "quad" | "quint";
+
+export type TravelRoomPrices = Record<RoomType, number>;
+
+export type ReservationRoom = {
+  id: string;
+  type: RoomType;
+  capacity: number;
+  price: number;
+};
+
+export const roomTypeLabels: Record<RoomType, string> = {
+  double: "غرفة ثنائية",
+  triple: "غرفة ثلاثية",
+  quad: "غرفة رباعية",
+  quint: "غرفة خماسية",
+};
+
+export const roomCapacities: Record<RoomType, number> = {
+  double: 2,
+  triple: 3,
+  quad: 4,
+  quint: 5,
+};
+
+export const defaultRoomPrices: TravelRoomPrices = {
+  double: 0,
+  triple: 0,
+  quad: 0,
+  quint: 0,
+};
 
 export type Travel = {
   id: string;
@@ -94,6 +125,7 @@ export type Travel = {
   duration: string;
   price: number;
   commission?: number | null;
+  roomPrices?: TravelRoomPrices;
   childPrice?: number | null;
   babyPrice?: number | null;
   hasChildPrice?: boolean;
@@ -113,7 +145,7 @@ export type Travel = {
 };
 
 export type ReservationStatus = "Nouvelle" | "En etude" | "Confirmee" | "Annulee";
-export type PassengerType = "adult" | "child";
+export type PassengerType = "adult" | "child" | "baby";
 
 export type ReservationAttachment = {
   id: string;
@@ -130,6 +162,7 @@ export type ReservationPassenger = {
   phone: string;
   address: string;
   fatherName: string;
+  grandfatherName: string;
   motherName: string;
   birthPlace: string;
   birthDate: string;
@@ -150,7 +183,9 @@ export type Reservation = {
   customerPhone: string;
   adults: number;
   children: number;
+  babies?: number;
   quantity: number;
+  rooms?: ReservationRoom[];
   total: number;
   passengers: ReservationPassenger[];
   attachments: ReservationAttachment[];
@@ -335,6 +370,7 @@ export const reservationStatusLabels: Record<ReservationStatus, string> = {
 export const passengerTypeLabels: Record<PassengerType, string> = {
   adult: "بالغ",
   child: "طفل",
+  baby: "رضيع",
 };
 
 const ARABIC_MONTHS = [
@@ -645,6 +681,7 @@ type TravelRow = {
   duration: string;
   adult_price: number | string;
   commission: number | string | null;
+  room_prices?: TravelRoomPrices | null;
   child_price: number | string | null;
   baby_price: number | string | null;
   has_child_price: boolean | null;
@@ -697,6 +734,7 @@ type ReservationRequestRow = {
   customer_phone: string;
   adults_count: number;
   children_count: number;
+  babies_count?: number | null;
   quantity: number;
   total_amount: number | string;
   notes: string | null;
@@ -723,22 +761,51 @@ function serializePassengerNotes(passenger: ReservationPassenger) {
     notes: passenger.notes || "",
     address: passenger.address || "",
     fatherName: passenger.fatherName || "",
+    grandfatherName: passenger.grandfatherName || "",
     motherName: passenger.motherName || "",
   });
 }
 
 function parsePassengerNotes(raw: string | null) {
-  if (!raw) return { notes: "", address: "", fatherName: "", motherName: "" };
+  if (!raw) return { notes: "", address: "", fatherName: "", grandfatherName: "", motherName: "" };
   try {
     const parsed = JSON.parse(raw) as Partial<ReservationPassenger>;
     return {
       notes: typeof parsed.notes === "string" ? parsed.notes : "",
       address: typeof parsed.address === "string" ? parsed.address : "",
       fatherName: typeof parsed.fatherName === "string" ? parsed.fatherName : "",
+      grandfatherName: typeof parsed.grandfatherName === "string" ? parsed.grandfatherName : "",
       motherName: typeof parsed.motherName === "string" ? parsed.motherName : "",
     };
   } catch {
-    return { notes: raw, address: "", fatherName: "", motherName: "" };
+    return { notes: raw, address: "", fatherName: "", grandfatherName: "", motherName: "" };
+  }
+}
+
+function serializeReservationNotes(reservation: Reservation) {
+  return JSON.stringify({
+    notes: reservation.notes || "",
+    babies: Number(reservation.babies ?? 0),
+    rooms: reservation.rooms ?? [],
+  });
+}
+
+function parseReservationNotes(raw: string | null) {
+  if (!raw) return { notes: "", babies: 0, rooms: [] as ReservationRoom[] };
+  try {
+    const parsed = JSON.parse(raw) as { notes?: unknown; babies?: unknown; rooms?: unknown };
+    return {
+      notes: typeof parsed.notes === "string" ? parsed.notes : "",
+      babies: typeof parsed.babies === "number" ? parsed.babies : 0,
+      rooms: Array.isArray(parsed.rooms) ? parsed.rooms.filter((room): room is ReservationRoom => (
+        Boolean(room) &&
+        typeof room === "object" &&
+        "type" in room &&
+        "capacity" in room
+      )) : [],
+    };
+  } catch {
+    return { notes: raw, babies: 0, rooms: [] as ReservationRoom[] };
   }
 }
 
@@ -764,6 +831,7 @@ function normalizeTravel(travel: Travel): Travel {
     : [travel.date || new Date().toISOString().slice(0, 10)];
   const hasChildPrice = travel.hasChildPrice ?? travel.childPrice != null;
   const hasBabyPrice = travel.hasBabyPrice ?? travel.babyPrice != null;
+  const roomPrices = { ...defaultRoomPrices, ...(travel.roomPrices ?? {}) };
 
   return {
     ...travel,
@@ -772,6 +840,8 @@ function normalizeTravel(travel: Travel): Travel {
     banner: travel.banner || images[0] || image,
     date: departures[0] || travel.date || new Date().toISOString().slice(0, 10),
     departures,
+    roomPrices,
+    price: Number(roomPrices.quint || travel.price || 0),
     commission: Number(travel.commission ?? 0),
     childPrice: hasChildPrice ? Number(travel.childPrice ?? 0) : null,
     babyPrice: hasBabyPrice ? Number(travel.babyPrice ?? 0) : null,
@@ -813,6 +883,10 @@ function mapTravelRow(row: TravelRow): Travel {
     duration: row.duration || "30 يوم",
     price: Number(row.adult_price ?? 0),
     commission: Number(row.commission ?? 0),
+    roomPrices: row.room_prices ?? {
+      ...defaultRoomPrices,
+      quint: Number(row.adult_price ?? 0),
+    },
     childPrice: row.child_price == null ? null : Number(row.child_price),
     babyPrice: row.baby_price == null ? null : Number(row.baby_price),
     hasChildPrice: row.has_child_price ?? row.child_price != null,
@@ -846,6 +920,7 @@ function mapTravelToRow(travel: Travel) {
     duration: normalized.duration,
     adult_price: normalized.price,
     commission: Number(normalized.commission ?? 0),
+    room_prices: normalized.roomPrices ?? defaultRoomPrices,
     child_price: normalized.hasChildPrice ? normalized.childPrice : null,
     baby_price: normalized.hasBabyPrice ? normalized.babyPrice : null,
     has_child_price: normalized.hasChildPrice,
@@ -899,7 +974,9 @@ function mapReservationRows(
 ): Reservation[] {
   const travelNames = new globalThis.Map(travels.map((travel) => [travel.id, travel.name]));
 
-  return requestRows.map((row) => ({
+  return requestRows.map((row) => {
+    const reservationMeta = parseReservationNotes(row.notes);
+    return {
     id: row.id,
     travelId: row.travel_id,
     travelName: travelNames.get(row.travel_id) ?? "رحلة",
@@ -911,7 +988,9 @@ function mapReservationRows(
     customerPhone: row.customer_phone,
     adults: row.adults_count,
     children: row.children_count,
+    babies: Number(row.babies_count ?? reservationMeta.babies ?? 0),
     quantity: row.quantity,
+    rooms: reservationMeta.rooms,
     total: Number(row.total_amount),
     passengers: passengerRows
       .filter((passenger) => passenger.reservation_id === row.id)
@@ -925,6 +1004,7 @@ function mapReservationRows(
           phone: passenger.phone,
           address: meta.address,
           fatherName: meta.fatherName,
+          grandfatherName: meta.grandfatherName,
           motherName: meta.motherName,
           birthPlace: passenger.birth_place,
           birthDate: passenger.birth_date,
@@ -941,10 +1021,11 @@ function mapReservationRows(
         mimeType: attachment.mime_type,
         dataUrl: attachment.public_url ?? attachment.storage_path,
       })),
-    notes: row.notes ?? "",
+    notes: reservationMeta.notes,
     status: row.status,
     createdAt: row.created_at,
-  }));
+  };
+  });
 }
 
 async function uploadReservationAttachment(reservationId: string, attachment: ReservationAttachment) {
@@ -1176,7 +1257,7 @@ export async function createReservationInSupabase(reservation: Reservation) {
       children_count: reservation.children,
       quantity: reservation.quantity,
       total_amount: reservation.total,
-      notes: reservation.notes || null,
+      notes: serializeReservationNotes(reservation),
       status: reservation.status,
       created_at: reservation.createdAt,
     });

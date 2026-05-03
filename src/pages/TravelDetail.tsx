@@ -10,11 +10,14 @@ import {
   createReservationInSupabase,
   formatArabicDate,
   getTravels,
+  roomCapacities,
+  roomTypeLabels,
   syncTravelsFromSupabase,
   type PassengerType,
   type Reservation,
   type ReservationAttachment,
   type ReservationPassenger,
+  type ReservationRoom,
   type Travel,
 } from "../lib/data";
 import { useAuth } from "../components/providers/auth";
@@ -28,6 +31,7 @@ function createPassenger(type: PassengerType): ReservationPassenger {
     phone: "",
     address: "",
     fatherName: "",
+    grandfatherName: "",
     motherName: "",
     birthPlace: "",
     birthDate: "",
@@ -48,13 +52,15 @@ export default function TravelDetail() {
 
   const [adults, setAdults] = useState(1);
   const [children, setChildren] = useState(0);
+  const [babies, setBabies] = useState(0);
+  const [selectedRooms, setSelectedRooms] = useState<ReservationRoom[]>([]);
   const [generalNotes, setGeneralNotes] = useState("");
   const [attachments, setAttachments] = useState<ReservationAttachment[]>([]);
   const [passengers, setPassengers] = useState<ReservationPassenger[]>([createPassenger("adult")]);
   const [submittedId, setSubmittedId] = useState("");
   const [submitError, setSubmitError] = useState("");
 
-  const quantity = adults + children;
+  const quantity = adults + children + babies;
   const maxTickets = travel?.ticketsLeft ?? 0;
 
   useEffect(() => {
@@ -68,17 +74,29 @@ export default function TravelDetail() {
   }, [travelId]);
 
   useEffect(() => {
-    const total = adults + children;
+    const total = adults + children + babies;
     if (passengers.length > total) {
       setPassengers((current) => current.slice(0, total));
     }
-  }, [adults, children, passengers.length]);
+  }, [adults, children, babies, passengers.length]);
+
+  const selectedRoomCapacity = selectedRooms.reduce((sum, room) => sum + room.capacity, 0);
+  const roomPriceList = travel?.roomPrices ?? { double: travel?.price ?? 0, triple: travel?.price ?? 0, quad: travel?.price ?? 0, quint: travel?.price ?? 0 };
+  const roomTotal = selectedRooms.reduce((sum, room) => sum + room.price * room.capacity, 0);
+  const roomsMatchQuantity = quantity > 0 && selectedRoomCapacity === quantity;
+
+  useEffect(() => {
+    if (selectedRoomCapacity <= quantity) return;
+    setSelectedRooms([]);
+  }, [quantity, selectedRoomCapacity]);
 
   const total = useMemo(() => {
     if (!travel) return 0;
+    if (selectedRooms.length > 0) return roomTotal;
     const childUnit = travel.hasChildPrice ? Number(travel.childPrice ?? 0) : travel.price;
-    return adults * travel.price + children * childUnit;
-  }, [adults, children, travel]);
+    const babyUnit = travel.hasBabyPrice ? Number(travel.babyPrice ?? 0) : childUnit;
+    return adults * travel.price + children * childUnit + babies * babyUnit;
+  }, [adults, babies, children, roomTotal, selectedRooms.length, travel]);
 
   if (!travel) return <Navigate to="/" replace />;
   if (isAdminFlow && !user) return <Navigate to="/auth" replace />;
@@ -109,7 +127,9 @@ export default function TravelDetail() {
 
   function getNextPassengerType(): PassengerType {
     const adultCount = passengers.filter((passenger) => passenger.type === "adult").length;
-    return adultCount < adults ? "adult" : "child";
+    const childCount = passengers.filter((passenger) => passenger.type === "child").length;
+    if (adultCount < adults) return "adult";
+    return childCount < children ? "child" : "baby";
   }
 
   function addPassengerCard() {
@@ -121,6 +141,19 @@ export default function TravelDetail() {
     setAttachments((current) => current.filter((attachment) => attachment.id !== attachmentId));
   }
 
+  function addRoom(roomType: keyof typeof roomTypeLabels) {
+    const capacity = roomCapacities[roomType];
+    if (selectedRoomCapacity + capacity > quantity) return;
+    setSelectedRooms((current) => [
+      ...current,
+      { id: crypto.randomUUID(), type: roomType, capacity, price: Number(roomPriceList[roomType] ?? currentTravel.price) },
+    ]);
+  }
+
+  function removeRoom(roomId: string) {
+    setSelectedRooms((current) => current.filter((room) => room.id !== roomId));
+  }
+
   function isPassengerComplete(passenger: ReservationPassenger) {
     return Boolean(
       passenger.firstName.trim() &&
@@ -128,6 +161,7 @@ export default function TravelDetail() {
       passenger.phone.trim() &&
       passenger.address.trim() &&
       passenger.fatherName.trim() &&
+      passenger.grandfatherName.trim() &&
       passenger.motherName.trim() &&
       passenger.birthPlace.trim() &&
       passenger.birthDate &&
@@ -140,6 +174,10 @@ export default function TravelDetail() {
     event.preventDefault();
     setSubmitError("");
     if (quantity < 1 || quantity > currentTravel.ticketsLeft) return;
+    if (!roomsMatchQuantity) {
+      setSubmitError("اختر غرفا تغطي نفس عدد المسافرين قبل إرسال الحجز.");
+      return;
+    }
     if (passengers.length !== quantity || passengers.some((passenger) => !isPassengerComplete(passenger))) return;
     const primaryPassenger = passengers[0];
 
@@ -155,8 +193,10 @@ export default function TravelDetail() {
       customerPhone: primaryPassenger.phone.trim(),
       adults,
       children,
+      babies,
       quantity,
       total,
+      rooms: selectedRooms,
       passengers,
       attachments,
       notes: generalNotes.trim(),
@@ -170,6 +210,8 @@ export default function TravelDetail() {
       setGeneralNotes("");
       setAdults(1);
       setChildren(0);
+      setBabies(0);
+      setSelectedRooms([]);
       setPassengers([createPassenger("adult")]);
       setAttachments([]);
     } catch {
@@ -304,7 +346,9 @@ export default function TravelDetail() {
               <select value={adults} onChange={(event) => {
                 const nextAdults = Number(event.target.value);
                 setAdults(nextAdults);
-                if (nextAdults + children > maxTickets) setChildren(Math.max(0, maxTickets - nextAdults));
+                if (nextAdults + children + babies > maxTickets) {
+                  setChildren(Math.max(0, maxTickets - nextAdults - babies));
+                }
               }}>
                 {Array.from({ length: Math.max(1, maxTickets) }, (_, index) => index + 1).map((count) => (
                   <option key={count} value={count}>{count}</option>
@@ -314,11 +358,51 @@ export default function TravelDetail() {
             <label>
               عدد الأطفال
               <select value={children} onChange={(event) => setChildren(Number(event.target.value))}>
-                {Array.from({ length: Math.max(1, maxTickets - adults + 1) }, (_, index) => index).map((count) => (
+                {Array.from({ length: Math.max(1, maxTickets - adults - babies + 1) }, (_, index) => index).map((count) => (
                   <option key={count} value={count}>{count}</option>
                 ))}
               </select>
             </label>
+            <label>
+              عدد الرضع
+              <select value={babies} onChange={(event) => setBabies(Number(event.target.value))}>
+                {Array.from({ length: Math.max(1, maxTickets - adults - children + 1) }, (_, index) => index).map((count) => (
+                  <option key={count} value={count}>{count}</option>
+                ))}
+              </select>
+            </label>
+          </div>
+
+          <div className="room-selector-block">
+            <div className="traveler-header">
+              <div>
+                <h3>اختيار الغرف</h3>
+                <p>{selectedRoomCapacity} / {quantity} مقعد داخل الغرف</p>
+              </div>
+            </div>
+            <div className="room-choice-grid">
+              {(Object.keys(roomTypeLabels) as Array<keyof typeof roomTypeLabels>).map((roomType) => {
+                const capacity = roomCapacities[roomType];
+                const disabled = selectedRoomCapacity + capacity > quantity;
+                return (
+                  <button key={roomType} type="button" disabled={disabled} onClick={() => addRoom(roomType)}>
+                    <strong>{roomTypeLabels[roomType]}</strong>
+                    <span>{capacity} مقاعد</span>
+                    <small>{Number(roomPriceList[roomType] ?? currentTravel.price).toLocaleString("fr-FR")} دج</small>
+                  </button>
+                );
+              })}
+            </div>
+            {selectedRooms.length > 0 && (
+              <div className="selected-room-list">
+                {selectedRooms.map((room) => (
+                  <button key={room.id} type="button" onClick={() => removeRoom(room.id)}>
+                    {roomTypeLabels[room.type]} - {room.capacity} مقاعد
+                  </button>
+                ))}
+              </div>
+            )}
+            {!roomsMatchQuantity && <p className="reservation-warning">اختر غرفة أو أكثر حتى يصبح عدد مقاعد الغرف مساويا لعدد المسافرين.</p>}
           </div>
 
           <div className="reservation-line" />
@@ -338,19 +422,20 @@ export default function TravelDetail() {
               <article key={passenger.id} className="traveler-card">
                 <div className="traveler-card-head">
                   <strong>المسافر {index + 1}</strong>
-                  <span>{passenger.type === "adult" ? "بالغ" : "طفل"}</span>
+                  <span>{passenger.type === "adult" ? "بالغ" : passenger.type === "child" ? "طفل" : "رضيع"}</span>
                 </div>
                 <div className="traveler-grid">
                   <label>الاسم<input required value={passenger.firstName} onChange={(event) => updatePassenger(passenger.id, "firstName", event.target.value)} /></label>
                   <label>اللقب<input required value={passenger.lastName} onChange={(event) => updatePassenger(passenger.id, "lastName", event.target.value)} /></label>
                   <label>اسم الأب<input required value={passenger.fatherName} onChange={(event) => updatePassenger(passenger.id, "fatherName", event.target.value)} /></label>
-                  <label>اسم الأم<input required value={passenger.motherName} onChange={(event) => updatePassenger(passenger.id, "motherName", event.target.value)} /></label>
                   <label>رقم الهاتف<input required value={passenger.phone} onChange={(event) => updatePassenger(passenger.id, "phone", event.target.value)} /></label>
+                  <label>اسم الجد<input required value={passenger.grandfatherName} onChange={(event) => updatePassenger(passenger.id, "grandfatherName", event.target.value)} /></label>
+                  <label>اسم و لقب الأم<input required value={passenger.motherName} onChange={(event) => updatePassenger(passenger.id, "motherName", event.target.value)} /></label>
                   <label className="span-two">العنوان<input required value={passenger.address} onChange={(event) => updatePassenger(passenger.id, "address", event.target.value)} /></label>
                   <label>مكان الميلاد<input required value={passenger.birthPlace} onChange={(event) => updatePassenger(passenger.id, "birthPlace", event.target.value)} /></label>
                   <label>تاريخ الميلاد<input required type="date" value={passenger.birthDate} onChange={(event) => updatePassenger(passenger.id, "birthDate", event.target.value)} /></label>
                   <label>رقم جواز السفر<input required value={passenger.passportNumber} onChange={(event) => updatePassenger(passenger.id, "passportNumber", event.target.value)} /></label>
-                  <label>انتهاء جواز السفر<input required type="date" value={passenger.passportExpiry} onChange={(event) => updatePassenger(passenger.id, "passportExpiry", event.target.value)} /></label>
+                  <label>انتهاء صلاحية جواز السفر<input required type="date" value={passenger.passportExpiry} onChange={(event) => updatePassenger(passenger.id, "passportExpiry", event.target.value)} /></label>
                   <label className="span-two">ملاحظة خاصة<textarea value={passenger.notes} onChange={(event) => updatePassenger(passenger.id, "notes", event.target.value)} /></label>
                 </div>
               </article>
@@ -389,11 +474,12 @@ export default function TravelDetail() {
           <div className="reservation-recap">
             <div><span>الرحلة</span><strong>{travel.name}</strong></div>
             <div><span>المقاعد المطلوبة</span><strong>{quantity}</strong></div>
+            <div><span>الغرف</span><strong>{selectedRooms.length ? selectedRooms.map((room) => roomTypeLabels[room.type]).join(" - ") : "غير محدد"}</strong></div>
             <div><span>الإجمالي</span><strong>{total.toLocaleString("fr-FR")} دج</strong></div>
             <div><span>المرفقات</span><strong>{attachments.length}</strong></div>
           </div>
 
-          <button className="primary-reservation-button" disabled={quantity > travel.ticketsLeft}>
+          <button className="primary-reservation-button" disabled={quantity > travel.ticketsLeft || !roomsMatchQuantity}>
             <CheckCircle2 size={18} /> إرسال طلب الحجز
           </button>
 

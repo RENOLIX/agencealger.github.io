@@ -5,6 +5,7 @@ import type { User } from "../../lib/data";
 type NavItem = {
   key: string;
   label: string;
+  badge?: number;
   active?: boolean;
   onClick: () => void;
   visible?: boolean;
@@ -16,9 +17,10 @@ type AdminTopbarProps = {
   onCreateReservation: () => void;
   onLogout: () => void;
   onOpenApprovals?: () => void;
+  approvalsBadge?: number;
 };
 
-export default function AdminTopbar({ user, items, onCreateReservation, onLogout, onOpenApprovals }: AdminTopbarProps) {
+export default function AdminTopbar({ user, items, onCreateReservation, onLogout, onOpenApprovals, approvalsBadge = 0 }: AdminTopbarProps) {
   const [open, setOpen] = useState(false);
   const visibleItems = items.filter((item) => item.visible !== false);
 
@@ -28,7 +30,8 @@ export default function AdminTopbar({ user, items, onCreateReservation, onLogout
   }
 
   return (
-    <header className="admin-appbar">
+    <header className={`admin-appbar ${open ? "menu-open" : ""}`}>
+      {open && <button type="button" className="admin-menu-backdrop" aria-label="إغلاق القائمة" onClick={() => setOpen(false)} />}
       <div className="admin-appbar-brand">
         <button type="button" className="admin-menu-toggle" onClick={() => setOpen((current) => !current)} aria-label="القائمة">
           <Menu size={19} />
@@ -40,6 +43,7 @@ export default function AdminTopbar({ user, items, onCreateReservation, onLogout
         {visibleItems.map((item) => (
           <button key={item.key} type="button" className={item.active ? "active" : ""} onClick={() => run(item.onClick)}>
             {item.label}
+            {item.badge ? <span className="nav-badge">{item.badge}</span> : null}
           </button>
         ))}
 
@@ -50,6 +54,7 @@ export default function AdminTopbar({ user, items, onCreateReservation, onLogout
         {onOpenApprovals && (
           <button type="button" onClick={() => run(onOpenApprovals)}>
             <ShieldCheck size={15} /> الحجوزات للموافقة
+            {approvalsBadge ? <span className="nav-badge">{approvalsBadge}</span> : null}
           </button>
         )}
 

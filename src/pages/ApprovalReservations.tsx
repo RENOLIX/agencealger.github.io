@@ -67,10 +67,11 @@ export default function ApprovalReservations() {
           user={user}
           items={[
             { key: "dashboard", label: "لوحة الإدارة", onClick: () => navigate("/admin") },
-            { key: "approvals", label: "الحجوزات للموافقة", active: true, onClick: () => navigate("/admin/approvals") },
+            { key: "approvals", label: "الحجوزات للموافقة", badge: pendingReservations.length, active: true, onClick: () => navigate("/admin/approvals") },
           ]}
           onCreateReservation={() => navigate("/admin/reservations/new")}
           onOpenApprovals={() => navigate("/admin/approvals")}
+          approvalsBadge={pendingReservations.length}
           onLogout={logout}
         />
 
