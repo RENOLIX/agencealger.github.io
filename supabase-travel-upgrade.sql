@@ -1,6 +1,7 @@
 alter table public.travels
   add column if not exists departures date[] default '{}',
   add column if not exists baby_price numeric(12,2),
+  add column if not exists commission numeric(12,2) default 0,
   add column if not exists has_child_price boolean default true,
   add column if not exists has_baby_price boolean default false,
   add column if not exists hotels jsonb default '[]'::jsonb,
@@ -10,6 +11,7 @@ alter table public.travels
 update public.travels
 set
   departures = coalesce(departures, array[coalesce(departure_date, current_date)]),
+  commission = coalesce(commission, 0),
   has_child_price = coalesce(has_child_price, true),
   has_baby_price = coalesce(has_baby_price, false),
   hotels = coalesce(hotels, '[]'::jsonb),
@@ -20,6 +22,8 @@ where true;
 alter table public.travels
   alter column departures set default '{}',
   alter column departures set not null,
+  alter column commission set default 0,
+  alter column commission set not null,
   alter column has_child_price set default true,
   alter column has_child_price set not null,
   alter column has_baby_price set default false,

@@ -214,9 +214,9 @@ export default function TravelDetail() {
             <div><CalendarDays size={16} /><small>المدة</small><strong>{travel.duration}</strong></div>
             <div><Landmark size={16} /><small>الفئة</small><strong>{categoryLabels[travel.category]}</strong></div>
             <div><Plane size={16} /><small>الرحلة الجوية</small><strong>{travel.flightMode === "escale" ? "مع توقف" : "مباشرة"}</strong></div>
-            <div><Ticket size={16} /><small>الشركة</small><strong>{(travel.airlines ?? ["Air Algerie"]).join(" - ")}</strong></div>
+            <div><Ticket size={16} /><small>الشركة</small><strong>{(travel.airlines ?? ["Air Algerie"]).map((airline) => airline === "Air Algerie" ? "Air Algérie" : airline).join(" - ")}</strong></div>
             <div><Users size={16} /><small>سعر البالغ (ADT)</small><strong>{travel.price.toLocaleString("fr-FR")} دج</strong></div>
-            {travel.hasChildPrice && <div><Users size={16} /><small>سعر الطفل (CLD)</small><strong>{Number(travel.childPrice ?? 0).toLocaleString("fr-FR")} دج</strong></div>}
+            {travel.hasChildPrice && <div><Users size={16} /><small>سعر الطفل (CHD)</small><strong>{Number(travel.childPrice ?? 0).toLocaleString("fr-FR")} دج</strong></div>}
             {travel.hasBabyPrice && <div><Users size={16} /><small>سعر الرضيع (INF)</small><strong>{Number(travel.babyPrice ?? 0).toLocaleString("fr-FR")} دج</strong></div>}
             <div><Luggage size={16} /><small>المقاعد المتوفرة</small><strong>{travel.ticketsLeft}</strong></div>
           </div>

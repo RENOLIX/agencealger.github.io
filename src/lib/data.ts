@@ -80,7 +80,7 @@ export type TravelHotel = {
 };
 
 export type FlightMode = "direct" | "escale";
-export type AirlineCode = "Air Algerie" | "MS" | "TK";
+export type AirlineCode = "Air Algerie" | "SV" | "MS" | "TK";
 
 export type Travel = {
   id: string;
@@ -93,6 +93,7 @@ export type Travel = {
   departures?: string[];
   duration: string;
   price: number;
+  commission?: number | null;
   childPrice?: number | null;
   babyPrice?: number | null;
   hasChildPrice?: boolean;
@@ -643,6 +644,7 @@ type TravelRow = {
   departures: string[] | null;
   duration: string;
   adult_price: number | string;
+  commission: number | string | null;
   child_price: number | string | null;
   baby_price: number | string | null;
   has_child_price: boolean | null;
@@ -770,6 +772,7 @@ function normalizeTravel(travel: Travel): Travel {
     banner: travel.banner || images[0] || image,
     date: departures[0] || travel.date || new Date().toISOString().slice(0, 10),
     departures,
+    commission: Number(travel.commission ?? 0),
     childPrice: hasChildPrice ? Number(travel.childPrice ?? 0) : null,
     babyPrice: hasBabyPrice ? Number(travel.babyPrice ?? 0) : null,
     hasChildPrice,
@@ -809,6 +812,7 @@ function mapTravelRow(row: TravelRow): Travel {
     departures: Array.isArray(row.departures) && row.departures.length > 0 ? row.departures.filter(Boolean) : [row.departure_date || new Date().toISOString().slice(0, 10)],
     duration: row.duration || "30 يوم",
     price: Number(row.adult_price ?? 0),
+    commission: Number(row.commission ?? 0),
     childPrice: row.child_price == null ? null : Number(row.child_price),
     babyPrice: row.baby_price == null ? null : Number(row.baby_price),
     hasChildPrice: row.has_child_price ?? row.child_price != null,
@@ -841,6 +845,7 @@ function mapTravelToRow(travel: Travel) {
     departures: normalized.departures,
     duration: normalized.duration,
     adult_price: normalized.price,
+    commission: Number(normalized.commission ?? 0),
     child_price: normalized.hasChildPrice ? normalized.childPrice : null,
     baby_price: normalized.hasBabyPrice ? normalized.babyPrice : null,
     has_child_price: normalized.hasChildPrice,
@@ -1128,7 +1133,7 @@ export async function syncReservationsFromSupabase() {
       ? supabase.from("reservation_attachments").select("id, reservation_id, file_name, mime_type, storage_path, public_url").in("reservation_id", reservationIds)
       : Promise.resolve({ data: [], error: null }),
     travelIds.length > 0
-      ? supabase.from("travels").select("id, name, destination, country, image_url, image_urls, banner_url, departure_date, departures, duration, adult_price, child_price, baby_price, has_child_price, has_baby_price, short_description, long_description, guides, hotels, flight_mode, airlines, category, benefits, tickets_total, tickets_left, rating").in("id", travelIds)
+    ? supabase.from("travels").select("id, name, destination, country, image_url, image_urls, banner_url, departure_date, departures, duration, adult_price, commission, child_price, baby_price, has_child_price, has_baby_price, short_description, long_description, guides, hotels, flight_mode, airlines, category, benefits, tickets_total, tickets_left, rating").in("id", travelIds)
       : Promise.resolve({ data: [], error: null }),
   ]);
 

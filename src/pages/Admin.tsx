@@ -36,7 +36,7 @@ import {
   type User,
 } from "../lib/data";
 
-type AdminTab = "reservations" | "voyages" | "team" | "messages" | "users";
+type AdminTab = "dashboard" | "reservations" | "history" | "voyages" | "team" | "messages" | "users";
 
 type TravelFormState = {
   name: string;
@@ -48,6 +48,7 @@ type TravelFormState = {
   departures: string[];
   duration: string;
   price: number;
+  commission: number;
   hasChildPrice: boolean;
   childPrice: number;
   hasBabyPrice: boolean;
@@ -57,11 +58,19 @@ type TravelFormState = {
   guides: string[];
   hotels: TravelHotel[];
   flightMode: "direct" | "escale";
-  airlines: Array<"Air Algerie" | "MS" | "TK">;
+  airlines: Array<"Air Algerie" | "SV" | "MS" | "TK">;
   category: Travel["category"];
   benefits: BenefitKey[];
   ticketsTotal: number;
 };
+
+const destinationOptions = ["مكة المكرمة", "المدينة"] as const;
+const airlineOptions = [
+  { value: "Air Algerie", label: "Air Algérie" },
+  { value: "SV", label: "SV" },
+  { value: "MS", label: "MS" },
+  { value: "TK", label: "TK" },
+] as const;
 
 const emptyTravelForm: TravelFormState = {
   name: "",
@@ -73,6 +82,7 @@ const emptyTravelForm: TravelFormState = {
   departures: [""],
   duration: "30 يوم",
   price: 185000,
+  commission: 0,
   hasChildPrice: true,
   childPrice: 145000,
   hasBabyPrice: false,
@@ -91,7 +101,7 @@ const emptyTravelForm: TravelFormState = {
 export default function Admin() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const [tab, setTab] = useState<AdminTab>("reservations");
+  const [tab, setTab] = useState<AdminTab>("dashboard");
   const [travels, setTravels] = useState<Travel[]>(() => getTravels());
   const [reservations, setReservations] = useState<Reservation[]>(() => getReservations());
   const [messages, setMessages] = useState<ContactMessage[]>(() => getContactMessages());
@@ -104,6 +114,8 @@ export default function Admin() {
   const [teamRoleForm, setTeamRoleForm] = useState("");
   const [teamMemberDrafts, setTeamMemberDrafts] = useState<Record<string, string>>({});
   const [reservationQuery, setReservationQuery] = useState("");
+  const [employeeQuery, setEmployeeQuery] = useState("");
+  const [historyQuery, setHistoryQuery] = useState("");
   const [guideQuery, setGuideQuery] = useState("");
 
   useEffect(() => {
@@ -149,12 +161,100 @@ export default function Admin() {
     return guideOptions.filter((guide) => guide.toLowerCase().includes(needle));
   }, [guideOptions, guideQuery]);
 
+  const travelIndex = useMemo(() => new Map(travels.map((travel) => [travel.id, travel])), [travels]);
+
+  function getReservationCommission(reservation: Reservation) {
+    if (reservation.status !== "Confirmee") return 0;
+    const travelCommission = Number(travelIndex.get(reservation.travelId)?.commission ?? 0);
+    return travelCommission * reservation.quantity;
+  }
+
+  const reservationHistory = useMemo(() => (
+    [...reservationScope].sort((left, right) => (
+      new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime()
+    ))
+  ), [reservationScope]);
+
+  const filteredHistory = useMemo(() => {
+    const needle = historyQuery.trim().toLowerCase();
+    if (!needle) return reservationHistory;
+    return reservationHistory.filter((reservation) => (
+      [
+        reservation.travelName,
+        reservation.customerFirstName,
+        reservation.customerLastName,
+        reservation.customerPhone,
+        reservation.employeeName,
+      ].some((value) => value.toLowerCase().includes(needle))
+    ));
+  }, [historyQuery, reservationHistory]);
+
+  const employeePerformance = useMemo(() => {
+    const employees = adminUsers.filter((account) => account.role === "employee");
+    const roster = new Map<string, { id: string | null; name: string; email: string }>();
+
+    for (const account of employees) {
+      roster.set(account.name, { id: account.id, name: account.name, email: account.email });
+    }
+
+    for (const reservation of reservations) {
+      if (!roster.has(reservation.employeeName)) {
+        roster.set(reservation.employeeName, {
+          id: reservation.employeeId,
+          name: reservation.employeeName,
+          email: "",
+        });
+      }
+    }
+
+    return Array.from(roster.values())
+      .map((employee) => {
+        const ownReservations = reservations.filter((reservation) => (
+          reservation.employeeName === employee.name ||
+          (employee.id ? reservation.employeeId === employee.id : false)
+        ));
+        const approvedReservations = ownReservations.filter((reservation) => reservation.status === "Confirmee");
+        const pendingReservations = ownReservations.filter((reservation) => reservation.status === "Nouvelle" || reservation.status === "En etude");
+        const reservedTickets = ownReservations.reduce((sum, reservation) => sum + reservation.quantity, 0);
+        const soldTickets = approvedReservations.reduce((sum, reservation) => sum + reservation.quantity, 0);
+        const commissionTotal = approvedReservations.reduce((sum, reservation) => sum + getReservationCommission(reservation), 0);
+        const salesTotal = approvedReservations.reduce((sum, reservation) => sum + reservation.total, 0);
+
+        return {
+          ...employee,
+          ownReservations,
+          approvedReservations,
+          pendingReservations,
+          reservedTickets,
+          soldTickets,
+          commissionTotal,
+          salesTotal,
+        };
+      })
+      .sort((left, right) => right.salesTotal - left.salesTotal || left.name.localeCompare(right.name, "ar"));
+  }, [adminUsers, reservations, travelIndex]);
+
+  const filteredEmployeePerformance = useMemo(() => {
+    const needle = employeeQuery.trim().toLowerCase();
+    if (!needle) return employeePerformance;
+    return employeePerformance.filter((employee) => (
+      [employee.name, employee.email].some((value) => value.toLowerCase().includes(needle))
+    ));
+  }, [employeePerformance, employeeQuery]);
+
   const totalPending = reservations.filter((reservation) => reservation.status === "Nouvelle" || reservation.status === "En etude").length;
   const confirmedRevenue = reservations
     .filter((reservation) => reservation.status === "Confirmee")
     .reduce((sum, reservation) => sum + reservation.total, 0);
   const employeeApproved = reservationScope.filter((reservation) => reservation.status === "Confirmee").length;
   const employeePending = reservationScope.filter((reservation) => reservation.status === "Nouvelle" || reservation.status === "En etude").length;
+  const employeeRejected = reservationScope.filter((reservation) => reservation.status === "Annulee").length;
+  const employeeReservedTickets = reservationScope.reduce((sum, reservation) => sum + reservation.quantity, 0);
+  const employeeSoldTickets = reservationScope
+    .filter((reservation) => reservation.status === "Confirmee")
+    .reduce((sum, reservation) => sum + reservation.quantity, 0);
+  const employeeCommissionTotal = reservationScope.reduce((sum, reservation) => sum + getReservationCommission(reservation), 0);
+  const totalConfirmedCommission = reservations.reduce((sum, reservation) => sum + getReservationCommission(reservation), 0);
   const allTeamNames = Array.from(new Set(teamGroups.flatMap((group) => group.members))).sort((a, b) => a.localeCompare(b, "ar"));
 
   function persistTravels(nextTravels: Travel[]) {
@@ -231,6 +331,7 @@ export default function Admin() {
       departures: travel.departures?.length ? travel.departures : [travel.date],
       duration: travel.duration,
       price: travel.price,
+      commission: Number(travel.commission ?? 0),
       hasChildPrice: travel.hasChildPrice ?? travel.childPrice != null,
       childPrice: travel.childPrice ?? 0,
       hasBabyPrice: travel.hasBabyPrice ?? travel.babyPrice != null,
@@ -343,7 +444,7 @@ export default function Admin() {
     }));
   }
 
-  function toggleAirline(airline: "Air Algerie" | "MS" | "TK", checked: boolean) {
+  function toggleAirline(airline: "Air Algerie" | "SV" | "MS" | "TK", checked: boolean) {
     setTravelForm((current) => ({
       ...current,
       airlines: checked
@@ -380,6 +481,7 @@ export default function Admin() {
       departures,
       duration: travelForm.duration.trim(),
       price: Number(travelForm.price),
+      commission: Number(travelForm.commission),
       hasChildPrice: travelForm.hasChildPrice,
       childPrice: travelForm.hasChildPrice ? Number(travelForm.childPrice) : null,
       hasBabyPrice: travelForm.hasBabyPrice,
@@ -468,7 +570,9 @@ export default function Admin() {
         <AdminTopbar
           user={user}
           items={[
+            { key: "dashboard", label: "لوحة المتابعة", active: tab === "dashboard", onClick: () => setTab("dashboard") },
             { key: "reservations", label: "سجل الحجوزات", active: tab === "reservations", onClick: () => setTab("reservations") },
+            { key: "history", label: "الأرشيف", active: tab === "history", onClick: () => setTab("history") },
             { key: "voyages", label: "الرحلات", active: tab === "voyages", onClick: () => setTab("voyages"), visible: isAdmin },
             { key: "team", label: "الطاقم", active: tab === "team", onClick: () => setTab("team"), visible: isAdmin },
             { key: "messages", label: "الرسائل", active: tab === "messages", onClick: () => setTab("messages"), visible: isAdmin },
@@ -483,7 +587,9 @@ export default function Admin() {
           <div>
             <span className="label">لوحة الوكالة</span>
             <h1>
-              {tab === "reservations" ? "متابعة سجل الحجوزات" :
+              {tab === "dashboard" ? (isAdmin ? "لوحة الأداء والمبيعات" : "لوحة الأداء الخاصة بك") :
+                tab === "reservations" ? "متابعة سجل الحجوزات" :
+                  tab === "history" ? "الأرشيف الكامل للحجوزات" :
                 tab === "voyages" ? "إدارة الرحلات" :
                   tab === "team" ? "إدارة الطاقم" :
                     tab === "messages" ? "رسائل العملاء" : "الحسابات"}
@@ -492,11 +598,130 @@ export default function Admin() {
         </header>
 
         <div className="metric-grid">
-          <article><span>{isAdmin ? "طلبات جديدة" : "حجوزاتي الجديدة"}</span><strong>{isAdmin ? totalPending : employeePending}</strong></article>
-          <article><span>{isAdmin ? "إيراد مؤكد" : "الحجوزات الموافق عليها"}</span><strong>{isAdmin ? `${confirmedRevenue.toLocaleString("fr-FR")} دج` : employeeApproved}</strong></article>
-          <article><span>أماكن متاحة</span><strong>{travels.reduce((sum, travel) => sum + travel.ticketsLeft, 0)}</strong></article>
-          <article><span>{isAdmin ? "أعضاء الطاقم" : "إجمالي حجوزاتي"}</span><strong>{isAdmin ? teamGroups.reduce((sum, group) => sum + group.members.length, 0) : reservationScope.length}</strong></article>
+          <article><span>{isAdmin ? "طلبات جديدة" : "طلبات بانتظار الموافقة"}</span><strong>{isAdmin ? totalPending : employeePending}</strong></article>
+          <article><span>{isAdmin ? "إيراد مؤكد" : "حجوزات مؤكدة"}</span><strong>{isAdmin ? `${confirmedRevenue.toLocaleString("fr-FR")} دج` : employeeApproved}</strong></article>
+          <article><span>{isAdmin ? "عمولات محققة" : "عمولاتي المحققة"}</span><strong>{`${(isAdmin ? totalConfirmedCommission : employeeCommissionTotal).toLocaleString("fr-FR")} دج`}</strong></article>
+          <article><span>{isAdmin ? "أعضاء الطاقم" : "تذاكر محجوزة / مباعة"}</span><strong>{isAdmin ? employeePerformance.length : `${employeeReservedTickets} / ${employeeSoldTickets}`}</strong></article>
         </div>
+
+        {tab === "dashboard" && (
+          <div className="reservation-admin-shell">
+            {isAdmin ? (
+              <>
+                <div className="reservation-admin-toolbar">
+                  <div className="reservation-admin-search">
+                    <Search size={18} />
+                    <input value={employeeQuery} onChange={(event) => setEmployeeQuery(event.target.value)} placeholder="ابحث باسم الموظف أو البريد الإلكتروني" />
+                  </div>
+                </div>
+
+                <div className="employee-performance-list">
+                  {filteredEmployeePerformance.map((employee) => (
+                    <article key={employee.email || employee.name} className="admin-card employee-performance-card">
+                      <div className="employee-performance-head">
+                        <div>
+                          <h2>{employee.name}</h2>
+                          <p>{employee.email || "بدون بريد محفوظ"}</p>
+                        </div>
+                        <strong>{employee.salesTotal.toLocaleString("fr-FR")} دج</strong>
+                      </div>
+
+                      <div className="reservation-request-metrics">
+                        <div><small>الحجوزات</small><strong>{employee.ownReservations.length}</strong></div>
+                        <div><small>المؤكدة</small><strong>{employee.approvedReservations.length}</strong></div>
+                        <div><small>قيد الانتظار</small><strong>{employee.pendingReservations.length}</strong></div>
+                        <div><small>التذاكر المباعة</small><strong>{employee.soldTickets}</strong></div>
+                        <div><small>التذاكر المحجوزة</small><strong>{employee.reservedTickets}</strong></div>
+                        <div><small>العمولة</small><strong>{employee.commissionTotal.toLocaleString("fr-FR")} دج</strong></div>
+                      </div>
+                    </article>
+                  ))}
+
+                  {filteredEmployeePerformance.length === 0 && (
+                    <article className="admin-card">
+                      <h2>لا توجد نتائج</h2>
+                      <p>لم نجد موظفًا مطابقًا لعبارة البحث الحالية.</p>
+                    </article>
+                  )}
+                </div>
+              </>
+            ) : (
+              <div className="employee-dashboard-grid">
+                <article className="admin-card">
+                  <h2>أداء حجوزاتك</h2>
+                  <div className="reservation-request-metrics">
+                    <div><small>المؤكدة</small><strong>{employeeApproved}</strong></div>
+                    <div><small>قيد الانتظار</small><strong>{employeePending}</strong></div>
+                    <div><small>الملغاة</small><strong>{employeeRejected}</strong></div>
+                    <div><small>التذاكر المحجوزة</small><strong>{employeeReservedTickets}</strong></div>
+                    <div><small>التذاكر المباعة</small><strong>{employeeSoldTickets}</strong></div>
+                    <div><small>العمولات</small><strong>{employeeCommissionTotal.toLocaleString("fr-FR")} دج</strong></div>
+                  </div>
+                </article>
+
+                <article className="admin-card">
+                  <h2>آخر الحجوزات</h2>
+                  <div className="history-list">
+                    {reservationHistory.slice(0, 5).map((reservation) => (
+                      <div key={reservation.id} className="history-row">
+                        <div>
+                          <strong>{reservation.travelName}</strong>
+                          <small>{reservation.customerFirstName} {reservation.customerLastName}</small>
+                        </div>
+                        <div className="history-side">
+                          <span className={`status-pill status-${reservation.status.replace(/\s+/g, "-").toLowerCase()}`}>{reservationStatusLabels[reservation.status]}</span>
+                          <strong>{reservation.quantity} مقعد</strong>
+                        </div>
+                      </div>
+                    ))}
+                    {reservationHistory.length === 0 && <p className="hint-text">لا توجد حجوزات بعد لهذا الحساب.</p>}
+                  </div>
+                </article>
+              </div>
+            )}
+          </div>
+        )}
+
+        {tab === "history" && (
+          <div className="reservation-admin-shell">
+            <div className="reservation-admin-toolbar">
+              <div className="reservation-admin-search">
+                <Search size={18} />
+                <input value={historyQuery} onChange={(event) => setHistoryQuery(event.target.value)} placeholder="ابحث باسم العميل أو الرحلة أو الموظف" />
+              </div>
+            </div>
+
+            <div className="history-list history-list-full">
+              {filteredHistory.map((reservation) => (
+                <article key={reservation.id} className="admin-card history-card">
+                  <div className="history-row">
+                    <div>
+                      <strong>{reservation.travelName}</strong>
+                      <small>{reservation.customerFirstName} {reservation.customerLastName} - {reservation.customerPhone}</small>
+                    </div>
+                    <div className="history-side">
+                      <span className={`status-pill status-${reservation.status.replace(/\s+/g, "-").toLowerCase()}`}>{reservationStatusLabels[reservation.status]}</span>
+                      <strong>{new Date(reservation.createdAt).toLocaleDateString("fr-FR")}</strong>
+                    </div>
+                  </div>
+                  <div className="reservation-request-metrics">
+                    {isAdmin && <div><small>الموظف</small><strong>{reservation.employeeName}</strong></div>}
+                    <div><small>المقاعد</small><strong>{reservation.quantity}</strong></div>
+                    <div><small>الإجمالي</small><strong>{reservation.total.toLocaleString("fr-FR")} دج</strong></div>
+                    <div><small>العمولة</small><strong>{getReservationCommission(reservation).toLocaleString("fr-FR")} دج</strong></div>
+                  </div>
+                </article>
+              ))}
+
+              {filteredHistory.length === 0 && (
+                <article className="admin-card">
+                  <h2>لا توجد نتائج</h2>
+                  <p>سيظهر تاريخ الحجوزات الكامل هنا حالما يتم إنشاء الطلبات.</p>
+                </article>
+              )}
+            </div>
+          </div>
+        )}
 
         {tab === "reservations" && (
           <div className="reservation-admin-shell">
@@ -584,15 +809,19 @@ export default function Admin() {
 
         {isAdmin && tab === "voyages" && (
           travelMode === "form" ? (
-            <form className="admin-card form-grid travel-editor travel-editor-modern" onSubmit={saveTravel}>
+            <form className="admin-card form-grid travel-editor travel-editor-modern travel-editor-panel" onSubmit={saveTravel}>
               <div className="editor-head">
                 <h2>{editingTravelId ? "تعديل الرحلة" : "إضافة رحلة"}</h2>
                 <button type="button" className="secondary-button" onClick={resetTravelEditor}>رجوع</button>
               </div>
 
               <div className="form-two">
-                <label>اسم الرحلة<input required value={travelForm.name} onChange={(event) => setTravelForm({ ...travelForm, name: event.target.value })} /></label>
-                <label>الوجهة<input required value={travelForm.destination} onChange={(event) => setTravelForm({ ...travelForm, destination: event.target.value })} /></label>
+                <label>تسمية الرحلة<input required value={travelForm.name} onChange={(event) => setTravelForm({ ...travelForm, name: event.target.value })} /></label>
+                <label>الدخول
+                  <select value={travelForm.destination} onChange={(event) => setTravelForm({ ...travelForm, destination: event.target.value })}>
+                    {destinationOptions.map((option) => <option key={option} value={option}>{option}</option>)}
+                  </select>
+                </label>
                 <label>البلد<input required value={travelForm.country} onChange={(event) => setTravelForm({ ...travelForm, country: event.target.value })} /></label>
                 <label>المدة<input required value={travelForm.duration} onChange={(event) => setTravelForm({ ...travelForm, duration: event.target.value })} /></label>
                 <label>الفئة<select value={travelForm.category} onChange={(event) => setTravelForm({ ...travelForm, category: event.target.value as Travel["category"] })}>
@@ -631,15 +860,15 @@ export default function Admin() {
                 <div className="pricing-grid">
                   <label>نوع الرحلة الجوية
                     <select value={travelForm.flightMode} onChange={(event) => setTravelForm({ ...travelForm, flightMode: event.target.value as TravelFormState["flightMode"] })}>
-                      <option value="direct">Vol direct</option>
-                      <option value="escale">Avec escale</option>
+                      <option value="direct">مباشرة</option>
+                      <option value="escale">مع توقف</option>
                     </select>
                   </label>
                   <div className="guide-picker-grid flight-picker-grid">
-                    {(["Air Algerie", "MS", "TK"] as const).map((airline) => (
-                      <label key={airline} className="guide-option">
-                        <span>{airline}</span>
-                        <input type="checkbox" checked={travelForm.airlines.includes(airline)} onChange={(event) => toggleAirline(airline, event.target.checked)} />
+                    {airlineOptions.map((airline) => (
+                      <label key={airline.value} className="guide-option airline-option">
+                        <span>{airline.label}</span>
+                        <input type="checkbox" checked={travelForm.airlines.includes(airline.value)} onChange={(event) => toggleAirline(airline.value, event.target.checked)} />
                       </label>
                     ))}
                   </div>
@@ -649,13 +878,14 @@ export default function Admin() {
               <div className="pricing-grid">
                 <label>سعر البالغ (ADT)<input required type="number" min={1} value={travelForm.price} onChange={(event) => setTravelForm({ ...travelForm, price: Number(event.target.value) })} /></label>
                 <div className="price-optional">
-                  <label className="checkbox-row"><input type="checkbox" checked={travelForm.hasChildPrice} onChange={(event) => setTravelForm({ ...travelForm, hasChildPrice: event.target.checked })} /> تفعيل سعر الطفل (CLD)</label>
+                  <label className="checkbox-row"><input type="checkbox" checked={travelForm.hasChildPrice} onChange={(event) => setTravelForm({ ...travelForm, hasChildPrice: event.target.checked })} /> تفعيل سعر الطفل (CHD)</label>
                   {travelForm.hasChildPrice && <input type="number" min={0} value={travelForm.childPrice} onChange={(event) => setTravelForm({ ...travelForm, childPrice: Number(event.target.value) })} />}
                 </div>
                 <div className="price-optional">
                   <label className="checkbox-row"><input type="checkbox" checked={travelForm.hasBabyPrice} onChange={(event) => setTravelForm({ ...travelForm, hasBabyPrice: event.target.checked })} /> تفعيل سعر الرضيع (INF)</label>
                   {travelForm.hasBabyPrice && <input type="number" min={0} value={travelForm.babyPrice} onChange={(event) => setTravelForm({ ...travelForm, babyPrice: Number(event.target.value) })} />}
                 </div>
+                <label>العمولة لكل مقعد<input type="number" min={0} value={travelForm.commission} onChange={(event) => setTravelForm({ ...travelForm, commission: Number(event.target.value) })} /></label>
               </div>
 
               <label>وصف مختصر<textarea required value={travelForm.description} onChange={(event) => setTravelForm({ ...travelForm, description: event.target.value })} /></label>
