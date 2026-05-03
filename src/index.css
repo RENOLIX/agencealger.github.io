@@ -866,3 +866,361 @@ progress { accent-color: var(--orange); width: 100%; }
     text-align: right;
   }
 }
+
+/* RTL hardening for the Arabic admin */
+.admin-main-modern,
+.admin-top-modern,
+.admin-card,
+.reservation-admin-shell,
+.reservation-admin-toolbar,
+.reservation-admin-list,
+.message-list,
+.team-admin-layout,
+.travel-admin-list,
+.admin-grid,
+.user-list,
+.history-list,
+.employee-performance-list,
+.metric-grid article {
+  direction: rtl;
+  text-align: right;
+}
+
+.admin-top-modern {
+  justify-content: flex-start;
+}
+
+.admin-card h2,
+.admin-card h3,
+.admin-card p,
+.admin-card small,
+.admin-card strong,
+.list-toolbar h2,
+.list-toolbar p,
+.user-list strong,
+.user-list small,
+.reservation-admin-search input,
+.form-grid input,
+.form-grid select,
+.form-grid textarea {
+  text-align: right;
+}
+
+.reservation-admin-search {
+  direction: rtl;
+}
+
+.reservation-admin-search input {
+  min-width: 0;
+}
+
+.profile {
+  direction: rtl;
+  text-align: right;
+}
+
+.employee-performance-card {
+  padding: 0;
+}
+
+.employee-performance-card .reservation-request-metrics {
+  padding: 0 22px 22px;
+}
+
+.employee-performance-head {
+  cursor: pointer;
+  list-style: none;
+  padding: 22px;
+}
+
+.employee-performance-head::-webkit-details-marker {
+  display: none;
+}
+
+.employee-performance-total {
+  align-items: center;
+  color: #111827;
+  display: inline-flex;
+  gap: 10px;
+}
+
+.employee-performance-card[open] .employee-performance-total svg {
+  transform: rotate(180deg);
+}
+
+.reservation-line-list {
+  gap: 10px;
+}
+
+.reservation-line-card {
+  background: rgba(255,255,255,.92);
+  border: 1px solid #e5edf3;
+  border-radius: 14px;
+  direction: rtl;
+  overflow: hidden;
+  text-align: right;
+}
+
+.reservation-line-row {
+  align-items: center;
+  display: grid;
+  gap: 14px;
+  grid-template-columns: minmax(260px, 1.4fr) minmax(160px, .8fr) 92px 140px auto;
+  padding: 14px 16px;
+}
+
+.reservation-line-main {
+  display: grid;
+  gap: 4px;
+  justify-items: start;
+}
+
+.reservation-line-main strong,
+.history-row strong {
+  display: block;
+  line-height: 1.4;
+}
+
+.reservation-line-main small,
+.history-row small {
+  color: #64748b;
+  display: block;
+  line-height: 1.5;
+  margin-top: 4px;
+}
+
+.reservation-line-details {
+  border-top: 1px solid #e5edf3;
+  padding: 18px;
+}
+
+.compact-button {
+  min-height: 38px;
+  padding: 0 12px;
+  white-space: nowrap;
+}
+
+.flight-config-grid {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: minmax(220px, .45fr) minmax(0, 1fr);
+}
+
+.price-card-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.commission-row {
+  display: grid;
+  margin-top: -4px;
+}
+
+.commission-row label {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  box-shadow: 0 10px 30px -24px rgba(15,23,42,.18);
+  display: grid;
+  gap: 12px;
+  max-width: 360px;
+  padding: 16px;
+}
+
+input[type="number"] {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.guide-option,
+.benefit-picker label {
+  align-items: center;
+  direction: rtl;
+  display: flex;
+  gap: 14px;
+  justify-content: space-between;
+  text-align: right;
+}
+
+.guide-option span,
+.benefit-picker label span {
+  flex: 1;
+  justify-content: flex-start;
+  text-align: right;
+}
+
+.guide-option input,
+.benefit-picker label input,
+.checkbox-row input {
+  accent-color: var(--orange);
+  flex: 0 0 auto;
+  margin-inline-start: 16px;
+}
+
+.checkbox-row {
+  direction: rtl;
+  display: flex;
+  justify-content: space-between;
+  text-align: right;
+}
+
+.airline-option {
+  background: linear-gradient(180deg, #fff, #fbf7eb);
+  border-color: #e7d4a6;
+  min-height: 74px;
+}
+
+.airline-option span {
+  color: #1f2937;
+}
+
+.user-list article {
+  direction: rtl;
+  grid-template-columns: auto 1fr auto;
+  text-align: right;
+}
+
+.user-list article > span {
+  grid-column: 1;
+}
+
+.user-list article > div {
+  grid-column: 2;
+}
+
+.user-list article > button {
+  grid-column: 3;
+  justify-self: end;
+}
+
+.place,
+.duration {
+  background: rgba(0,0,0,.58);
+  box-shadow: 0 10px 24px rgba(0,0,0,.28);
+  text-shadow: 0 1px 8px rgba(0,0,0,.8);
+}
+
+.about-photo-story {
+  align-self: center;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: 1.15fr .75fr .75fr;
+  grid-template-rows: 235px 235px;
+}
+
+.about-photo-story img {
+  border-radius: 26px;
+  box-shadow: 0 28px 80px -58px rgba(15,23,42,.75);
+  height: 100%;
+  object-fit: cover;
+  width: 100%;
+}
+
+.about-photo-story img:nth-child(2) {
+  height: 100%;
+  margin-top: 0;
+}
+
+.about-photo-story .about-photo-wide {
+  grid-row: 1 / span 2;
+}
+
+.about-photo-story .about-photo-portrait {
+  grid-row: 1 / span 2;
+  object-position: center top;
+}
+
+.about-band-track {
+  text-align: center;
+  white-space: normal;
+}
+
+.about-band-track h2 {
+  animation: none;
+  padding-right: 0;
+}
+
+.history-row {
+  direction: rtl;
+  text-align: right;
+}
+
+.testimonial-nav button {
+  align-items: center;
+  display: inline-flex;
+  justify-content: center;
+}
+
+@media (max-width: 900px) {
+  .why {
+    gap: 30px !important;
+    grid-template-columns: 1fr !important;
+    padding: 72px 22px !important;
+  }
+
+  .why-left {
+    margin: 0 auto !important;
+    max-width: 390px;
+    width: 100%;
+  }
+
+  .feature-grid {
+    grid-template-columns: 1fr !important;
+    margin: 18px auto 0 !important;
+    max-width: 390px;
+    width: 100%;
+  }
+
+  .feature {
+    margin: 0 auto;
+    width: 100%;
+  }
+
+  .testimonial-nav {
+    flex-direction: row-reverse;
+  }
+
+  .reservation-line-row,
+  .flight-config-grid,
+  .price-card-grid,
+  .commission-row,
+  .reservation-request-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .reservation-line-row {
+    align-items: stretch;
+  }
+
+  .commission-row label {
+    max-width: none;
+  }
+
+  .flight-picker-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .about-photo-story {
+    grid-template-columns: 1fr .8fr;
+    grid-template-rows: 220px 170px;
+  }
+
+  .about-photo-story .about-photo-wide,
+  .about-photo-story .about-photo-portrait {
+    grid-row: auto;
+  }
+
+  .about-photo-story .about-photo-soft:nth-child(3) {
+    display: none;
+  }
+
+  .admin-topnav.open {
+    margin-top: 10px;
+    padding-top: 10px;
+  }
+}

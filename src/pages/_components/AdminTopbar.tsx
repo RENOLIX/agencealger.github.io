@@ -1,4 +1,4 @@
-import { LogOut, Menu, Plus, ShieldCheck, X } from "lucide-react";
+import { LogOut, Menu, Plus, ShieldCheck } from "lucide-react";
 import { useState } from "react";
 import type { User } from "../../lib/data";
 
@@ -31,7 +31,7 @@ export default function AdminTopbar({ user, items, onCreateReservation, onLogout
     <header className="admin-appbar">
       <div className="admin-appbar-brand">
         <button type="button" className="admin-menu-toggle" onClick={() => setOpen((current) => !current)} aria-label="القائمة">
-          {open ? <X size={19} /> : <Menu size={19} />}
+          <Menu size={19} />
         </button>
         <img src="/agencealger.github.io/logo-normal.png" alt="Hamdi Voyage" />
       </div>

@@ -1,4 +1,4 @@
-import { ArrowUpRight, Compass, Gem, Globe2, Plane, Sparkles, UsersRound } from "lucide-react";
+import { ArrowUpRight, Compass, Gem, Globe2, Plane, UsersRound } from "lucide-react";
 import Navbar from "./_components/Navbar";
 import Footer from "./_components/Footer";
 
@@ -19,10 +19,11 @@ export default function About() {
           <p>Hamdi Voyage تجمع بين الخبرة، المتابعة الدقيقة، ولوحة إدارة حديثة لتسهيل الحجز وتنظيم الرحلات الشهرية.</p>
           <a href="/agencealger.github.io/#tours">عرض الرحلات <ArrowUpRight size={17} /></a>
         </div>
-        <div className="about-collage">
-          <img src="https://images.pexels.com/photos/18274181/pexels-photo-18274181.jpeg?auto=compress&cs=tinysrgb&w=1000" alt="مكة المكرمة" />
-          <img src="https://images.pexels.com/photos/34959936/pexels-photo-34959936.jpeg?auto=compress&cs=tinysrgb&w=900" alt="الحرم الشريف" />
-          <div><Sparkles /><strong>18 سنة</strong><span>خبرة في السفر</span></div>
+        <div className="about-collage about-photo-story">
+          <img className="about-photo-wide" src="/agencealger.github.io/about/team-airport.jpeg" alt="فريق الوكالة في المطار" />
+          <img className="about-photo-portrait" src="/agencealger.github.io/about/award-portrait.jpeg" alt="تكريم في منتدى العمرة والزيارة" />
+          <img className="about-photo-soft" src="/agencealger.github.io/about/umrah-forum.jpeg" alt="مشاركة في منتدى العمرة والزيارة" />
+          <img className="about-photo-soft" src="/agencealger.github.io/about/field-team.jpeg" alt="فريق مرافقة ميداني" />
         </div>
       </section>
 
@@ -56,7 +57,6 @@ export default function About() {
         <Plane />
         <div className="about-band-track">
           <h2>6 رحلات شهرية إلى مكة، وهدف واحد: أن يشعر العميل أن كل شيء تحت السيطرة.</h2>
-          <h2 aria-hidden="true">6 رحلات شهرية إلى مكة، وهدف واحد: أن يشعر العميل أن كل شيء تحت السيطرة.</h2>
         </div>
         <Globe2 />
       </section>

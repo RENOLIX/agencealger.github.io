@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { Edit3, Mail, Plus, ReceiptText, Save, Search, ShieldCheck, Trash2, Users, WalletCards } from "lucide-react";
+import { ChevronDown, Edit3, Eye, Mail, Plus, ReceiptText, Save, Search, ShieldCheck, Trash2, Users, WalletCards } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../components/providers/auth";
 import AdminTopbar from "./_components/AdminTopbar";
@@ -117,6 +117,7 @@ export default function Admin() {
   const [employeeQuery, setEmployeeQuery] = useState("");
   const [historyQuery, setHistoryQuery] = useState("");
   const [guideQuery, setGuideQuery] = useState("");
+  const [openReservationId, setOpenReservationId] = useState("");
 
   useEffect(() => {
     void syncTravelsFromSupabase().then(setTravels).catch(() => undefined);
@@ -190,7 +191,7 @@ export default function Admin() {
   }, [historyQuery, reservationHistory]);
 
   const employeePerformance = useMemo(() => {
-    const employees = adminUsers.filter((account) => account.role === "employee");
+    const employees = adminUsers;
     const roster = new Map<string, { id: string | null; name: string; email: string }>();
 
     for (const account of employees) {
@@ -617,14 +618,17 @@ export default function Admin() {
 
                 <div className="employee-performance-list">
                   {filteredEmployeePerformance.map((employee) => (
-                    <article key={employee.email || employee.name} className="admin-card employee-performance-card">
-                      <div className="employee-performance-head">
+                    <details key={employee.email || employee.name} className="admin-card employee-performance-card">
+                      <summary className="employee-performance-head">
                         <div>
                           <h2>{employee.name}</h2>
                           <p>{employee.email || "بدون بريد محفوظ"}</p>
                         </div>
-                        <strong>{employee.salesTotal.toLocaleString("fr-FR")} دج</strong>
-                      </div>
+                        <div className="employee-performance-total">
+                          <strong>{employee.salesTotal.toLocaleString("fr-FR")} دج</strong>
+                          <ChevronDown size={18} />
+                        </div>
+                      </summary>
 
                       <div className="reservation-request-metrics">
                         <div><small>الحجوزات</small><strong>{employee.ownReservations.length}</strong></div>
@@ -634,7 +638,7 @@ export default function Admin() {
                         <div><small>التذاكر المحجوزة</small><strong>{employee.reservedTickets}</strong></div>
                         <div><small>العمولة</small><strong>{employee.commissionTotal.toLocaleString("fr-FR")} دج</strong></div>
                       </div>
-                    </article>
+                    </details>
                   ))}
 
                   {filteredEmployeePerformance.length === 0 && (
@@ -647,8 +651,17 @@ export default function Admin() {
               </>
             ) : (
               <div className="employee-dashboard-grid">
-                <article className="admin-card">
-                  <h2>أداء حجوزاتك</h2>
+                <details className="admin-card employee-performance-card" open>
+                  <summary className="employee-performance-head">
+                    <div>
+                      <h2>{user.name}</h2>
+                      <p>{user.email}</p>
+                    </div>
+                    <div className="employee-performance-total">
+                      <strong>{employeeCommissionTotal.toLocaleString("fr-FR")} دج</strong>
+                      <ChevronDown size={18} />
+                    </div>
+                  </summary>
                   <div className="reservation-request-metrics">
                     <div><small>المؤكدة</small><strong>{employeeApproved}</strong></div>
                     <div><small>قيد الانتظار</small><strong>{employeePending}</strong></div>
@@ -657,7 +670,7 @@ export default function Admin() {
                     <div><small>التذاكر المباعة</small><strong>{employeeSoldTickets}</strong></div>
                     <div><small>العمولات</small><strong>{employeeCommissionTotal.toLocaleString("fr-FR")} دج</strong></div>
                   </div>
-                </article>
+                </details>
 
                 <article className="admin-card">
                   <h2>آخر الحجوزات</h2>
@@ -735,70 +748,70 @@ export default function Admin() {
               </button>
             </div>
 
-            <div className="reservation-admin-list">
+            <div className="reservation-admin-list reservation-line-list">
               {filteredReservations.length === 0 ? (
                 <article className="admin-card">
                   <h2>لا توجد حجوزات</h2>
                   <p>كل ملفات الحجز الخاصة بهذا الحساب ستظهر هنا.</p>
                 </article>
               ) : filteredReservations.map((reservation) => (
-                <article key={reservation.id} className="admin-card reservation-request-card">
-                  <div className="reservation-request-top">
-                    <div>
+                <article key={reservation.id} className="reservation-line-card">
+                  <div className="reservation-line-row">
+                    <div className="reservation-line-main">
                       <span className={`status-pill status-${reservation.status.replace(/\s+/g, "-").toLowerCase()}`}>{reservationStatusLabels[reservation.status]}</span>
-                      <h2>{reservation.travelName}</h2>
-                      <p>{reservation.customerFirstName} {reservation.customerLastName} - {reservation.customerPhone}</p>
+                      <strong>{reservation.travelName}</strong>
+                      <small>{reservation.customerFirstName} {reservation.customerLastName}</small>
                     </div>
-                    <div className="history-side">
-                      <strong>{reservationStatusLabels[reservation.status]}</strong>
-                      {isAdmin && (reservation.status === "Nouvelle" || reservation.status === "En etude") && (
-                        <button type="button" className="secondary-button" onClick={() => navigate("/admin/approvals")}>
-                          فتح صفحة الموافقة
-                        </button>
-                      )}
-                    </div>
+                    <span>{reservation.employeeName}</span>
+                    <span>{reservation.quantity} مقعد</span>
+                    <span>{reservation.total.toLocaleString("fr-FR")} دج</span>
+                    <button type="button" className="secondary-button compact-button" onClick={() => setOpenReservationId((current) => current === reservation.id ? "" : reservation.id)}>
+                      <Eye size={15} /> عرض
+                    </button>
                   </div>
 
-                  <div className="reservation-request-metrics">
-                    <div><small>الموظف</small><strong>{reservation.employeeName}</strong></div>
-                    <div><small>المقاعد</small><strong>{reservation.quantity}</strong></div>
-                    <div><small>الإجمالي</small><strong>{reservation.total.toLocaleString("fr-FR")} دج</strong></div>
-                    <div><small>المرفقات</small><strong>{reservation.attachments.length}</strong></div>
-                  </div>
-
-                  <div className="reservation-request-grid">
-                    <div>
-                      <h3>بيانات صاحب الطلب</h3>
-                      <p><strong>الاسم:</strong> {reservation.customerFirstName} {reservation.customerLastName}</p>
-                      <p><strong>العنوان:</strong> {reservation.customerAddress}</p>
-                      <p><strong>الهاتف:</strong> {reservation.customerPhone}</p>
-                      <p><strong>تاريخ الطلب:</strong> {new Date(reservation.createdAt).toLocaleString("fr-FR")}</p>
-                      {reservation.notes && <p><strong>ملاحظة:</strong> {reservation.notes}</p>}
-                    </div>
-                    <div>
-                      <h3>المسافرون</h3>
-                      <div className="reservation-passenger-list">
-                        {reservation.passengers.map((passenger) => (
-                          <div key={passenger.id} className="reservation-passenger-item">
-                            <strong>{passenger.firstName} {passenger.lastName}</strong>
-                            <small>{passengerTypeLabels[passenger.type]} - {passenger.passportNumber}</small>
-                            <small>{passenger.birthPlace} - {passenger.birthDate}</small>
+                  {openReservationId === reservation.id && (
+                    <div className="reservation-line-details">
+                      <div className="reservation-request-grid">
+                        <div>
+                          <h3>بيانات صاحب الطلب</h3>
+                          <p><strong>الاسم:</strong> {reservation.customerFirstName} {reservation.customerLastName}</p>
+                          <p><strong>العنوان:</strong> {reservation.customerAddress}</p>
+                          <p><strong>الهاتف:</strong> {reservation.customerPhone}</p>
+                          <p><strong>تاريخ الطلب:</strong> {new Date(reservation.createdAt).toLocaleString("fr-FR")}</p>
+                          {reservation.notes && <p><strong>ملاحظة:</strong> {reservation.notes}</p>}
+                          {isAdmin && (reservation.status === "Nouvelle" || reservation.status === "En etude") && (
+                            <button type="button" className="secondary-button" onClick={() => navigate("/admin/approvals")}>
+                              فتح صفحة الموافقة
+                            </button>
+                          )}
+                        </div>
+                        <div>
+                          <h3>المسافرون</h3>
+                          <div className="reservation-passenger-list">
+                            {reservation.passengers.map((passenger) => (
+                              <div key={passenger.id} className="reservation-passenger-item">
+                                <strong>{passenger.firstName} {passenger.lastName}</strong>
+                                <small>{passengerTypeLabels[passenger.type]} - {passenger.passportNumber}</small>
+                                <small>{passenger.birthPlace} - {passenger.birthDate}</small>
+                              </div>
+                            ))}
                           </div>
-                        ))}
+                        </div>
                       </div>
-                    </div>
-                  </div>
 
-                  {reservation.attachments.length > 0 && (
-                    <div className="reservation-request-files">
-                      <h3>الوثائق المرفوعة</h3>
-                      <div className="attachment-list">
-                        {reservation.attachments.map((attachment) => (
-                          <a key={attachment.id} href={attachment.dataUrl} target="_blank" rel="noreferrer" className="attachment-item">
-                            <span>{attachment.name}</span>
-                          </a>
-                        ))}
-                      </div>
+                      {reservation.attachments.length > 0 && (
+                        <div className="reservation-request-files">
+                          <h3>الوثائق المرفوعة</h3>
+                          <div className="attachment-list">
+                            {reservation.attachments.map((attachment) => (
+                              <a key={attachment.id} href={attachment.dataUrl} target="_blank" rel="noreferrer" className="attachment-item">
+                                <span>{attachment.name}</span>
+                              </a>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
                 </article>
@@ -857,7 +870,7 @@ export default function Admin() {
                     <span>حدد إن كانت الرحلة مباشرة أو مع توقف، ثم اختر شركة أو أكثر.</span>
                   </div>
                 </div>
-                <div className="pricing-grid">
+                <div className="flight-config-grid">
                   <label>نوع الرحلة الجوية
                     <select value={travelForm.flightMode} onChange={(event) => setTravelForm({ ...travelForm, flightMode: event.target.value as TravelFormState["flightMode"] })}>
                       <option value="direct">مباشرة</option>
@@ -875,16 +888,18 @@ export default function Admin() {
                 </div>
               </div>
 
-              <div className="pricing-grid">
+              <div className="pricing-grid price-card-grid">
                 <label>سعر البالغ (ADT)<input required type="number" min={1} value={travelForm.price} onChange={(event) => setTravelForm({ ...travelForm, price: Number(event.target.value) })} /></label>
                 <div className="price-optional">
-                  <label className="checkbox-row"><input type="checkbox" checked={travelForm.hasChildPrice} onChange={(event) => setTravelForm({ ...travelForm, hasChildPrice: event.target.checked })} /> تفعيل سعر الطفل (CHD)</label>
+                  <label className="checkbox-row"><span>تفعيل سعر الطفل (CHD)</span><input type="checkbox" checked={travelForm.hasChildPrice} onChange={(event) => setTravelForm({ ...travelForm, hasChildPrice: event.target.checked })} /></label>
                   {travelForm.hasChildPrice && <input type="number" min={0} value={travelForm.childPrice} onChange={(event) => setTravelForm({ ...travelForm, childPrice: Number(event.target.value) })} />}
                 </div>
                 <div className="price-optional">
-                  <label className="checkbox-row"><input type="checkbox" checked={travelForm.hasBabyPrice} onChange={(event) => setTravelForm({ ...travelForm, hasBabyPrice: event.target.checked })} /> تفعيل سعر الرضيع (INF)</label>
+                  <label className="checkbox-row"><span>تفعيل سعر الرضيع (INF)</span><input type="checkbox" checked={travelForm.hasBabyPrice} onChange={(event) => setTravelForm({ ...travelForm, hasBabyPrice: event.target.checked })} /></label>
                   {travelForm.hasBabyPrice && <input type="number" min={0} value={travelForm.babyPrice} onChange={(event) => setTravelForm({ ...travelForm, babyPrice: Number(event.target.value) })} />}
                 </div>
+              </div>
+              <div className="commission-row">
                 <label>العمولة لكل مقعد<input type="number" min={0} value={travelForm.commission} onChange={(event) => setTravelForm({ ...travelForm, commission: Number(event.target.value) })} /></label>
               </div>
 
