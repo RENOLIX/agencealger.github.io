@@ -50,13 +50,13 @@ export default function TravelDetail() {
   const [travel, setTravel] = useState<Travel | null>(() => getTravels().find((item) => item.id === travelId) ?? null);
   const [activeImage, setActiveImage] = useState(0);
 
-  const [adults, setAdults] = useState(1);
+  const [adults, setAdults] = useState(0);
   const [children, setChildren] = useState(0);
   const [babies, setBabies] = useState(0);
   const [selectedRooms, setSelectedRooms] = useState<ReservationRoom[]>([]);
   const [generalNotes, setGeneralNotes] = useState("");
   const [attachments, setAttachments] = useState<ReservationAttachment[]>([]);
-  const [passengers, setPassengers] = useState<ReservationPassenger[]>([createPassenger("adult")]);
+  const [passengers, setPassengers] = useState<ReservationPassenger[]>([]);
   const [submittedId, setSubmittedId] = useState("");
   const [submitError, setSubmitError] = useState("");
 
@@ -223,11 +223,11 @@ export default function TravelDetail() {
       await createReservationInSupabase(nextReservation);
       setSubmittedId(nextReservation.id);
       setGeneralNotes("");
-      setAdults(1);
+      setAdults(0);
       setChildren(0);
       setBabies(0);
       setSelectedRooms([]);
-      setPassengers([createPassenger("adult")]);
+      setPassengers([]);
       setAttachments([]);
     } catch {
       setSubmitError("تعذر إرسال الطلب حاليا، حاول مرة أخرى.");
@@ -365,7 +365,7 @@ export default function TravelDetail() {
                   setChildren(Math.max(0, maxTickets - nextAdults - babies));
                 }
               }}>
-                {Array.from({ length: Math.max(1, maxTickets) }, (_, index) => index + 1).map((count) => (
+                {Array.from({ length: Math.max(1, maxTickets + 1) }, (_, index) => index).map((count) => (
                   <option key={count} value={count}>{count}</option>
                 ))}
               </select>
