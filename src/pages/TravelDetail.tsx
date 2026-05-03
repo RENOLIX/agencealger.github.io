@@ -62,6 +62,7 @@ export default function TravelDetail() {
 
   const quantity = adults + children + babies;
   const maxTickets = travel?.ticketsLeft ?? 0;
+  const isSinglePassenger = quantity === 1;
 
   useEffect(() => {
     void syncTravelsFromSupabase()
@@ -86,9 +87,22 @@ export default function TravelDetail() {
   const roomsMatchQuantity = quantity > 0 && selectedRoomCapacity === quantity;
 
   useEffect(() => {
+    if (isSinglePassenger && travel) {
+      setSelectedRooms((current) => (
+        current.length === 1 && current[0].type === "quint" && current[0].capacity === 1
+          ? current
+          : [{
+            id: crypto.randomUUID(),
+            type: "quint",
+            capacity: 1,
+            price: Number((travel.roomPrices?.quint ?? travel.price) || 0),
+          }]
+      ));
+      return;
+    }
     if (selectedRoomCapacity <= quantity) return;
     setSelectedRooms([]);
-  }, [quantity, selectedRoomCapacity]);
+  }, [isSinglePassenger, quantity, selectedRoomCapacity, travel]);
 
   const total = useMemo(() => {
     if (!travel) return 0;
@@ -142,7 +156,7 @@ export default function TravelDetail() {
   }
 
   function addRoom(roomType: keyof typeof roomTypeLabels) {
-    const capacity = roomCapacities[roomType];
+    const capacity = isSinglePassenger && roomType === "quint" ? 1 : roomCapacities[roomType];
     if (selectedRoomCapacity + capacity > quantity) return;
     setSelectedRooms((current) => [
       ...current,
@@ -151,6 +165,7 @@ export default function TravelDetail() {
   }
 
   function removeRoom(roomId: string) {
+    if (isSinglePassenger) return;
     setSelectedRooms((current) => current.filter((room) => room.id !== roomId));
   }
 
@@ -382,8 +397,8 @@ export default function TravelDetail() {
             </div>
             <div className="room-choice-grid">
               {(Object.keys(roomTypeLabels) as Array<keyof typeof roomTypeLabels>).map((roomType) => {
-                const capacity = roomCapacities[roomType];
-                const disabled = selectedRoomCapacity + capacity > quantity;
+                const capacity = isSinglePassenger && roomType === "quint" ? 1 : roomCapacities[roomType];
+                const disabled = isSinglePassenger || selectedRoomCapacity + capacity > quantity;
                 return (
                   <button key={roomType} type="button" disabled={disabled} onClick={() => addRoom(roomType)}>
                     <strong>{roomTypeLabels[roomType]}</strong>
