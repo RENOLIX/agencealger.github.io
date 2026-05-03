@@ -392,7 +392,7 @@ export default function TravelDetail() {
             <div className="traveler-header">
               <div>
                 <h3>اختيار الغرف</h3>
-                <p>{selectedRoomCapacity} / {quantity} مقعد داخل الغرف</p>
+                <p>{selectedRoomCapacity} / {quantity} سرير داخل الغرف</p>
               </div>
             </div>
             <div className="room-choice-grid">
@@ -402,7 +402,7 @@ export default function TravelDetail() {
                 return (
                   <button key={roomType} type="button" disabled={disabled} onClick={() => addRoom(roomType)}>
                     <strong>{roomTypeLabels[roomType]}</strong>
-                    <span>{capacity} مقاعد</span>
+                    <span>{capacity} أَسِرَّة</span>
                     <small>{Number(roomPriceList[roomType] ?? currentTravel.price).toLocaleString("fr-FR")} دج</small>
                   </button>
                 );
@@ -412,12 +412,12 @@ export default function TravelDetail() {
               <div className="selected-room-list">
                 {selectedRooms.map((room) => (
                   <button key={room.id} type="button" onClick={() => removeRoom(room.id)}>
-                    {roomTypeLabels[room.type]} - {room.capacity} مقاعد
+                    {roomTypeLabels[room.type]} - {room.capacity} أَسِرَّة
                   </button>
                 ))}
               </div>
             )}
-            {!roomsMatchQuantity && <p className="reservation-warning">اختر غرفة أو أكثر حتى يصبح عدد مقاعد الغرف مساويا لعدد المسافرين.</p>}
+            {!roomsMatchQuantity && <p className="reservation-warning">اختر غرفة أو أكثر حتى يصبح عدد أَسِرَّة الغرف مساويا لعدد المسافرين.</p>}
           </div>
 
           <div className="reservation-line" />
