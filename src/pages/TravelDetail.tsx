@@ -9,6 +9,8 @@ import {
   categoryLabels,
   createReservationInSupabase,
   formatArabicDate,
+  formatReservationDisplayNumber,
+  getReservations,
   getTravels,
   roomCapacities,
   roomTypeLabels,
@@ -57,6 +59,7 @@ export default function TravelDetail() {
   const [generalNotes, setGeneralNotes] = useState("");
   const [attachments, setAttachments] = useState<ReservationAttachment[]>([]);
   const [passengers, setPassengers] = useState<ReservationPassenger[]>([]);
+  const [submittedNumber, setSubmittedNumber] = useState("");
   const [submittedId, setSubmittedId] = useState("");
   const [submitError, setSubmitError] = useState("");
 
@@ -220,7 +223,9 @@ export default function TravelDetail() {
     };
 
     try {
+      const nextDisplayNumber = formatReservationDisplayNumber(getReservations().length + 1);
       await createReservationInSupabase(nextReservation);
+      setSubmittedNumber(nextDisplayNumber);
       setSubmittedId(nextReservation.id);
       setGeneralNotes("");
       setAdults(0);
@@ -501,7 +506,7 @@ export default function TravelDetail() {
           {submittedId && (
             <div className="reservation-success">
               <strong>تم إرسال الطلب بنجاح</strong>
-              <span>رقم الطلب: {submittedId}</span>
+              <span>رقم الطلب: {submittedNumber || submittedId}</span>
               <button type="button" className="secondary-button" onClick={() => navigate("/admin")}>العودة إلى السجل</button>
             </div>
           )}

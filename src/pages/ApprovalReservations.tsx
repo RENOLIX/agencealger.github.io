@@ -4,6 +4,7 @@ import { Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "../components/providers/auth";
 import AdminTopbar from "./_components/AdminTopbar";
 import {
+  buildReservationNumberMap,
   getReservations,
   getTravels,
   passengerTypeLabels,
@@ -33,8 +34,10 @@ export default function ApprovalReservations() {
     const filtered = reservations.filter((reservation) => reservation.status === "Nouvelle" || reservation.status === "En etude");
     const needle = query.trim().toLowerCase();
     if (!needle) return filtered;
+    const reservationNumberMap = buildReservationNumberMap(reservations);
 
     return filtered.filter((reservation) => [
+      reservationNumberMap.get(reservation.id) ?? "",
       reservation.travelName,
       reservation.customerFirstName,
       reservation.customerLastName,
@@ -42,6 +45,7 @@ export default function ApprovalReservations() {
       reservation.employeeName,
     ].some((value) => value.toLowerCase().includes(needle)));
   }, [query, reservations]);
+  const reservationNumberMap = useMemo(() => buildReservationNumberMap(reservations), [reservations]);
 
   if (!user) return <Navigate to="/auth" replace />;
   if (user.role !== "admin") return <Navigate to="/admin" replace />;
@@ -107,6 +111,7 @@ export default function ApprovalReservations() {
                   <div>
                     <span className={`status-pill status-${reservation.status.replace(/\s+/g, "-").toLowerCase()}`}>{reservationStatusLabels[reservation.status]}</span>
                     <h2>{reservation.travelName}</h2>
+                    <p>رقم الحجز: {reservationNumberMap.get(reservation.id) ?? "00001"}</p>
                     <p>{reservation.customerFirstName} {reservation.customerLastName} - {reservation.customerPhone}</p>
                   </div>
                   <div className="approval-actions">

@@ -6,8 +6,8 @@ import { useAuth } from "../../components/providers/auth";
 export default function SignIn() {
   const { user, login } = useAuth();
   const navigate = useNavigate();
-  const [email, setEmail] = useState("admin@hamdi.local");
-  const [password, setPassword] = useState("admin123");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
   if (user) return <Navigate to="/admin" replace />;

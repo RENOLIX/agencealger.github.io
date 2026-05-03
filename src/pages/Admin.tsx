@@ -7,6 +7,7 @@ import {
   benefitIcons,
   benefitLabels,
   benefitOptions,
+  buildReservationNumberMap,
   categoryLabels,
   defaultRoomPrices,
   deleteTravelFromSupabase,
@@ -141,12 +142,14 @@ export default function Admin() {
       ? reservations
       : reservations.filter((reservation) => reservation.employeeId === user?.id || reservation.employeeName === user?.name)
   ), [reservations, user]);
+  const reservationNumberMap = useMemo(() => buildReservationNumberMap(reservations), [reservations]);
 
   const filteredReservations = useMemo(() => {
     const needle = reservationQuery.trim().toLowerCase();
     if (!needle) return reservationScope;
     return reservationScope.filter((reservation) => (
       [
+        reservationNumberMap.get(reservation.id) ?? "",
         reservation.travelName,
         reservation.customerFirstName,
         reservation.customerLastName,
@@ -154,7 +157,7 @@ export default function Admin() {
         reservation.employeeName,
       ].some((value) => value.toLowerCase().includes(needle))
     ));
-  }, [reservationQuery, reservationScope]);
+  }, [reservationNumberMap, reservationQuery, reservationScope]);
 
   const guideOptions = useMemo(() => (
     Array.from(new Set(
@@ -189,6 +192,7 @@ export default function Admin() {
     if (!needle) return reservationHistory;
     return reservationHistory.filter((reservation) => (
       [
+        reservationNumberMap.get(reservation.id) ?? "",
         reservation.travelName,
         reservation.customerFirstName,
         reservation.customerLastName,
@@ -196,7 +200,7 @@ export default function Admin() {
         reservation.employeeName,
       ].some((value) => value.toLowerCase().includes(needle))
     ));
-  }, [historyQuery, reservationHistory]);
+  }, [historyQuery, reservationHistory, reservationNumberMap]);
 
   const employeePerformance = useMemo(() => {
     const employees = adminUsers;
@@ -284,6 +288,7 @@ export default function Admin() {
     return housingEntries.filter(({ reservation, room }) => (
       [
         reservation.id,
+        reservationNumberMap.get(reservation.id) ?? "",
         reservation.travelName,
         reservation.customerFirstName,
         reservation.customerLastName,
@@ -292,7 +297,7 @@ export default function Admin() {
         roomTypeLabels[room.type],
       ].some((value) => value.toLowerCase().includes(needle))
     ));
-  }, [housingEntries, housingQuery]);
+  }, [housingEntries, housingQuery, reservationNumberMap]);
   const allTeamNames = Array.from(new Set(teamGroups.flatMap((group) => group.members))).sort((a, b) => a.localeCompare(b, "ar"));
 
   function persistTravels(nextTravels: Travel[]) {
@@ -821,7 +826,7 @@ export default function Admin() {
                           <p><strong>العنوان:</strong> {reservation.customerAddress}</p>
                           <p><strong>الهاتف:</strong> {reservation.customerPhone}</p>
                           <p><strong>تاريخ الطلب:</strong> {new Date(reservation.createdAt).toLocaleString("fr-FR")}</p>
-                          <p><strong>رقم الحجز:</strong> {reservation.id}</p>
+                          <p><strong>رقم الحجز:</strong> {reservationNumberMap.get(reservation.id) ?? "00001"}</p>
                           <p><strong>الموظف:</strong> {reservation.employeeName}</p>
                           <p><strong>عدد البالغين:</strong> {reservation.adults}</p>
                           <p><strong>عدد الأطفال:</strong> {reservation.children}</p>
@@ -894,7 +899,7 @@ export default function Admin() {
                   </header>
                   <div className="housing-card-body">
                     <small>رقم الحجز</small>
-                    <h2>#{reservation.id.slice(0, 8)}</h2>
+                    <h2>#{reservationNumberMap.get(reservation.id) ?? "00001"}</h2>
                     <p>{reservation.travelName}</p>
                     <p>{new Date(reservation.createdAt).toLocaleDateString("fr-FR")}</p>
                     <div className="housing-passengers">

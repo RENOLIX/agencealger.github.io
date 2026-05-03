@@ -250,6 +250,20 @@ export function saveUsers(nextUsers: User[]) {
   writeStore("hv-users", nextUsers);
 }
 
+export function formatReservationDisplayNumber(value: number) {
+  return String(Math.max(1, value)).padStart(5, "0");
+}
+
+export function buildReservationNumberMap(reservations: Reservation[]) {
+  return new globalThis.Map(
+    [...reservations]
+      .sort((left, right) => (
+        new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime()
+      ))
+      .map((reservation, index) => [reservation.id, formatReservationDisplayNumber(index + 1)]),
+  );
+}
+
 export const benefitIcons: Record<BenefitKey, ElementType> = {
   Vol: Plane,
   Hotel,
