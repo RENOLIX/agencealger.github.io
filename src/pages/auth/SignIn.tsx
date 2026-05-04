@@ -12,9 +12,9 @@ export default function SignIn() {
 
   if (user) return <Navigate to="/admin" replace />;
 
-  function submit(event: FormEvent) {
+  async function submit(event: FormEvent) {
     event.preventDefault();
-    if (login(email, password)) navigate("/admin");
+    if (await login(email, password)) navigate("/admin");
     else setError("بيانات الدخول غير صحيحة.");
   }
 

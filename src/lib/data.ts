@@ -212,7 +212,6 @@ export type TeamGroup = {
 };
 
 export const seedUsers: User[] = [
-  { id: "admin", name: "Nora Admin", email: "admin@hamdi.local", password: "admin123", role: "admin", avatar: "NA" },
   { id: "seller-bouraq", name: "وكالة البراق", email: "elbouraqtravel@gmail.com", password: "Hamdi2026!01", role: "employee", avatar: "بر" },
   { id: "seller-fariha", name: "وكالة فريحة", email: "agencefareha@gmail.com", password: "Hamdi2026!02", role: "employee", avatar: "فر" },
   { id: "seller-barouaguia", name: "فرع حمدي البراواقية", email: "voyage26.02hamdi@gmail.com", password: "Hamdi2026!03", role: "employee", avatar: "بر" },
@@ -241,6 +240,7 @@ function mergeUsersWithSeeds(users: User[]) {
 
 export function getUsers() {
   const storedUsers = readStore<User[]>("hv-users", []);
+  if (hasSupabaseConfig) return storedUsers;
   const mergedUsers = mergeUsersWithSeeds(storedUsers);
   if (mergedUsers.length !== storedUsers.length) writeStore("hv-users", mergedUsers);
   return mergedUsers;
@@ -248,6 +248,77 @@ export function getUsers() {
 
 export function saveUsers(nextUsers: User[]) {
   writeStore("hv-users", nextUsers);
+}
+
+type UserRow = {
+  id: string;
+  full_name: string;
+  email: string;
+  password: string;
+  role: UserRole;
+  avatar: string | null;
+  created_at: string;
+};
+
+function mapUserRow(row: UserRow): User {
+  return {
+    id: row.id,
+    name: row.full_name,
+    email: row.email.trim().toLowerCase(),
+    password: row.password,
+    role: row.role,
+    avatar: row.avatar || row.full_name.split(" ").map((part) => part[0]).join("").slice(0, 2).toUpperCase() || "HV",
+  };
+}
+
+function mapUserToRow(user: User) {
+  return {
+    id: user.id,
+    full_name: user.name.trim(),
+    email: user.email.trim().toLowerCase(),
+    password: user.password,
+    role: user.role,
+    avatar: user.avatar,
+  };
+}
+
+export async function syncUsersFromSupabase() {
+  if (!hasSupabaseConfig) return getUsers();
+
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("id, full_name, email, password, role, avatar, created_at")
+    .order("created_at", { ascending: true });
+
+  if (error) throw error;
+
+  const users = (data as UserRow[]).map(mapUserRow);
+  saveUsers(users);
+  return users;
+}
+
+export async function createUserInSupabase(user: User) {
+  if (!hasSupabaseConfig) {
+    const nextUsers = [...getUsers(), user];
+    saveUsers(nextUsers);
+    return nextUsers;
+  }
+
+  const { error } = await supabase.from("profiles").insert(mapUserToRow(user));
+  if (error) throw error;
+  return syncUsersFromSupabase();
+}
+
+export async function deleteUserFromSupabase(userId: string) {
+  if (!hasSupabaseConfig) {
+    const nextUsers = getUsers().filter((user) => user.id !== userId);
+    saveUsers(nextUsers);
+    return nextUsers;
+  }
+
+  const { error } = await supabase.from("profiles").delete().eq("id", userId);
+  if (error) throw error;
+  return syncUsersFromSupabase();
 }
 
 export function formatReservationDisplayNumber(value: number) {

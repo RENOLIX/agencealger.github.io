@@ -8,7 +8,9 @@ import {
   benefitLabels,
   benefitOptions,
   buildReservationNumberMap,
+  createUserInSupabase,
   categoryLabels,
+  deleteUserFromSupabase,
   defaultRoomPrices,
   deleteTravelFromSupabase,
   getContactMessages,
@@ -31,6 +33,7 @@ import {
   syncReservationsFromSupabase,
   syncTeamGroupsFromSupabase,
   syncTravelsFromSupabase,
+  syncUsersFromSupabase,
   type BenefitKey,
   type ContactMessage,
   type Reservation,
@@ -133,6 +136,7 @@ export default function Admin() {
     void syncReservationsFromSupabase().then(setReservations).catch(() => undefined);
     void syncContactMessagesFromSupabase().then(setMessages).catch(() => undefined);
     void syncTeamGroupsFromSupabase().then(setTeamGroups).catch(() => undefined);
+    void syncUsersFromSupabase().then(setAdminUsers).catch(() => undefined);
   }, []);
 
   const isAdmin = user?.role === "admin";
@@ -336,23 +340,40 @@ export default function Admin() {
     setTravelMode("list");
   }
 
-  function createUser(event: FormEvent) {
+  async function createUser(event: FormEvent) {
     event.preventDefault();
     const cleanEmail = userForm.email.trim().toLowerCase();
     if (!cleanEmail || adminUsers.some((item) => item.email === cleanEmail)) return;
     const initials = userForm.name.split(" ").map((part) => part[0]).join("").slice(0, 2).toUpperCase() || "HV";
-    persistUsers([
-      ...adminUsers,
-      {
-        id: crypto.randomUUID(),
-        name: userForm.name.trim(),
-        email: cleanEmail,
-        password: userForm.password,
-        role: userForm.role,
-        avatar: initials,
-      },
-    ]);
+    const previousUsers = adminUsers;
+    const nextUser = {
+      id: crypto.randomUUID(),
+      name: userForm.name.trim(),
+      email: cleanEmail,
+      password: userForm.password,
+      role: userForm.role,
+      avatar: initials,
+    } satisfies User;
+    persistUsers([...adminUsers, nextUser]);
+    try {
+      setAdminUsers(await createUserInSupabase(nextUser));
+    } catch (error) {
+      console.error(error);
+      persistUsers(previousUsers);
+    }
     setUserForm({ name: "", email: "", password: "", role: "employee" });
+  }
+
+  async function removeUser(accountId: string) {
+    const previousUsers = adminUsers;
+    const nextUsers = adminUsers.filter((item) => item.id !== accountId);
+    persistUsers(nextUsers);
+    try {
+      setAdminUsers(await deleteUserFromSupabase(accountId));
+    } catch (error) {
+      console.error(error);
+      persistUsers(previousUsers);
+    }
   }
 
   function openNewTravel() {
@@ -1265,7 +1286,7 @@ export default function Admin() {
                   <div><strong>{account.name}</strong><small>{account.email} - {account.role === "admin" ? "مدير" : "موظف"}</small></div>
                   <button
                     disabled={account.id === user.id}
-                    onClick={() => persistUsers(adminUsers.filter((item) => item.id !== account.id))}
+                    onClick={() => void removeUser(account.id)}
                     title={account.id === user.id ? "لا يمكن حذف الحساب المتصل" : "حذف"}
                   >
                     <Trash2 size={16} />
