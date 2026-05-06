@@ -75,7 +75,7 @@ type TravelFormState = {
 };
 
 const destinationOptions = ["جدة", "المدينة المنورة"] as const;
-const exitOptions = ["مكة المكرمة", "جدة"] as const;
+const exitOptions = ["جدة", "المدينة المنورة"] as const;
 const airlineOptions = [
   { value: "Air Algerie", label: "Air Algérie" },
   { value: "Flynas", label: "Flynas" },
@@ -538,6 +538,7 @@ export default function Admin() {
       .map((hotel) => ({ ...hotel, name: hotel.name.trim(), photos: hotel.photos.filter(Boolean) }))
       .filter((hotel) => hotel.name);
     const airlines: TravelFormState["airlines"] = travelForm.airlines.length > 0 ? travelForm.airlines : ["Air Algerie"];
+    const guides = Array.from(new Set(travelForm.guides.map((guide) => guide.trim()).filter(Boolean)));
 
     const baseTravel: Travel = {
       id: editingTravelId ?? crypto.randomUUID(),
@@ -560,7 +561,7 @@ export default function Admin() {
       babyPrice: travelForm.hasBabyPrice ? Number(travelForm.babyPrice) : null,
       description: travelForm.description.trim(),
       longDescription: travelForm.longDescription.trim(),
-      guides: travelForm.guides,
+      guides,
       hotels,
       flightMode: travelForm.flightMode,
       airlines,

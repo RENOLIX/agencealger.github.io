@@ -953,12 +953,14 @@ function normalizeTravel(travel: Travel): Travel {
   };
 }
 
-function mapTravelRow(row: TravelRow): Travel {
+function mapTravelRow(row: TravelRow, fallbackTravel?: Travel): Travel {
   const image = row.image_url || "https://images.pexels.com/photos/32525647/pexels-photo-32525647.jpeg?auto=compress&cs=tinysrgb&w=1400";
   const images = Array.isArray(row.image_urls) && row.image_urls.length > 0
     ? row.image_urls.filter(Boolean)
     : [image];
-  const guides = Array.isArray(row.guides) ? row.guides.filter(Boolean) : [];
+  const guides = Array.isArray(row.guides) && row.guides.length > 0
+    ? row.guides.filter(Boolean)
+    : (fallbackTravel?.guides ?? []);
   const benefits = Array.isArray(row.benefits)
     ? row.benefits.filter((benefit): benefit is BenefitKey => benefitOptionSet.has(benefit))
     : [];
@@ -1142,6 +1144,8 @@ async function uploadReservationAttachment(reservationId: string, attachment: Re
 
 export async function syncTravelsFromSupabase() {
   if (!hasSupabaseConfig) return getTravels();
+  const localTravels = getTravels();
+  const localTravelMap = new globalThis.Map(localTravels.map((travel) => [travel.id, travel]));
 
   const { data, error } = await supabase
     .from("travels")
@@ -1151,7 +1155,7 @@ export async function syncTravelsFromSupabase() {
 
   if (error) throw error;
 
-  const travels = (data as TravelRow[]).map(mapTravelRow);
+  const travels = (data as TravelRow[]).map((row) => mapTravelRow(row, localTravelMap.get(row.id)));
   saveTravels(travels);
   return travels;
 }
@@ -1322,7 +1326,7 @@ export async function syncReservationsFromSupabase() {
     reservations,
     passengerResult.data as ReservationPassengerRow[],
     attachmentResult.data as ReservationAttachmentRow[],
-    (travelResult.data as TravelRow[]).map(mapTravelRow),
+    (travelResult.data as TravelRow[]).map((row) => mapTravelRow(row)),
   );
 
   saveReservations(mappedReservations);
