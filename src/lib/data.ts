@@ -901,6 +901,44 @@ function isUuidLike(value: string | null | undefined) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
 }
 
+function normalizeTextList(value: unknown) {
+  const sanitize = (items: string[]) => Array.from(new Set(
+    items
+      .map((item) => item.trim())
+      .filter(Boolean),
+  ));
+
+  if (Array.isArray(value)) {
+    return sanitize(value.filter((item): item is string => typeof item === "string"));
+  }
+
+  if (typeof value !== "string") return [];
+
+  const raw = value.trim();
+  if (!raw) return [];
+
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    if (Array.isArray(parsed)) {
+      return sanitize(parsed.filter((item): item is string => typeof item === "string"));
+    }
+  } catch {
+    // Fallback to PostgreSQL/text parsing below.
+  }
+
+  if (raw.startsWith("{") && raw.endsWith("}")) {
+    const inner = raw.slice(1, -1).trim();
+    if (!inner) return [];
+    return sanitize(
+      inner
+        .split(",")
+        .map((item) => item.trim().replace(/^"+|"+$/g, "")),
+    );
+  }
+
+  return sanitize(raw.split(","));
+}
+
 type ReservationAttachmentRow = {
   id: string;
   reservation_id: string;
@@ -948,6 +986,7 @@ function normalizeTravel(travel: Travel): Travel {
         photos: Array.isArray(hotel.photos) ? hotel.photos.filter(Boolean) : [],
       }))
       : [],
+    guides: normalizeTextList(travel.guides),
     flightMode: travel.flightMode ?? "direct",
     airlines: Array.isArray(travel.airlines) && travel.airlines.length > 0 ? travel.airlines : ["Air Algerie"],
   };
@@ -958,9 +997,9 @@ function mapTravelRow(row: TravelRow, fallbackTravel?: Travel): Travel {
   const images = Array.isArray(row.image_urls) && row.image_urls.length > 0
     ? row.image_urls.filter(Boolean)
     : [image];
-  const guides = Array.isArray(row.guides) && row.guides.length > 0
-    ? row.guides.filter(Boolean)
-    : (fallbackTravel?.guides ?? []);
+  const rowGuides = normalizeTextList(row.guides);
+  const fallbackGuides = normalizeTextList(fallbackTravel?.guides ?? []);
+  const guides = rowGuides.length > 0 ? rowGuides : fallbackGuides;
   const benefits = Array.isArray(row.benefits)
     ? row.benefits.filter((benefit): benefit is BenefitKey => benefitOptionSet.has(benefit))
     : [];
@@ -1025,7 +1064,7 @@ function mapTravelToRow(travel: Travel) {
     has_baby_price: normalized.hasBabyPrice,
     short_description: normalized.description,
     long_description: normalized.longDescription,
-    guides: normalized.guides,
+    guides: normalizeTextList(normalized.guides),
     hotels: normalized.hotels ?? [],
     flight_mode: normalized.flightMode ?? "direct",
     airlines: normalized.airlines ?? ["Air Algerie"],

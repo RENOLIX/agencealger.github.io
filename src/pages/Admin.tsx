@@ -1189,7 +1189,7 @@ export default function Admin() {
                       <span>{categoryLabels[travel.category]} - {travel.departures?.length ?? 1} موعد</span>
                       <h3>{travel.name}</h3>
                       <p>{travel.destination} - {travel.country}</p>
-                      <p>المرشدون: {travel.guides.join(" - ")}</p>
+                      <p>المرشدون: {travel.guides.length > 0 ? travel.guides.join(" - ") : "سيتم تحديدهم من الإدارة"}</p>
                       <strong>{travel.price.toLocaleString("fr-FR")} دج</strong>
                       <small>{travel.ticketsLeft}/{travel.ticketsTotal} مكان متاح</small>
                       {travel.ticketsLeft <= 10 && <p className="admin-low-stock">تنبيه: بقي {travel.ticketsLeft} مقاعد فقط</p>}

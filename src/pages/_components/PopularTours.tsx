@@ -38,7 +38,7 @@ export default function PopularTours() {
                   return <span key={benefit}><Icon size={12} /> {benefitLabels[benefit] ?? benefit}</span>;
                 })}
               </div>
-              <p className="tour-desc">المرشدون: {tour.guides.join(" - ")}</p>
+              <p className="tour-desc">المرشدون: {tour.guides.length > 0 ? tour.guides.join(" - ") : "سيتم تحديدهم من الإدارة"}</p>
               <div className="tour-foot">
                 <div><strong>{tour.price.toLocaleString("fr-FR")} دج</strong><span>للبالغ</span></div>
                 <span className={tour.ticketsLeft < 8 ? "low-stock" : ""}><Users size={13} /> {tour.ticketsLeft}/{tour.ticketsTotal} مكان</span>
