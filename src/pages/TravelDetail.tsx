@@ -64,8 +64,9 @@ export default function TravelDetail() {
   const [submitError, setSubmitError] = useState("");
 
   const quantity = adults + children + babies;
+  const roomGuests = adults;
   const maxTickets = travel?.ticketsLeft ?? 0;
-  const isSinglePassenger = quantity === 1;
+  const isSinglePassenger = roomGuests === 1;
 
   useEffect(() => {
     void syncTravelsFromSupabase()
@@ -87,7 +88,7 @@ export default function TravelDetail() {
   const selectedRoomCapacity = selectedRooms.reduce((sum, room) => sum + room.capacity, 0);
   const roomPriceList = travel?.roomPrices ?? { double: travel?.price ?? 0, triple: travel?.price ?? 0, quad: travel?.price ?? 0, quint: travel?.price ?? 0 };
   const roomTotal = selectedRooms.reduce((sum, room) => sum + room.price * room.capacity, 0);
-  const roomsMatchQuantity = quantity > 0 && selectedRoomCapacity === quantity;
+  const roomsMatchQuantity = roomGuests === 0 || selectedRoomCapacity === roomGuests;
 
   useEffect(() => {
     if (isSinglePassenger && travel) {
@@ -103,15 +104,15 @@ export default function TravelDetail() {
       ));
       return;
     }
-    if (selectedRoomCapacity <= quantity) return;
+    if (selectedRoomCapacity <= roomGuests) return;
     setSelectedRooms([]);
-  }, [isSinglePassenger, quantity, selectedRoomCapacity, travel]);
+  }, [isSinglePassenger, roomGuests, selectedRoomCapacity, travel]);
 
   const total = useMemo(() => {
     if (!travel) return 0;
-    if (selectedRooms.length > 0) return roomTotal;
     const childUnit = travel.hasChildPrice ? Number(travel.childPrice ?? 0) : travel.price;
     const babyUnit = travel.hasBabyPrice ? Number(travel.babyPrice ?? 0) : childUnit;
+    if (selectedRooms.length > 0) return roomTotal + children * childUnit + babies * babyUnit;
     return adults * travel.price + children * childUnit + babies * babyUnit;
   }, [adults, babies, children, roomTotal, selectedRooms.length, travel]);
 
@@ -160,7 +161,7 @@ export default function TravelDetail() {
 
   function addRoom(roomType: keyof typeof roomTypeLabels) {
     const capacity = isSinglePassenger && roomType === "quint" ? 1 : roomCapacities[roomType];
-    if (selectedRoomCapacity + capacity > quantity) return;
+    if (selectedRoomCapacity + capacity > roomGuests) return;
     setSelectedRooms((current) => [
       ...current,
       { id: crypto.randomUUID(), type: roomType, capacity, price: Number(roomPriceList[roomType] ?? currentTravel.price) },
@@ -193,7 +194,7 @@ export default function TravelDetail() {
     setSubmitError("");
     if (quantity < 1 || quantity > currentTravel.ticketsLeft) return;
     if (!roomsMatchQuantity) {
-      setSubmitError("اختر غرفا تغطي نفس عدد المسافرين قبل إرسال الحجز.");
+      setSubmitError("اختر غرفا تغطي عدد البالغين فقط قبل إرسال الحجز.");
       return;
     }
     if (passengers.length !== quantity || passengers.some((passenger) => !isPassengerComplete(passenger))) return;
@@ -267,13 +268,15 @@ export default function TravelDetail() {
           <p className="travel-summary-copy">{travel.description}</p>
 
           <div className="travel-meta-list">
-            <span><MapPin size={15} /> {travel.destination} - {travel.country}</span>
+            <span><MapPin size={15} /> دخول: {travel.destination} - خروج: {travel.exitCity ?? "مكة المكرمة"}</span>
             <span><CalendarDays size={15} /> {travel.departures?.length ? `${travel.departures.length} مواعيد انطلاق` : formatArabicDate(travel.date)}</span>
             <span><Users size={15} /> {travel.guides.length} مرشد</span>
           </div>
 
           <div className="travel-inline-facts vertical-facts">
             <div><CalendarDays size={16} /><small>المدة</small><strong>{travel.duration}</strong></div>
+            <div><MapPin size={16} /><small>الدخول</small><strong>{travel.destination}</strong></div>
+            <div><MapPin size={16} /><small>الخروج</small><strong>{travel.exitCity ?? "مكة المكرمة"}</strong></div>
             <div><Landmark size={16} /><small>الفئة</small><strong>{categoryLabels[travel.category]}</strong></div>
             <div><Plane size={16} /><small>الرحلة الجوية</small><strong>{travel.flightMode === "escale" ? "مع توقف" : "مباشرة"}</strong></div>
             <div><Ticket size={16} /><small>الشركة</small><strong>{(travel.airlines ?? ["Air Algerie"]).map((airline) => airline === "Air Algerie" ? "Air Algérie" : airline).join(" - ")}</strong></div>
@@ -316,7 +319,9 @@ export default function TravelDetail() {
           <div className="travel-subsection">
             <h2>فريق المرافقة</h2>
             <div className="travel-chip-grid">
-              {travel.guides.map((guide) => <span key={guide}>{guide}</span>)}
+              {travel.guides.length > 0
+                ? travel.guides.map((guide) => <span key={guide}>{guide}</span>)
+                : <span>سيتم تحديد المرشدين من الإدارة</span>}
             </div>
           </div>
 
@@ -397,13 +402,13 @@ export default function TravelDetail() {
             <div className="traveler-header">
               <div>
                 <h3>اختيار الغرف</h3>
-                <p>{selectedRoomCapacity} / {quantity} سرير داخل الغرف</p>
+                <p>{selectedRoomCapacity} / {roomGuests} سرير للبالغين داخل الغرف</p>
               </div>
             </div>
             <div className="room-choice-grid">
               {(Object.keys(roomTypeLabels) as Array<keyof typeof roomTypeLabels>).map((roomType) => {
                 const capacity = isSinglePassenger && roomType === "quint" ? 1 : roomCapacities[roomType];
-                const disabled = isSinglePassenger || selectedRoomCapacity + capacity > quantity;
+                const disabled = isSinglePassenger || selectedRoomCapacity + capacity > roomGuests;
                 return (
                   <button key={roomType} type="button" disabled={disabled} onClick={() => addRoom(roomType)}>
                     <strong>{roomTypeLabels[roomType]}</strong>
@@ -422,7 +427,7 @@ export default function TravelDetail() {
                 ))}
               </div>
             )}
-            {!roomsMatchQuantity && <p className="reservation-warning">اختر غرفة أو أكثر حتى يصبح عدد أَسِرَّة الغرف مساويا لعدد المسافرين.</p>}
+            {!roomsMatchQuantity && <p className="reservation-warning">اختر غرفة أو أكثر حتى يصبح عدد أَسِرَّة الغرف مساويا لعدد البالغين فقط.</p>}
           </div>
 
           <div className="reservation-line" />

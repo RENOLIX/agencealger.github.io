@@ -1077,6 +1077,7 @@ input[type="number"]::-webkit-inner-spin-button {
 
 .airline-option span {
   color: #1f2937;
+  width: 100%;
 }
 
 .user-list article {
@@ -1576,6 +1577,11 @@ input[type="number"]::-webkit-inner-spin-button {
 
   .flight-picker-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .airline-option span {
+    justify-content: center !important;
+    text-align: center !important;
   }
 
   .about-photo-story {

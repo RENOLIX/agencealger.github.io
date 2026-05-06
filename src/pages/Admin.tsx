@@ -49,6 +49,7 @@ type AdminTab = "dashboard" | "reservations" | "housing" | "history" | "voyages"
 type TravelFormState = {
   name: string;
   destination: string;
+  exitCity: string;
   country: string;
   image: string;
   images: string[];
@@ -67,15 +68,17 @@ type TravelFormState = {
   guides: string[];
   hotels: TravelHotel[];
   flightMode: "direct" | "escale";
-  airlines: Array<"Air Algerie" | "SV" | "MS" | "TK">;
+  airlines: Array<"Air Algerie" | "SV" | "MS" | "TK" | "Flynas">;
   category: Travel["category"];
   benefits: BenefitKey[];
   ticketsTotal: number;
 };
 
-const destinationOptions = ["مكة المكرمة", "المدينة"] as const;
+const destinationOptions = ["جدة", "المدينة المنورة"] as const;
+const exitOptions = ["مكة المكرمة", "جدة"] as const;
 const airlineOptions = [
   { value: "Air Algerie", label: "Air Algérie" },
+  { value: "Flynas", label: "Flynas" },
   { value: "SV", label: "SV" },
   { value: "MS", label: "MS" },
   { value: "TK", label: "TK" },
@@ -84,7 +87,8 @@ const roomPriceKeys = Object.keys(roomTypeLabels) as Array<keyof TravelRoomPrice
 
 const emptyTravelForm: TravelFormState = {
   name: "",
-  destination: "مكة المكرمة",
+  destination: "جدة",
+  exitCity: "مكة المكرمة",
   country: "السعودية",
   image: "",
   images: [],
@@ -388,6 +392,7 @@ export default function Admin() {
     setTravelForm({
       name: travel.name,
       destination: travel.destination,
+      exitCity: travel.exitCity ?? "مكة المكرمة",
       country: travel.country,
       image: travel.image,
       images: travel.images,
@@ -509,7 +514,7 @@ export default function Admin() {
     }));
   }
 
-  function toggleAirline(airline: "Air Algerie" | "SV" | "MS" | "TK", checked: boolean) {
+  function toggleAirline(airline: "Air Algerie" | "SV" | "MS" | "TK" | "Flynas", checked: boolean) {
     setTravelForm((current) => ({
       ...current,
       airlines: checked
@@ -538,6 +543,7 @@ export default function Admin() {
       id: editingTravelId ?? crypto.randomUUID(),
       name: travelForm.name.trim(),
       destination: travelForm.destination.trim(),
+      exitCity: travelForm.exitCity.trim(),
       country: travelForm.country.trim(),
       image: images[0],
       images,
@@ -959,6 +965,11 @@ export default function Admin() {
                 <label>الدخول
                   <select value={travelForm.destination} onChange={(event) => setTravelForm({ ...travelForm, destination: event.target.value })}>
                     {destinationOptions.map((option) => <option key={option} value={option}>{option}</option>)}
+                  </select>
+                </label>
+                <label>الخروج
+                  <select value={travelForm.exitCity} onChange={(event) => setTravelForm({ ...travelForm, exitCity: event.target.value })}>
+                    {exitOptions.map((option) => <option key={option} value={option}>{option}</option>)}
                   </select>
                 </label>
                 <label>البلد<input required value={travelForm.country} onChange={(event) => setTravelForm({ ...travelForm, country: event.target.value })} /></label>

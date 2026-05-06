@@ -1,5 +1,6 @@
 alter table public.travels
   add column if not exists departures date[] default '{}',
+  add column if not exists exit_city text default 'مكة المكرمة',
   add column if not exists baby_price numeric(12,2),
   add column if not exists commission numeric(12,2) default 0,
   add column if not exists room_prices jsonb default '{"double":0,"triple":0,"quad":0,"quint":0}'::jsonb,
@@ -11,6 +12,12 @@ alter table public.travels
 
 update public.travels
 set
+  destination = case
+    when destination = 'مكة المكرمة' then 'جدة'
+    when destination = 'المدينة' then 'المدينة المنورة'
+    else coalesce(destination, 'جدة')
+  end,
+  exit_city = coalesce(nullif(exit_city, ''), 'مكة المكرمة'),
   departures = coalesce(departures, array[coalesce(departure_date, current_date)]),
   commission = coalesce(commission, 0),
   has_child_price = coalesce(has_child_price, true),
@@ -29,6 +36,8 @@ where true;
 alter table public.travels
   alter column departures set default '{}',
   alter column departures set not null,
+  alter column exit_city set default 'مكة المكرمة',
+  alter column exit_city set not null,
   alter column commission set default 0,
   alter column commission set not null,
   alter column room_prices set default '{"double":0,"triple":0,"quad":0,"quint":0}'::jsonb,

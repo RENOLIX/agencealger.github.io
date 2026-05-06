@@ -80,7 +80,7 @@ export type TravelHotel = {
 };
 
 export type FlightMode = "direct" | "escale";
-export type AirlineCode = "Air Algerie" | "SV" | "MS" | "TK";
+export type AirlineCode = "Air Algerie" | "SV" | "MS" | "TK" | "Flynas";
 export type RoomType = "double" | "triple" | "quad" | "quint";
 
 export type TravelRoomPrices = Record<RoomType, number>;
@@ -117,6 +117,7 @@ export type Travel = {
   id: string;
   name: string;
   destination: string;
+  exitCity?: string;
   country: string;
   image: string;
   images: string[];
@@ -757,6 +758,7 @@ type TravelRow = {
   id: string;
   name: string;
   destination: string;
+  exit_city?: string | null;
   country: string;
   image_url: string;
   image_urls: string[] | null;
@@ -917,9 +919,16 @@ function normalizeTravel(travel: Travel): Travel {
   const hasChildPrice = travel.hasChildPrice ?? travel.childPrice != null;
   const hasBabyPrice = travel.hasBabyPrice ?? travel.babyPrice != null;
   const roomPrices = { ...defaultRoomPrices, ...(travel.roomPrices ?? {}) };
+  const destination = travel.destination === "مكة المكرمة"
+    ? "جدة"
+    : travel.destination === "المدينة"
+      ? "المدينة المنورة"
+      : (travel.destination || "جدة");
 
   return {
     ...travel,
+    destination,
+    exitCity: travel.exitCity || "مكة المكرمة",
     image,
     images,
     banner: travel.banner || images[0] || image,
@@ -959,6 +968,7 @@ function mapTravelRow(row: TravelRow): Travel {
     id: row.id,
     name: row.name || "رحلة عمرة",
     destination: row.destination || "مكة المكرمة",
+    exitCity: row.exit_city || "مكة المكرمة",
     country: row.country || "السعودية",
     image,
     images,
@@ -996,6 +1006,7 @@ function mapTravelToRow(travel: Travel) {
     id: normalized.id,
     name: normalized.name,
     destination: normalized.destination,
+    exit_city: normalized.exitCity ?? "مكة المكرمة",
     country: normalized.country,
     image_url: normalized.image,
     image_urls: normalized.images,
@@ -1299,7 +1310,7 @@ export async function syncReservationsFromSupabase() {
       ? supabase.from("reservation_attachments").select("id, reservation_id, file_name, mime_type, storage_path, public_url").in("reservation_id", reservationIds)
       : Promise.resolve({ data: [], error: null }),
     travelIds.length > 0
-    ? supabase.from("travels").select("id, name, destination, country, image_url, image_urls, banner_url, departure_date, departures, duration, adult_price, commission, child_price, baby_price, has_child_price, has_baby_price, short_description, long_description, guides, hotels, flight_mode, airlines, category, benefits, tickets_total, tickets_left, rating").in("id", travelIds)
+    ? supabase.from("travels").select("id, name, destination, exit_city, country, image_url, image_urls, banner_url, departure_date, departures, duration, adult_price, commission, child_price, baby_price, has_child_price, has_baby_price, short_description, long_description, guides, hotels, flight_mode, airlines, category, benefits, tickets_total, tickets_left, rating").in("id", travelIds)
       : Promise.resolve({ data: [], error: null }),
   ]);
 
