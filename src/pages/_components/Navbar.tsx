@@ -27,7 +27,7 @@ export default function Navbar() {
     <header className={`nav ${scrolled ? "nav-scrolled" : ""}`}>
       <Link to="/#hero" className="brand" aria-label="Hamdi Voyage">
         <img
-          src={normalMode ? "/agencealger.github.io/logo-normal.png" : "/agencealger.github.io/logo-transparent.png"}
+          src={normalMode ? "/logo-normal.png" : "/logo-transparent.png"}
           alt="Hamdi Voyage"
         />
       </Link>
@@ -36,7 +36,7 @@ export default function Navbar() {
       </nav>
       <div className="nav-actions">
         <a href="tel:0777777794"><Phone size={14} /> 0777777794</a>
-        <a className="nav-cta" href="/agencealger.github.io/#tours">استكشف</a>
+        <a className="nav-cta" href="/#tours">استكشف</a>
       </div>
       <button className="menu-btn" onClick={() => setOpen(!open)} aria-label="Menu">{open ? <X /> : <Menu />}</button>
       {open && (

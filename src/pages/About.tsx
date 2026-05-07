@@ -17,13 +17,13 @@ export default function About() {
           <span className="label">من نحن</span>
           <h1>وكالة تنظم رحلات العمرة إلى مكة باهتمام ووضوح.</h1>
           <p>Hamdi Voyage تجمع بين الخبرة، المتابعة الدقيقة، ولوحة إدارة حديثة لتسهيل الحجز وتنظيم الرحلات الشهرية.</p>
-          <a href="/agencealger.github.io/#tours">عرض الرحلات <ArrowUpRight size={17} /></a>
+          <a href="/#tours">عرض الرحلات <ArrowUpRight size={17} /></a>
         </div>
         <div className="about-collage about-photo-story">
-          <img className="about-photo-wide" src="/agencealger.github.io/about/team-airport.jpeg" alt="فريق الوكالة في المطار" />
-          <img className="about-photo-portrait" src="/agencealger.github.io/about/award-portrait.jpeg" alt="تكريم في منتدى العمرة والزيارة" />
-          <img className="about-photo-soft" src="/agencealger.github.io/about/umrah-forum.jpeg" alt="مشاركة في منتدى العمرة والزيارة" />
-          <img className="about-photo-soft" src="/agencealger.github.io/about/field-team.jpeg" alt="فريق مرافقة ميداني" />
+          <img className="about-photo-wide" src="/about/team-airport.jpeg" alt="فريق الوكالة في المطار" />
+          <img className="about-photo-portrait" src="/about/award-portrait.jpeg" alt="تكريم في منتدى العمرة والزيارة" />
+          <img className="about-photo-soft" src="/about/umrah-forum.jpeg" alt="مشاركة في منتدى العمرة والزيارة" />
+          <img className="about-photo-soft" src="/about/field-team.jpeg" alt="فريق مرافقة ميداني" />
         </div>
       </section>
 

@@ -27,7 +27,7 @@ function AdminOnly({ children }: { children: React.ReactNode }) {
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <BrowserRouter basename="/agencealger.github.io">
+    <BrowserRouter>
       <AuthProvider>
         <ScrollToTop />
         <Routes>
