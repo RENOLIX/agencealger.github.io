@@ -5,6 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="Hamdi Voyage، وكالة رحلات إلى مكة المكرمة مع مساحة إدارة للحجوزات." />
     <title>Hamdi Voyage</title>
+    <base href="/" />
+    <script>
+      (function () {
+        var repoBase = "/agencealger.github.io/";
+        var pathname = window.location.pathname;
+        var base = pathname === "/agencealger.github.io" || pathname.indexOf(repoBase) === 0 ? repoBase : "/";
+        var baseTag = document.querySelector("base");
+        if (baseTag) {
+          baseTag.setAttribute("href", base);
+        }
+      })();
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />

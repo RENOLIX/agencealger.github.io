@@ -12,6 +12,7 @@ import Contact from "./pages/Contact";
 import NotFound from "./pages/NotFound";
 import TravelDetail from "./pages/TravelDetail";
 import ScrollToTop from "./components/ScrollToTop";
+import { getAppBasePath, withAppBase } from "./lib/app-base";
 import "./index.css";
 
 function Protected({ children }: { children: React.ReactNode }) {
@@ -27,7 +28,7 @@ function AdminOnly({ children }: { children: React.ReactNode }) {
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <BrowserRouter>
+    <BrowserRouter basename={getAppBasePath() || undefined}>
       <AuthProvider>
         <ScrollToTop />
         <Routes>
@@ -46,3 +47,5 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     </BrowserRouter>
   </React.StrictMode>,
 );
+
+document.documentElement.style.setProperty("--admin-pattern-image", `url("${withAppBase("/admin/admin-pattern.jpg")}")`);

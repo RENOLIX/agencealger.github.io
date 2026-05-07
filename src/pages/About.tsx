@@ -1,6 +1,7 @@
 import { ArrowUpRight, Compass, Gem, Globe2, Plane, UsersRound } from "lucide-react";
 import Navbar from "./_components/Navbar";
 import Footer from "./_components/Footer";
+import { withAppBase } from "../lib/app-base";
 
 const values = [
   { icon: Compass, title: "برنامج واضح", text: "كل رحلة تبدأ في اليوم 1 وتنتهي في اليوم 30 مع تفاصيل سهلة الفهم." },
@@ -17,13 +18,13 @@ export default function About() {
           <span className="label">من نحن</span>
           <h1>وكالة تنظم رحلات العمرة إلى مكة باهتمام ووضوح.</h1>
           <p>Hamdi Voyage تجمع بين الخبرة، المتابعة الدقيقة، ولوحة إدارة حديثة لتسهيل الحجز وتنظيم الرحلات الشهرية.</p>
-          <a href="/#tours">عرض الرحلات <ArrowUpRight size={17} /></a>
+          <a href={withAppBase("/#tours")}>عرض الرحلات <ArrowUpRight size={17} /></a>
         </div>
         <div className="about-collage about-photo-story">
-          <img className="about-photo-wide" src="/about/team-airport.jpeg" alt="فريق الوكالة في المطار" />
-          <img className="about-photo-portrait" src="/about/award-portrait.jpeg" alt="تكريم في منتدى العمرة والزيارة" />
-          <img className="about-photo-soft" src="/about/umrah-forum.jpeg" alt="مشاركة في منتدى العمرة والزيارة" />
-          <img className="about-photo-soft" src="/about/field-team.jpeg" alt="فريق مرافقة ميداني" />
+          <img className="about-photo-wide" src={withAppBase("/about/team-airport.jpeg")} alt="فريق الوكالة في المطار" />
+          <img className="about-photo-portrait" src={withAppBase("/about/award-portrait.jpeg")} alt="تكريم في منتدى العمرة والزيارة" />
+          <img className="about-photo-soft" src={withAppBase("/about/umrah-forum.jpeg")} alt="مشاركة في منتدى العمرة والزيارة" />
+          <img className="about-photo-soft" src={withAppBase("/about/field-team.jpeg")} alt="فريق مرافقة ميداني" />
         </div>
       </section>
 

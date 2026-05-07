@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Menu, Phone, X } from "lucide-react";
+import { withAppBase } from "../../lib/app-base";
 
 const links = [
   { label: "الرئيسية", href: "/#hero" },
@@ -27,7 +28,7 @@ export default function Navbar() {
     <header className={`nav ${scrolled ? "nav-scrolled" : ""}`}>
       <Link to="/#hero" className="brand" aria-label="Hamdi Voyage">
         <img
-          src={normalMode ? "/logo-normal.png" : "/logo-transparent.png"}
+          src={normalMode ? withAppBase("/logo-normal.png") : withAppBase("/logo-transparent.png")}
           alt="Hamdi Voyage"
         />
       </Link>
@@ -36,7 +37,7 @@ export default function Navbar() {
       </nav>
       <div className="nav-actions">
         <a href="tel:0777777794"><Phone size={14} /> 0777777794</a>
-        <a className="nav-cta" href="/#tours">استكشف</a>
+        <a className="nav-cta" href={withAppBase("/#tours")}>استكشف</a>
       </div>
       <button className="menu-btn" onClick={() => setOpen(!open)} aria-label="Menu">{open ? <X /> : <Menu />}</button>
       {open && (
