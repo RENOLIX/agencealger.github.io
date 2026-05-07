@@ -502,16 +502,16 @@ export default function TravelDetail() {
                   <span>{passenger.type === "adult" ? "بالغ" : passenger.type === "child" ? "طفل" : "رضيع"}</span>
                 </div>
                 <div className="traveler-grid">
+                  <label>الاسم<input required value={passenger.firstName} onChange={(event) => updatePassenger(passenger.id, "firstName", event.target.value)} /></label>
+                  <label>الاسم باللاتينية<input required value={passenger.firstNameLatin} onChange={(event) => updatePassenger(passenger.id, "firstNameLatin", event.target.value)} /></label>
+                  <label>اللقب<input required value={passenger.lastName} onChange={(event) => updatePassenger(passenger.id, "lastName", event.target.value)} /></label>
+                  <label>اللقب باللاتينية<input required value={passenger.lastNameLatin} onChange={(event) => updatePassenger(passenger.id, "lastNameLatin", event.target.value)} /></label>
                   <label>الجنس
                     <select required value={passenger.sex} onChange={(event) => updatePassenger(passenger.id, "sex", event.target.value)}>
                       <option value="male">رجل</option>
                       <option value="female">امرأة</option>
                     </select>
                   </label>
-                  <label>الاسم<input required value={passenger.firstName} onChange={(event) => updatePassenger(passenger.id, "firstName", event.target.value)} /></label>
-                  <label>اللقب<input required value={passenger.lastName} onChange={(event) => updatePassenger(passenger.id, "lastName", event.target.value)} /></label>
-                  <label>الاسم باللاتينية<input required value={passenger.firstNameLatin} onChange={(event) => updatePassenger(passenger.id, "firstNameLatin", event.target.value)} /></label>
-                  <label>اللقب باللاتينية<input required value={passenger.lastNameLatin} onChange={(event) => updatePassenger(passenger.id, "lastNameLatin", event.target.value)} /></label>
                   <label>اسم الأب<input required value={passenger.fatherName} onChange={(event) => updatePassenger(passenger.id, "fatherName", event.target.value)} /></label>
                   <label>رقم الهاتف<input required value={passenger.phone} onChange={(event) => updatePassenger(passenger.id, "phone", event.target.value)} /></label>
                   <label>اسم الجد<input required value={passenger.grandfatherName} onChange={(event) => updatePassenger(passenger.id, "grandfatherName", event.target.value)} /></label>
