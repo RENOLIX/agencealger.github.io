@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { CheckCircle2, Clock3, Search, XCircle } from "lucide-react";
+import { CheckCircle2, Clock3, Edit3, Search, XCircle } from "lucide-react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "../components/providers/auth";
 import AdminTopbar from "./_components/AdminTopbar";
@@ -115,6 +115,9 @@ export default function ApprovalReservations() {
                     <p>{reservation.customerFirstName} {reservation.customerLastName} - {reservation.customerPhone}</p>
                   </div>
                   <div className="approval-actions">
+                    <button type="button" className="secondary-button compact-button" onClick={() => navigate(`/admin/reservations/edit/${reservation.id}`)}>
+                      <Edit3 size={16} /> تعديل
+                    </button>
                     <button type="button" className="approve-button" disabled={busyId === reservation.id} onClick={() => void changeStatus(reservation.id, "Confirmee")}>
                       <CheckCircle2 size={16} /> تأكيد
                     </button>
@@ -146,7 +149,10 @@ export default function ApprovalReservations() {
                         <div key={passenger.id} className="reservation-passenger-item">
                           <strong>{passenger.firstName} {passenger.lastName}</strong>
                           <small>{passengerTypeLabels[passenger.type]} - {passenger.passportNumber}</small>
+                          <small>{passenger.firstNameLatin} {passenger.lastNameLatin}</small>
+                          <small>{passenger.sex === "female" ? "امرأة" : "رجل"} - {passenger.profession}</small>
                           <small>{passenger.birthPlace} - {passenger.birthDate}</small>
+                          <small>صدور الجواز: {passenger.passportIssueDate} - انتهاءه: {passenger.passportExpiry}</small>
                         </div>
                       ))}
                     </div>

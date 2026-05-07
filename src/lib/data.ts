@@ -80,8 +80,19 @@ export type TravelHotel = {
 };
 
 export type FlightMode = "direct" | "escale";
-export type AirlineCode = "Air Algerie" | "SV" | "MS" | "TK" | "Flynas";
-export type RoomType = "double" | "triple" | "quad" | "quint";
+export type AirlineCode =
+  | "Air Algerie"
+  | "SV"
+  | "MS"
+  | "TK"
+  | "Flynas"
+  | "Jordanian airline"
+  | "Qatar Airlines"
+  | "Pegasus"
+  | "Ajet"
+  | "Tunisia Airlines"
+  | "Tassili airlines";
+export type RoomType = "single" | "double" | "triple" | "quad" | "quint" | "sext";
 
 export type TravelRoomPrices = Record<RoomType, number>;
 
@@ -93,24 +104,30 @@ export type ReservationRoom = {
 };
 
 export const roomTypeLabels: Record<RoomType, string> = {
+  single: "غرفة أحادية",
   double: "غرفة ثنائية",
   triple: "غرفة ثلاثية",
   quad: "غرفة رباعية",
   quint: "غرفة خماسية",
+  sext: "غرفة سداسية",
 };
 
 export const roomCapacities: Record<RoomType, number> = {
+  single: 1,
   double: 2,
   triple: 3,
   quad: 4,
   quint: 5,
+  sext: 6,
 };
 
 export const defaultRoomPrices: TravelRoomPrices = {
+  single: 0,
   double: 0,
   triple: 0,
   quad: 0,
   quint: 0,
+  sext: 0,
 };
 
 export type Travel = {
@@ -147,27 +164,33 @@ export type Travel = {
 
 export type ReservationStatus = "Nouvelle" | "En etude" | "Confirmee" | "Annulee";
 export type PassengerType = "adult" | "child" | "baby";
+export type PassengerSex = "male" | "female";
 
 export type ReservationAttachment = {
   id: string;
   name: string;
   mimeType: string;
   dataUrl: string;
+  storagePath?: string;
 };
 
 export type ReservationPassenger = {
   id: string;
   type: PassengerType;
+  sex: PassengerSex;
   firstName: string;
   lastName: string;
+  firstNameLatin: string;
+  lastNameLatin: string;
   phone: string;
   address: string;
   fatherName: string;
   grandfatherName: string;
-  motherName: string;
+  profession: string;
   birthPlace: string;
   birthDate: string;
   passportNumber: string;
+  passportIssueDate: string;
   passportExpiry: string;
   notes: string;
 };
@@ -846,26 +869,54 @@ type ReservationPassengerRow = {
 function serializePassengerNotes(passenger: ReservationPassenger) {
   return JSON.stringify({
     notes: passenger.notes || "",
+    sex: passenger.sex || "male",
     address: passenger.address || "",
     fatherName: passenger.fatherName || "",
     grandfatherName: passenger.grandfatherName || "",
-    motherName: passenger.motherName || "",
+    firstNameLatin: passenger.firstNameLatin || "",
+    lastNameLatin: passenger.lastNameLatin || "",
+    profession: passenger.profession || "",
+    passportIssueDate: passenger.passportIssueDate || "",
   });
 }
 
 function parsePassengerNotes(raw: string | null) {
-  if (!raw) return { notes: "", address: "", fatherName: "", grandfatherName: "", motherName: "" };
+  if (!raw) return {
+    notes: "",
+    sex: "male" as PassengerSex,
+    address: "",
+    fatherName: "",
+    grandfatherName: "",
+    firstNameLatin: "",
+    lastNameLatin: "",
+    profession: "",
+    passportIssueDate: "",
+  };
   try {
     const parsed = JSON.parse(raw) as Partial<ReservationPassenger>;
     return {
       notes: typeof parsed.notes === "string" ? parsed.notes : "",
+      sex: parsed.sex === "female" ? "female" : "male",
       address: typeof parsed.address === "string" ? parsed.address : "",
       fatherName: typeof parsed.fatherName === "string" ? parsed.fatherName : "",
       grandfatherName: typeof parsed.grandfatherName === "string" ? parsed.grandfatherName : "",
-      motherName: typeof parsed.motherName === "string" ? parsed.motherName : "",
+      firstNameLatin: typeof parsed.firstNameLatin === "string" ? parsed.firstNameLatin : "",
+      lastNameLatin: typeof parsed.lastNameLatin === "string" ? parsed.lastNameLatin : "",
+      profession: typeof parsed.profession === "string" ? parsed.profession : "",
+      passportIssueDate: typeof parsed.passportIssueDate === "string" ? parsed.passportIssueDate : "",
     };
   } catch {
-    return { notes: raw, address: "", fatherName: "", grandfatherName: "", motherName: "" };
+    return {
+      notes: raw,
+      sex: "male" as PassengerSex,
+      address: "",
+      fatherName: "",
+      grandfatherName: "",
+      firstNameLatin: "",
+      lastNameLatin: "",
+      profession: "",
+      passportIssueDate: "",
+    };
   }
 }
 
@@ -966,7 +1017,7 @@ function normalizeTravel(travel: Travel): Travel {
   return {
     ...travel,
     destination,
-    exitCity: travel.exitCity || "مكة المكرمة",
+    exitCity: travel.exitCity || "جدة",
     image,
     images,
     banner: travel.banner || images[0] || image,
@@ -1009,7 +1060,7 @@ function mapTravelRow(row: TravelRow, fallbackTravel?: Travel): Travel {
     id: row.id,
     name: row.name || "رحلة عمرة",
     destination: row.destination || "مكة المكرمة",
-    exitCity: row.exit_city || "مكة المكرمة",
+    exitCity: row.exit_city || "جدة",
     country: row.country || "السعودية",
     image,
     images,
@@ -1047,7 +1098,7 @@ function mapTravelToRow(travel: Travel) {
     id: normalized.id,
     name: normalized.name,
     destination: normalized.destination,
-    exit_city: normalized.exitCity ?? "مكة المكرمة",
+    exit_city: normalized.exitCity ?? "جدة",
     country: normalized.country,
     image_url: normalized.image,
     image_urls: normalized.images,
@@ -1136,16 +1187,20 @@ function mapReservationRows(
         return {
           id: passenger.id,
           type: passenger.passenger_type,
+          sex: meta.sex,
           firstName: passenger.first_name,
           lastName: passenger.last_name,
+          firstNameLatin: meta.firstNameLatin,
+          lastNameLatin: meta.lastNameLatin,
           phone: passenger.phone,
           address: meta.address,
           fatherName: meta.fatherName,
           grandfatherName: meta.grandfatherName,
-          motherName: meta.motherName,
+          profession: meta.profession,
           birthPlace: passenger.birth_place,
           birthDate: passenger.birth_date,
           passportNumber: passenger.passport_number,
+          passportIssueDate: meta.passportIssueDate,
           passportExpiry: passenger.passport_expiry,
           notes: meta.notes,
         };
@@ -1157,6 +1212,7 @@ function mapReservationRows(
         name: attachment.file_name,
         mimeType: attachment.mime_type,
         dataUrl: attachment.public_url ?? attachment.storage_path,
+        storagePath: attachment.storage_path,
       })),
     notes: reservationMeta.notes,
     status: row.status,
@@ -1336,7 +1392,7 @@ export async function syncReservationsFromSupabase() {
 
   const { data: reservationData, error: reservationError } = await supabase
     .from("reservation_requests")
-    .select("id, travel_id, employee_id, employee_name, customer_first_name, customer_last_name, customer_address, customer_phone, adults_count, children_count, quantity, total_amount, notes, status, created_at")
+    .select("id, travel_id, employee_id, employee_name, customer_first_name, customer_last_name, customer_address, customer_phone, adults_count, children_count, babies_count, quantity, total_amount, notes, status, created_at")
     .order("created_at", { ascending: false });
 
   if (reservationError) throw reservationError;
@@ -1394,6 +1450,7 @@ export async function createReservationInSupabase(reservation: Reservation) {
       customer_phone: reservation.customerPhone,
       adults_count: reservation.adults,
       children_count: reservation.children,
+      babies_count: Number(reservation.babies ?? 0),
       quantity: reservation.quantity,
       total_amount: reservation.total,
       notes: serializeReservationNotes(reservation),
@@ -1425,6 +1482,91 @@ export async function createReservationInSupabase(reservation: Reservation) {
 
     if (reservation.attachments.length > 0) {
       const uploaded = await Promise.all(reservation.attachments.map((attachment) => uploadReservationAttachment(reservation.id, attachment)));
+      const { error: attachmentsError } = await supabase.from("reservation_attachments").insert(
+        reservation.attachments.map((attachment, index) => ({
+          id: attachment.id,
+          reservation_id: reservation.id,
+          file_name: attachment.name,
+          mime_type: attachment.mimeType,
+          storage_path: uploaded[index].path,
+          public_url: uploaded[index].publicUrl,
+        })),
+      );
+
+      if (attachmentsError) throw attachmentsError;
+    }
+
+    return await syncReservationsFromSupabase();
+  } catch {
+    return fallback();
+  }
+}
+
+export async function updateReservationInSupabase(reservation: Reservation) {
+  const fallback = () => {
+    const nextReservations = [reservation, ...getReservations().filter((item) => item.id !== reservation.id)];
+    saveReservations(nextReservations);
+    return nextReservations;
+  };
+
+  if (!hasSupabaseConfig) return fallback();
+
+  try {
+    const employeeId = isUuidLike(reservation.employeeId) ? reservation.employeeId : null;
+    const { error: reservationError } = await supabase.from("reservation_requests").update({
+      travel_id: reservation.travelId,
+      employee_id: employeeId,
+      employee_name: reservation.employeeName,
+      customer_first_name: reservation.customerFirstName,
+      customer_last_name: reservation.customerLastName,
+      customer_address: reservation.customerAddress,
+      customer_phone: reservation.customerPhone,
+      adults_count: reservation.adults,
+      children_count: reservation.children,
+      babies_count: Number(reservation.babies ?? 0),
+      quantity: reservation.quantity,
+      total_amount: reservation.total,
+      notes: serializeReservationNotes(reservation),
+      status: reservation.status,
+    }).eq("id", reservation.id);
+
+    if (reservationError) throw reservationError;
+
+    const { error: deletePassengersError } = await supabase.from("reservation_passengers").delete().eq("reservation_id", reservation.id);
+    if (deletePassengersError) throw deletePassengersError;
+
+    const { error: deleteAttachmentsError } = await supabase.from("reservation_attachments").delete().eq("reservation_id", reservation.id);
+    if (deleteAttachmentsError) throw deleteAttachmentsError;
+
+    if (reservation.passengers.length > 0) {
+      const { error: passengersError } = await supabase.from("reservation_passengers").insert(
+        reservation.passengers.map((passenger) => ({
+          id: passenger.id,
+          reservation_id: reservation.id,
+          passenger_type: passenger.type,
+          first_name: passenger.firstName,
+          last_name: passenger.lastName,
+          phone: passenger.phone,
+          birth_place: passenger.birthPlace,
+          birth_date: passenger.birthDate,
+          passport_number: passenger.passportNumber,
+          passport_expiry: passenger.passportExpiry,
+          notes: serializePassengerNotes(passenger),
+        })),
+      );
+
+      if (passengersError) throw passengersError;
+    }
+
+    if (reservation.attachments.length > 0) {
+      const uploaded = await Promise.all(reservation.attachments.map(async (attachment) => {
+        if (attachment.dataUrl.startsWith("data:")) return uploadReservationAttachment(reservation.id, attachment);
+        return {
+          path: attachment.storagePath ?? attachment.dataUrl,
+          publicUrl: attachment.dataUrl,
+        };
+      }));
+
       const { error: attachmentsError } = await supabase.from("reservation_attachments").insert(
         reservation.attachments.map((attachment, index) => ({
           id: attachment.id,

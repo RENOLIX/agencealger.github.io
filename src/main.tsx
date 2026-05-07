@@ -40,6 +40,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
           <Route path="/admin" element={<Protected><Admin /></Protected>} />
           <Route path="/admin/reservations/new" element={<Protected><AdminReservationCatalog /></Protected>} />
           <Route path="/admin/reservations/new/:travelId" element={<Protected><TravelDetail /></Protected>} />
+          <Route path="/admin/reservations/edit/:reservationId" element={<Protected><TravelDetail /></Protected>} />
           <Route path="/admin/approvals" element={<AdminOnly><ApprovalReservations /></AdminOnly>} />
           <Route path="*" element={<NotFound />} />
         </Routes>

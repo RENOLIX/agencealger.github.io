@@ -15,6 +15,8 @@ import {
   roomCapacities,
   roomTypeLabels,
   syncTravelsFromSupabase,
+  syncReservationsFromSupabase,
+  updateReservationInSupabase,
   type PassengerType,
   type Reservation,
   type ReservationAttachment,
@@ -28,29 +30,39 @@ function createPassenger(type: PassengerType): ReservationPassenger {
   return {
     id: crypto.randomUUID(),
     type,
+    sex: "male",
     firstName: "",
     lastName: "",
+    firstNameLatin: "",
+    lastNameLatin: "",
     phone: "",
     address: "",
     fatherName: "",
     grandfatherName: "",
-    motherName: "",
+    profession: "",
     birthPlace: "",
     birthDate: "",
     passportNumber: "",
+    passportIssueDate: "",
     passportExpiry: "",
     notes: "",
   };
 }
 
 export default function TravelDetail() {
-  const { travelId } = useParams();
+  const { travelId, reservationId } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
   const isAdminFlow = location.pathname.startsWith("/admin/");
-  const [travel, setTravel] = useState<Travel | null>(() => getTravels().find((item) => item.id === travelId) ?? null);
+  const isEditMode = isAdminFlow && Boolean(reservationId);
+  const [editingReservation, setEditingReservation] = useState<Reservation | null>(() => reservationId ? getReservations().find((item) => item.id === reservationId) ?? null : null);
+  const [travel, setTravel] = useState<Travel | null>(() => {
+    const fallbackTravelId = travelId ?? editingReservation?.travelId;
+    return getTravels().find((item) => item.id === fallbackTravelId) ?? null;
+  });
   const [activeImage, setActiveImage] = useState(0);
+  const [prefilledReservationId, setPrefilledReservationId] = useState("");
 
   const [adults, setAdults] = useState(0);
   const [children, setChildren] = useState(0);
@@ -65,18 +77,40 @@ export default function TravelDetail() {
 
   const quantity = adults + children + babies;
   const roomGuests = adults;
-  const maxTickets = travel?.ticketsLeft ?? 0;
+  const maxTickets = (travel?.ticketsLeft ?? 0) + (editingReservation?.status === "Confirmee" ? editingReservation.quantity : 0);
   const isSinglePassenger = roomGuests === 1;
 
   useEffect(() => {
     void syncTravelsFromSupabase()
-      .then((travels) => setTravel(travels.find((item) => item.id === travelId) ?? null))
+      .then((travels) => {
+        const fallbackTravelId = travelId ?? editingReservation?.travelId;
+        setTravel(travels.find((item) => item.id === fallbackTravelId) ?? null);
+      })
       .catch(() => undefined);
-  }, [travelId]);
+  }, [editingReservation?.travelId, travelId]);
+
+  useEffect(() => {
+    if (!reservationId) return;
+    void syncReservationsFromSupabase()
+      .then((reservations) => setEditingReservation(reservations.find((item) => item.id === reservationId) ?? null))
+      .catch(() => undefined);
+  }, [reservationId]);
 
   useEffect(() => {
     setActiveImage(0);
-  }, [travelId]);
+  }, [travelId, reservationId]);
+
+  useEffect(() => {
+    if (!editingReservation || prefilledReservationId === editingReservation.id) return;
+    setAdults(editingReservation.adults);
+    setChildren(editingReservation.children);
+    setBabies(Number(editingReservation.babies ?? 0));
+    setSelectedRooms(editingReservation.rooms?.map((room) => ({ ...room })) ?? []);
+    setGeneralNotes(editingReservation.notes);
+    setAttachments(editingReservation.attachments.map((attachment) => ({ ...attachment })));
+    setPassengers(editingReservation.passengers.map((passenger) => ({ ...passenger })));
+    setPrefilledReservationId(editingReservation.id);
+  }, [editingReservation, prefilledReservationId]);
 
   useEffect(() => {
     const total = adults + children + babies;
@@ -86,20 +120,27 @@ export default function TravelDetail() {
   }, [adults, children, babies, passengers.length]);
 
   const selectedRoomCapacity = selectedRooms.reduce((sum, room) => sum + room.capacity, 0);
-  const roomPriceList = travel?.roomPrices ?? { double: travel?.price ?? 0, triple: travel?.price ?? 0, quad: travel?.price ?? 0, quint: travel?.price ?? 0 };
+  const roomPriceList = travel?.roomPrices ?? {
+    single: travel?.price ?? 0,
+    double: travel?.price ?? 0,
+    triple: travel?.price ?? 0,
+    quad: travel?.price ?? 0,
+    quint: travel?.price ?? 0,
+    sext: travel?.price ?? 0,
+  };
   const roomTotal = selectedRooms.reduce((sum, room) => sum + room.price * room.capacity, 0);
   const roomsMatchQuantity = roomGuests === 0 || selectedRoomCapacity === roomGuests;
 
   useEffect(() => {
     if (isSinglePassenger && travel) {
       setSelectedRooms((current) => (
-        current.length === 1 && current[0].type === "quint" && current[0].capacity === 1
+        current.length === 1 && current[0].type === "single" && current[0].capacity === 1
           ? current
           : [{
             id: crypto.randomUUID(),
-            type: "quint",
+            type: "single",
             capacity: 1,
-            price: Number((travel.roomPrices?.quint ?? travel.price) || 0),
+            price: Number((travel.roomPrices?.single ?? travel.price) || 0),
           }]
       ));
       return;
@@ -116,8 +157,8 @@ export default function TravelDetail() {
     return adults * travel.price + children * childUnit + babies * babyUnit;
   }, [adults, babies, children, roomTotal, selectedRooms.length, travel]);
 
-  if (!travel) return <Navigate to="/" replace />;
   if (isAdminFlow && !user) return <Navigate to="/auth" replace />;
+  if (!travel) return isAdminFlow ? null : <Navigate to="/" replace />;
   const currentTravel = travel;
 
   const gallery = currentTravel.images.length > 0 ? currentTravel.images : [currentTravel.image];
@@ -160,7 +201,7 @@ export default function TravelDetail() {
   }
 
   function addRoom(roomType: keyof typeof roomTypeLabels) {
-    const capacity = isSinglePassenger && roomType === "quint" ? 1 : roomCapacities[roomType];
+    const capacity = isSinglePassenger && roomType === "single" ? 1 : roomCapacities[roomType];
     if (selectedRoomCapacity + capacity > roomGuests) return;
     setSelectedRooms((current) => [
       ...current,
@@ -175,16 +216,20 @@ export default function TravelDetail() {
 
   function isPassengerComplete(passenger: ReservationPassenger) {
     return Boolean(
+      passenger.sex &&
       passenger.firstName.trim() &&
       passenger.lastName.trim() &&
+      passenger.firstNameLatin.trim() &&
+      passenger.lastNameLatin.trim() &&
       passenger.phone.trim() &&
       passenger.address.trim() &&
       passenger.fatherName.trim() &&
       passenger.grandfatherName.trim() &&
-      passenger.motherName.trim() &&
+      passenger.profession.trim() &&
       passenger.birthPlace.trim() &&
       passenger.birthDate &&
       passenger.passportNumber.trim() &&
+      passenger.passportIssueDate &&
       passenger.passportExpiry,
     );
   }
@@ -192,7 +237,7 @@ export default function TravelDetail() {
   async function submitReservation(event: FormEvent) {
     event.preventDefault();
     setSubmitError("");
-    if (quantity < 1 || quantity > currentTravel.ticketsLeft) return;
+    if (quantity < 1 || quantity > maxTickets) return;
     if (!roomsMatchQuantity) {
       setSubmitError("اختر غرفا تغطي عدد البالغين فقط قبل إرسال الحجز.");
       return;
@@ -201,7 +246,7 @@ export default function TravelDetail() {
     const primaryPassenger = passengers[0];
 
     const nextReservation: Reservation = {
-      id: crypto.randomUUID(),
+      id: editingReservation?.id ?? crypto.randomUUID(),
       travelId: currentTravel.id,
       travelName: currentTravel.name,
       employeeId: user?.id ?? null,
@@ -219,24 +264,31 @@ export default function TravelDetail() {
       passengers,
       attachments,
       notes: generalNotes.trim(),
-      status: "Nouvelle",
-      createdAt: new Date().toISOString(),
+      status: editingReservation?.status ?? "Nouvelle",
+      createdAt: editingReservation?.createdAt ?? new Date().toISOString(),
     };
 
     try {
-      const nextDisplayNumber = formatReservationDisplayNumber(getReservations().length + 1);
-      await createReservationInSupabase(nextReservation);
+      const currentIndex = editingReservation ? getReservations().findIndex((item) => item.id === editingReservation.id) : -1;
+      const nextDisplayNumber = formatReservationDisplayNumber(editingReservation ? currentIndex + 1 : getReservations().length + 1);
+      if (editingReservation) {
+        await updateReservationInSupabase(nextReservation);
+      } else {
+        await createReservationInSupabase(nextReservation);
+      }
       setSubmittedNumber(nextDisplayNumber);
       setSubmittedId(nextReservation.id);
-      setGeneralNotes("");
-      setAdults(0);
-      setChildren(0);
-      setBabies(0);
-      setSelectedRooms([]);
-      setPassengers([]);
-      setAttachments([]);
+      if (!editingReservation) {
+        setGeneralNotes("");
+        setAdults(0);
+        setChildren(0);
+        setBabies(0);
+        setSelectedRooms([]);
+        setPassengers([]);
+        setAttachments([]);
+      }
     } catch {
-      setSubmitError("تعذر إرسال الطلب حاليا، حاول مرة أخرى.");
+      setSubmitError(editingReservation ? "تعذر حفظ التعديلات حاليا، حاول مرة أخرى." : "تعذر إرسال الطلب حاليا، حاول مرة أخرى.");
     }
   }
 
@@ -268,7 +320,7 @@ export default function TravelDetail() {
           <p className="travel-summary-copy">{travel.description}</p>
 
           <div className="travel-meta-list">
-            <span><MapPin size={15} /> دخول: {travel.destination} - خروج: {travel.exitCity ?? "مكة المكرمة"}</span>
+            <span><MapPin size={15} /> دخول: {travel.destination} - خروج: {travel.exitCity ?? "جدة"}</span>
             <span><CalendarDays size={15} /> {travel.departures?.length ? `${travel.departures.length} مواعيد انطلاق` : formatArabicDate(travel.date)}</span>
             <span><Users size={15} /> {travel.guides.length} مرشد</span>
           </div>
@@ -276,7 +328,7 @@ export default function TravelDetail() {
           <div className="travel-inline-facts vertical-facts">
             <div><CalendarDays size={16} /><small>المدة</small><strong>{travel.duration}</strong></div>
             <div><MapPin size={16} /><small>الدخول</small><strong>{travel.destination}</strong></div>
-            <div><MapPin size={16} /><small>الخروج</small><strong>{travel.exitCity ?? "مكة المكرمة"}</strong></div>
+            <div><MapPin size={16} /><small>الخروج</small><strong>{travel.exitCity ?? "جدة"}</strong></div>
             <div><Landmark size={16} /><small>الفئة</small><strong>{categoryLabels[travel.category]}</strong></div>
             <div><Plane size={16} /><small>الرحلة الجوية</small><strong>{travel.flightMode === "escale" ? "مع توقف" : "مباشرة"}</strong></div>
             <div><Ticket size={16} /><small>الشركة</small><strong>{(travel.airlines ?? ["Air Algerie"]).map((airline) => airline === "Air Algerie" ? "Air Algérie" : airline).join(" - ")}</strong></div>
@@ -360,8 +412,8 @@ export default function TravelDetail() {
       <div className="reservation-shell">
         <div className="reservation-copy">
           <span className="label">إتمام الحجز</span>
-          <h2>ملف حجز داخلي</h2>
-          <p>بعد الإرسال سيظهر الطلب مباشرة في صفحة الحجوزات للموافقة، ويُنقص المخزون فقط بعد موافقة المدير.</p>
+          <h2>{isEditMode ? "تعديل ملف الحجز" : "ملف حجز داخلي"}</h2>
+          <p>{isEditMode ? "يمكنك تعديل بيانات الحجز ثم حفظها مباشرة. إذا كان الحجز مؤكدا فسيتم تحديث المقاعد وفق التعديل." : "بعد الإرسال سيظهر الطلب مباشرة في صفحة الحجوزات للموافقة، ويُنقص المخزون فقط بعد موافقة المدير."}</p>
         </div>
 
         <form className="reservation-form" onSubmit={submitReservation}>
@@ -407,8 +459,8 @@ export default function TravelDetail() {
             </div>
             <div className="room-choice-grid">
               {(Object.keys(roomTypeLabels) as Array<keyof typeof roomTypeLabels>).map((roomType) => {
-                const capacity = isSinglePassenger && roomType === "quint" ? 1 : roomCapacities[roomType];
-                const disabled = isSinglePassenger || selectedRoomCapacity + capacity > roomGuests;
+                const capacity = isSinglePassenger && roomType === "single" ? 1 : roomCapacities[roomType];
+                const disabled = isSinglePassenger ? roomType !== "single" : selectedRoomCapacity + capacity > roomGuests;
                 return (
                   <button key={roomType} type="button" disabled={disabled} onClick={() => addRoom(roomType)}>
                     <strong>{roomTypeLabels[roomType]}</strong>
@@ -450,16 +502,25 @@ export default function TravelDetail() {
                   <span>{passenger.type === "adult" ? "بالغ" : passenger.type === "child" ? "طفل" : "رضيع"}</span>
                 </div>
                 <div className="traveler-grid">
+                  <label>الجنس
+                    <select required value={passenger.sex} onChange={(event) => updatePassenger(passenger.id, "sex", event.target.value)}>
+                      <option value="male">رجل</option>
+                      <option value="female">امرأة</option>
+                    </select>
+                  </label>
                   <label>الاسم<input required value={passenger.firstName} onChange={(event) => updatePassenger(passenger.id, "firstName", event.target.value)} /></label>
                   <label>اللقب<input required value={passenger.lastName} onChange={(event) => updatePassenger(passenger.id, "lastName", event.target.value)} /></label>
+                  <label>الاسم باللاتينية<input required value={passenger.firstNameLatin} onChange={(event) => updatePassenger(passenger.id, "firstNameLatin", event.target.value)} /></label>
+                  <label>اللقب باللاتينية<input required value={passenger.lastNameLatin} onChange={(event) => updatePassenger(passenger.id, "lastNameLatin", event.target.value)} /></label>
                   <label>اسم الأب<input required value={passenger.fatherName} onChange={(event) => updatePassenger(passenger.id, "fatherName", event.target.value)} /></label>
                   <label>رقم الهاتف<input required value={passenger.phone} onChange={(event) => updatePassenger(passenger.id, "phone", event.target.value)} /></label>
                   <label>اسم الجد<input required value={passenger.grandfatherName} onChange={(event) => updatePassenger(passenger.id, "grandfatherName", event.target.value)} /></label>
-                  <label>اسم و لقب الأم<input required value={passenger.motherName} onChange={(event) => updatePassenger(passenger.id, "motherName", event.target.value)} /></label>
+                  <label>المهنة<input required value={passenger.profession} onChange={(event) => updatePassenger(passenger.id, "profession", event.target.value)} /></label>
                   <label className="span-two">العنوان<input required value={passenger.address} onChange={(event) => updatePassenger(passenger.id, "address", event.target.value)} /></label>
                   <label>مكان الميلاد<input required value={passenger.birthPlace} onChange={(event) => updatePassenger(passenger.id, "birthPlace", event.target.value)} /></label>
                   <label>تاريخ الميلاد<input required type="date" value={passenger.birthDate} onChange={(event) => updatePassenger(passenger.id, "birthDate", event.target.value)} /></label>
                   <label>رقم جواز السفر<input required value={passenger.passportNumber} onChange={(event) => updatePassenger(passenger.id, "passportNumber", event.target.value)} /></label>
+                  <label>تاريخ صدور جواز السفر<input required type="date" value={passenger.passportIssueDate} onChange={(event) => updatePassenger(passenger.id, "passportIssueDate", event.target.value)} /></label>
                   <label>انتهاء صلاحية جواز السفر<input required type="date" value={passenger.passportExpiry} onChange={(event) => updatePassenger(passenger.id, "passportExpiry", event.target.value)} /></label>
                   <label className="span-two">ملاحظة خاصة<textarea value={passenger.notes} onChange={(event) => updatePassenger(passenger.id, "notes", event.target.value)} /></label>
                 </div>
@@ -504,13 +565,13 @@ export default function TravelDetail() {
             <div><span>المرفقات</span><strong>{attachments.length}</strong></div>
           </div>
 
-          <button className="primary-reservation-button" disabled={quantity > travel.ticketsLeft || !roomsMatchQuantity}>
-            <CheckCircle2 size={18} /> إرسال طلب الحجز
+          <button className="primary-reservation-button" disabled={quantity > maxTickets || !roomsMatchQuantity}>
+            <CheckCircle2 size={18} /> {isEditMode ? "حفظ تعديلات الحجز" : "إرسال طلب الحجز"}
           </button>
 
           {submittedId && (
             <div className="reservation-success">
-              <strong>تم إرسال الطلب بنجاح</strong>
+              <strong>{isEditMode ? "تم حفظ التعديلات بنجاح" : "تم إرسال الطلب بنجاح"}</strong>
               <span>رقم الطلب: {submittedNumber || submittedId}</span>
               <button type="button" className="secondary-button" onClick={() => navigate("/admin")}>العودة إلى السجل</button>
             </div>

@@ -68,17 +68,23 @@ type TravelFormState = {
   guides: string[];
   hotels: TravelHotel[];
   flightMode: "direct" | "escale";
-  airlines: Array<"Air Algerie" | "SV" | "MS" | "TK" | "Flynas">;
+  airlines: Array<NonNullable<Travel["airlines"]>[number]>;
   category: Travel["category"];
   benefits: BenefitKey[];
   ticketsTotal: number;
 };
 
-const destinationOptions = ["جدة", "المدينة المنورة"] as const;
-const exitOptions = ["جدة", "المدينة المنورة"] as const;
+const destinationOptions = ["جدة", "المدينة المنورة", "الدمام", "الطائف", "ينبع", "الرياض"] as const;
+const exitOptions = ["جدة", "المدينة المنورة", "الدمام", "الطائف", "ينبع", "الرياض"] as const;
 const airlineOptions = [
   { value: "Air Algerie", label: "Air Algérie" },
   { value: "Flynas", label: "Flynas" },
+  { value: "Jordanian airline", label: "Jordanian airline" },
+  { value: "Qatar Airlines", label: "Qatar Airlines" },
+  { value: "Pegasus", label: "Pegasus" },
+  { value: "Ajet", label: "Ajet" },
+  { value: "Tunisia Airlines", label: "Tunisia airlines" },
+  { value: "Tassili airlines", label: "Tassili airlines" },
   { value: "SV", label: "SV" },
   { value: "MS", label: "MS" },
   { value: "TK", label: "TK" },
@@ -88,7 +94,7 @@ const roomPriceKeys = Object.keys(roomTypeLabels) as Array<keyof TravelRoomPrice
 const emptyTravelForm: TravelFormState = {
   name: "",
   destination: "جدة",
-  exitCity: "مكة المكرمة",
+  exitCity: "جدة",
   country: "السعودية",
   image: "",
   images: [],
@@ -97,7 +103,7 @@ const emptyTravelForm: TravelFormState = {
   duration: "30 يوم",
   price: 185000,
   commission: 0,
-  roomPrices: { double: 205000, triple: 195000, quad: 190000, quint: 185000 },
+  roomPrices: { single: 260000, double: 205000, triple: 195000, quad: 190000, quint: 185000, sext: 180000 },
   hasChildPrice: true,
   childPrice: 145000,
   hasBabyPrice: false,
@@ -392,7 +398,7 @@ export default function Admin() {
     setTravelForm({
       name: travel.name,
       destination: travel.destination,
-      exitCity: travel.exitCity ?? "مكة المكرمة",
+      exitCity: travel.exitCity ?? "جدة",
       country: travel.country,
       image: travel.image,
       images: travel.images,
@@ -514,7 +520,7 @@ export default function Admin() {
     }));
   }
 
-  function toggleAirline(airline: "Air Algerie" | "SV" | "MS" | "TK" | "Flynas", checked: boolean) {
+  function toggleAirline(airline: NonNullable<Travel["airlines"]>[number], checked: boolean) {
     setTravelForm((current) => ({
       ...current,
       airlines: checked
@@ -798,6 +804,9 @@ export default function Admin() {
                     <div><small>الإجمالي</small><strong>{reservation.total.toLocaleString("fr-FR")} دج</strong></div>
                     <div><small>العمولة</small><strong>{getReservationCommission(reservation).toLocaleString("fr-FR")} دج</strong></div>
                   </div>
+                  <button type="button" className="secondary-button compact-button" onClick={() => navigate(`/admin/reservations/edit/${reservation.id}`)}>
+                    <Edit3 size={15} /> تعديل الحجز
+                  </button>
                 </article>
               ))}
 
@@ -840,9 +849,14 @@ export default function Admin() {
                     <span>{reservation.employeeName}</span>
                     <span>{reservation.quantity} مقعد</span>
                     <span>{reservation.total.toLocaleString("fr-FR")} دج</span>
-                    <button type="button" className="secondary-button compact-button" onClick={() => setOpenReservationId((current) => current === reservation.id ? "" : reservation.id)}>
-                      <Eye size={15} /> عرض
-                    </button>
+                    <div style={{ display: "flex", gap: "8px", justifyContent: "flex-end" }}>
+                      <button type="button" className="secondary-button compact-button" onClick={() => navigate(`/admin/reservations/edit/${reservation.id}`)}>
+                        <Edit3 size={15} /> تعديل
+                      </button>
+                      <button type="button" className="secondary-button compact-button" onClick={() => setOpenReservationId((current) => current === reservation.id ? "" : reservation.id)}>
+                        <Eye size={15} /> عرض
+                      </button>
+                    </div>
                   </div>
 
                   {openReservationId === reservation.id && (
@@ -878,9 +892,11 @@ export default function Admin() {
                                 <strong>{passenger.firstName} {passenger.lastName}</strong>
                                 <small>{passengerTypeLabels[passenger.type]} - {passenger.passportNumber}</small>
                                 <small>الهاتف: {passenger.phone} - العنوان: {passenger.address}</small>
+                                <small>باللاتينية: {passenger.firstNameLatin} {passenger.lastNameLatin}</small>
+                                <small>الجنس: {passenger.sex === "female" ? "امرأة" : "رجل"} - المهنة: {passenger.profession}</small>
                                 <small>الأب: {passenger.fatherName} - الجد: {passenger.grandfatherName || "غير مسجل"}</small>
-                                <small>الأم: {passenger.motherName}</small>
                                 <small>{passenger.birthPlace} - {passenger.birthDate}</small>
+                                <small>صدور الجواز: {passenger.passportIssueDate}</small>
                                 <small>انتهاء صلاحية جواز السفر: {passenger.passportExpiry}</small>
                                 {passenger.notes && <small>ملاحظة: {passenger.notes}</small>}
                               </div>
@@ -923,7 +939,7 @@ export default function Admin() {
                 <article key={id} className="housing-card">
                   <header>
                     <strong>{roomTypeLabels[room.type]}</strong>
-                    <span>{room.capacity} مقاعد</span>
+                    <span>{room.capacity} أَسِرَّة</span>
                   </header>
                   <div className="housing-card-body">
                     <small>رقم الحجز</small>
@@ -1061,7 +1077,7 @@ export default function Admin() {
                           roomPrices: { ...travelForm.roomPrices, [roomType]: Number(event.target.value) },
                         })}
                       />
-                      <small>{roomCapacities[roomType]} مقاعد</small>
+                      <small>{roomCapacities[roomType]} أَسِرَّة</small>
                     </label>
                   ))}
                 </div>
