@@ -896,7 +896,7 @@ function parsePassengerNotes(raw: string | null) {
     const parsed = JSON.parse(raw) as Partial<ReservationPassenger>;
     return {
       notes: typeof parsed.notes === "string" ? parsed.notes : "",
-      sex: parsed.sex === "female" ? "female" : "male",
+      sex: (parsed.sex === "female" ? "female" : "male") as PassengerSex,
       address: typeof parsed.address === "string" ? parsed.address : "",
       fatherName: typeof parsed.fatherName === "string" ? parsed.fatherName : "",
       grandfatherName: typeof parsed.grandfatherName === "string" ? parsed.grandfatherName : "",
