@@ -1,10 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "motion/react";
+import { withAppBase } from "../../lib/app-base";
 
 function getIntroVideoSrc() {
-  if (typeof window === "undefined") {
-    return "/agencealger.github.io/pc1.mp4";
-  }
+  if (typeof window === "undefined") return withAppBase("/pc1.mp4");
 
   const isPhone =
     window.innerWidth <= 900 ||
@@ -12,8 +11,8 @@ function getIntroVideoSrc() {
     window.matchMedia("(hover: none)").matches;
 
   return isPhone
-    ? "/agencealger.github.io/pc2-mobile.mp4?v=2"
-    : "/agencealger.github.io/pc1.mp4";
+    ? `${withAppBase("/pc2-mobile.mp4")}?v=2`
+    : withAppBase("/pc1.mp4");
 }
 
 export default function VideoIntro({ onComplete }: { onComplete: () => void }) {
