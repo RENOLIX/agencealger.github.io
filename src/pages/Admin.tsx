@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { ChevronDown, Edit3, Eye, Mail, Plus, ReceiptText, Save, Search, ShieldCheck, Trash2, Users, WalletCards } from "lucide-react";
+import { ArchiveRestore, ChevronDown, Edit3, Eye, Mail, Plus, ReceiptText, RotateCcw, Save, Search, ShieldCheck, Trash2, Users, WalletCards } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../components/providers/auth";
 import AdminTopbar from "./_components/AdminTopbar";
@@ -13,15 +13,20 @@ import {
   deleteUserFromSupabase,
   defaultRoomPrices,
   deleteTravelFromSupabase,
+  emptyTrashReservationInSupabase,
   getContactMessages,
   getReservations,
   getTeamGroups,
   getTravels,
   getUsers,
+  isReservationTrashed,
   markContactMessageAsReadInSupabase,
+  moveAllReservationsToTrashInSupabase,
+  moveReservationToTrashInSupabase,
   passengerTypeLabels,
   replaceTeamGroupsInSupabase,
   reservationStatusLabels,
+  restoreReservationFromTrashInSupabase,
   roomCapacities,
   roomTypeLabels,
   saveContactMessages,
@@ -44,7 +49,7 @@ import {
   type User,
 } from "../lib/data";
 
-type AdminTab = "dashboard" | "reservations" | "housing" | "history" | "voyages" | "team" | "messages" | "users";
+type AdminTab = "dashboard" | "reservations" | "housing" | "history" | "trash" | "voyages" | "team" | "messages" | "users";
 
 type TravelFormState = {
   name: string;
@@ -138,8 +143,12 @@ export default function Admin() {
   const [employeeQuery, setEmployeeQuery] = useState("");
   const [historyQuery, setHistoryQuery] = useState("");
   const [housingQuery, setHousingQuery] = useState("");
+  const [trashQuery, setTrashQuery] = useState("");
   const [guideQuery, setGuideQuery] = useState("");
   const [openReservationId, setOpenReservationId] = useState("");
+  const [trashBusyId, setTrashBusyId] = useState("");
+  const [trashActionBusyId, setTrashActionBusyId] = useState("");
+  const [resettingCounters, setResettingCounters] = useState(false);
 
   useEffect(() => {
     void syncTravelsFromSupabase().then(setTravels).catch(() => undefined);
@@ -150,12 +159,19 @@ export default function Admin() {
   }, []);
 
   const isAdmin = user?.role === "admin";
+  const activeReservations = useMemo(() => reservations.filter((reservation) => !isReservationTrashed(reservation)), [reservations]);
+  const trashedReservations = useMemo(() => reservations.filter((reservation) => isReservationTrashed(reservation)), [reservations]);
 
   const reservationScope = useMemo(() => (
     user?.role === "admin"
-      ? reservations
-      : reservations.filter((reservation) => reservation.employeeId === user?.id || reservation.employeeName === user?.name)
-  ), [reservations, user]);
+      ? activeReservations
+      : activeReservations.filter((reservation) => reservation.employeeId === user?.id || reservation.employeeName === user?.name)
+  ), [activeReservations, user]);
+  const trashScope = useMemo(() => (
+    user?.role === "admin"
+      ? trashedReservations
+      : trashedReservations.filter((reservation) => reservation.employeeId === user?.id || reservation.employeeName === user?.name)
+  ), [trashedReservations, user]);
   const reservationNumberMap = useMemo(() => buildReservationNumberMap(reservations), [reservations]);
 
   const filteredReservations = useMemo(() => {
@@ -224,7 +240,7 @@ export default function Admin() {
       roster.set(account.name, { id: account.id, name: account.name, email: account.email });
     }
 
-    for (const reservation of reservations) {
+    for (const reservation of activeReservations) {
       if (!roster.has(reservation.employeeName)) {
         roster.set(reservation.employeeName, {
           id: reservation.employeeId,
@@ -236,7 +252,7 @@ export default function Admin() {
 
     return Array.from(roster.values())
       .map((employee) => {
-        const ownReservations = reservations.filter((reservation) => (
+        const ownReservations = activeReservations.filter((reservation) => (
           reservation.employeeName === employee.name ||
           (employee.id ? reservation.employeeId === employee.id : false)
         ));
@@ -259,7 +275,7 @@ export default function Admin() {
         };
       })
       .sort((left, right) => right.salesTotal - left.salesTotal || left.name.localeCompare(right.name, "ar"));
-  }, [adminUsers, reservations, travelIndex]);
+  }, [activeReservations, adminUsers, travelIndex]);
 
   const filteredEmployeePerformance = useMemo(() => {
     const needle = employeeQuery.trim().toLowerCase();
@@ -269,8 +285,8 @@ export default function Admin() {
     ));
   }, [employeePerformance, employeeQuery]);
 
-  const totalPending = reservations.filter((reservation) => reservation.status === "Nouvelle" || reservation.status === "En etude").length;
-  const confirmedRevenue = reservations
+  const totalPending = activeReservations.filter((reservation) => reservation.status === "Nouvelle" || reservation.status === "En etude").length;
+  const confirmedRevenue = activeReservations
     .filter((reservation) => reservation.status === "Confirmee")
     .reduce((sum, reservation) => sum + reservation.total, 0);
   const employeeApproved = reservationScope.filter((reservation) => reservation.status === "Confirmee").length;
@@ -281,10 +297,10 @@ export default function Admin() {
     .filter((reservation) => reservation.status === "Confirmee")
     .reduce((sum, reservation) => sum + reservation.quantity, 0);
   const employeeCommissionTotal = reservationScope.reduce((sum, reservation) => sum + getReservationCommission(reservation), 0);
-  const totalConfirmedCommission = reservations.reduce((sum, reservation) => sum + getReservationCommission(reservation), 0);
-  const pendingApprovalCount = reservations.filter((reservation) => reservation.status === "Nouvelle" || reservation.status === "En etude").length;
+  const totalConfirmedCommission = activeReservations.reduce((sum, reservation) => sum + getReservationCommission(reservation), 0);
+  const pendingApprovalCount = activeReservations.filter((reservation) => reservation.status === "Nouvelle" || reservation.status === "En etude").length;
   const housingEntries = useMemo(() => {
-    const source = isAdmin ? reservations : reservationScope;
+    const source = isAdmin ? activeReservations : reservationScope;
     return source.flatMap((reservation) => {
       const rooms = reservation.rooms?.length
         ? reservation.rooms
@@ -295,7 +311,22 @@ export default function Admin() {
         room,
       }));
     });
-  }, [isAdmin, reservationScope, reservations]);
+  }, [activeReservations, isAdmin, reservationScope]);
+  const filteredTrash = useMemo(() => {
+    const needle = trashQuery.trim().toLowerCase();
+    if (!needle) return trashScope;
+    return trashScope.filter((reservation) => (
+      [
+        reservationNumberMap.get(reservation.id) ?? "",
+        reservation.travelName,
+        reservation.customerFirstName,
+        reservation.customerLastName,
+        reservation.customerPhone,
+        reservation.employeeName,
+        reservation.trashReason ?? "",
+      ].some((value) => value.toLowerCase().includes(needle))
+    ));
+  }, [reservationNumberMap, trashQuery, trashScope]);
   const filteredHousingEntries = useMemo(() => {
     const needle = housingQuery.trim().toLowerCase();
     if (!needle) return housingEntries;
@@ -580,7 +611,7 @@ export default function Admin() {
 
     if (editingTravelId) {
       const confirmedSeats = reservations
-        .filter((reservation) => reservation.travelId === editingTravelId && reservation.status === "Confirmee")
+        .filter((reservation) => reservation.travelId === editingTravelId && reservation.status === "Confirmee" && !isReservationTrashed(reservation))
         .reduce((sum, reservation) => sum + reservation.quantity, 0);
       baseTravel.ticketsLeft = Math.max(0, total - confirmedSeats);
     }
@@ -606,6 +637,64 @@ export default function Admin() {
       setTravels(await deleteTravelFromSupabase(travelId));
     } catch (error) {
       console.error(error);
+    }
+  }
+
+  async function refreshReservationsAndTravels(nextReservations: Reservation[]) {
+    setReservations(nextReservations);
+    setTravels(await syncTravelsFromSupabase().catch(() => getTravels()));
+  }
+
+  async function moveReservationToTrash(reservation: Reservation) {
+    if (!window.confirm("إرسال هذا الحجز إلى الكوربيلة؟")) return;
+    setTrashBusyId(reservation.id);
+    try {
+      const nextReservations = await moveReservationToTrashInSupabase(reservation.id, user?.name ?? "Admin", "manual-delete");
+      await refreshReservationsAndTravels(nextReservations);
+      setOpenReservationId((current) => current === reservation.id ? "" : current);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setTrashBusyId("");
+    }
+  }
+
+  async function resetDashboardCounters() {
+    if (!window.confirm("سيتم تصفير العدادات ونقل جميع الحجوزات إلى الكوربيلة. هل تريد المتابعة؟")) return;
+    setResettingCounters(true);
+    try {
+      const nextReservations = await moveAllReservationsToTrashInSupabase(user?.name ?? "Admin", "dashboard-reset");
+      await refreshReservationsAndTravels(nextReservations);
+      setOpenReservationId("");
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setResettingCounters(false);
+    }
+  }
+
+  async function restoreReservation(reservationId: string) {
+    setTrashActionBusyId(reservationId);
+    try {
+      const nextReservations = await restoreReservationFromTrashInSupabase(reservationId);
+      await refreshReservationsAndTravels(nextReservations);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setTrashActionBusyId("");
+    }
+  }
+
+  async function emptyTrashReservation(reservationId: string) {
+    if (!window.confirm("حذف نهائي من الكوربيلة؟")) return;
+    setTrashActionBusyId(reservationId);
+    try {
+      const nextReservations = await emptyTrashReservationInSupabase(reservationId);
+      await refreshReservationsAndTravels(nextReservations);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setTrashActionBusyId("");
     }
   }
 
@@ -653,6 +742,7 @@ export default function Admin() {
             { key: "reservations", label: "سجل الحجوزات", active: tab === "reservations", onClick: () => setTab("reservations") },
             { key: "housing", label: "تسكين", active: tab === "housing", onClick: () => setTab("housing") },
             { key: "history", label: "الأرشيف", active: tab === "history", onClick: () => setTab("history") },
+            { key: "trash", label: "الكوربيلة", active: tab === "trash", onClick: () => setTab("trash") },
             { key: "voyages", label: "الرحلات", active: tab === "voyages", onClick: () => setTab("voyages"), visible: isAdmin },
             { key: "team", label: "الطاقم", active: tab === "team", onClick: () => setTab("team"), visible: isAdmin },
             { key: "messages", label: "الرسائل", active: tab === "messages", onClick: () => setTab("messages"), visible: isAdmin },
@@ -672,6 +762,7 @@ export default function Admin() {
                 tab === "reservations" ? "متابعة سجل الحجوزات" :
                   tab === "housing" ? "تسكين الحجوزات" :
                   tab === "history" ? "الأرشيف الكامل للحجوزات" :
+                    tab === "trash" ? "الكوربيلة" :
                 tab === "voyages" ? "إدارة الرحلات" :
                   tab === "team" ? "إدارة الطاقم" :
                     tab === "messages" ? "رسائل العملاء" : "الحسابات"}
@@ -695,6 +786,9 @@ export default function Admin() {
                     <Search size={18} />
                     <input value={employeeQuery} onChange={(event) => setEmployeeQuery(event.target.value)} placeholder="ابحث باسم الموظف أو البريد الإلكتروني" />
                   </div>
+                  <button type="button" className="secondary-button compact-button danger-soft-button" disabled={resettingCounters || activeReservations.length === 0} onClick={() => void resetDashboardCounters()}>
+                    <ArchiveRestore size={15} /> {resettingCounters ? "جارٍ التصفير..." : "تصفير العدادات"}
+                  </button>
                 </div>
 
                 <div className="employee-performance-list">
@@ -820,6 +914,61 @@ export default function Admin() {
           </div>
         )}
 
+        {tab === "trash" && (
+          <div className="reservation-admin-shell">
+            <div className="reservation-admin-toolbar">
+              <div className="reservation-admin-search">
+                <Search size={18} />
+                <input value={trashQuery} onChange={(event) => setTrashQuery(event.target.value)} placeholder="ابحث باسم العميل أو الرحلة أو الموظف أو سبب النقل" />
+              </div>
+            </div>
+
+            {filteredTrash.length === 0 ? (
+              <article className="admin-card">
+                <h2>الكوربيلة فارغة</h2>
+                <p>كل الحجوزات التي تحذف من السجل أو عند تصفير العدادات ستظهر هنا.</p>
+              </article>
+            ) : (
+              <div className="trash-sheet">
+                <div className="trash-sheet-row trash-sheet-head">
+                  <span>رقم الحجز</span>
+                  <span>الرحلة</span>
+                  <span>العميل</span>
+                  <span>الموظف</span>
+                  <span>الحالة</span>
+                  <span>المقاعد</span>
+                  <span>الإجمالي</span>
+                  <span>تاريخ النقل</span>
+                  <span>السبب</span>
+                  <span>الإجراءات</span>
+                </div>
+
+                {filteredTrash.map((reservation) => (
+                  <div key={reservation.id} className="trash-sheet-row">
+                    <span>#{reservationNumberMap.get(reservation.id) ?? "00001"}</span>
+                    <span>{reservation.travelName}</span>
+                    <span>{reservation.customerFirstName} {reservation.customerLastName}</span>
+                    <span>{reservation.employeeName}</span>
+                    <span>{reservationStatusLabels[reservation.status]}</span>
+                    <span>{reservation.quantity}</span>
+                    <span>{reservation.total.toLocaleString("fr-FR")} دج</span>
+                    <span>{reservation.trashedAt ? new Date(reservation.trashedAt).toLocaleString("fr-FR") : "-"}</span>
+                    <span>{reservation.trashReason === "dashboard-reset" ? "تصفير العدادات" : "حذف يدوي"}</span>
+                    <div className="trash-sheet-actions">
+                      <button type="button" className="secondary-button compact-button" disabled={trashActionBusyId === reservation.id} onClick={() => void restoreReservation(reservation.id)}>
+                        <RotateCcw size={14} /> استرجاع
+                      </button>
+                      <button type="button" className="secondary-button compact-button danger-soft-button" disabled={trashActionBusyId === reservation.id} onClick={() => void emptyTrashReservation(reservation.id)}>
+                        <Trash2 size={14} /> حذف نهائي
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         {tab === "reservations" && (
           <div className="reservation-admin-shell">
             <div className="reservation-admin-toolbar">
@@ -849,7 +998,10 @@ export default function Admin() {
                     <span>{reservation.employeeName}</span>
                     <span>{reservation.quantity} مقعد</span>
                     <span>{reservation.total.toLocaleString("fr-FR")} دج</span>
-                    <div style={{ display: "flex", gap: "8px", justifyContent: "flex-end" }}>
+                     <div style={{ display: "flex", gap: "8px", justifyContent: "flex-end" }}>
+                      <button type="button" className="secondary-button compact-button danger-soft-button" disabled={trashBusyId === reservation.id} onClick={() => void moveReservationToTrash(reservation)}>
+                        <Trash2 size={15} /> {trashBusyId === reservation.id ? "..." : "حذف"}
+                      </button>
                       <button type="button" className="secondary-button compact-button" onClick={() => navigate(`/admin/reservations/edit/${reservation.id}`)}>
                         <Edit3 size={15} /> تعديل
                       </button>

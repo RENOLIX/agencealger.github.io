@@ -12,7 +12,13 @@ alter table public.travels
   add column if not exists airlines text[] default '{"Air Algerie"}';
 
 alter table public.reservation_requests
-  add column if not exists babies_count integer not null default 0;
+  add column if not exists babies_count integer not null default 0,
+  add column if not exists trashed_at timestamptz,
+  add column if not exists trashed_by text,
+  add column if not exists trash_reason text;
+
+create index if not exists reservation_requests_trashed_at_idx
+  on public.reservation_requests (trashed_at);
 
 do $$
 declare

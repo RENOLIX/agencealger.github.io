@@ -1000,6 +1000,52 @@ progress { accent-color: var(--orange); width: 100%; }
   white-space: nowrap;
 }
 
+.danger-soft-button {
+  background: #fff7ed !important;
+  border-color: #fdba74 !important;
+  color: #c2410c !important;
+}
+
+.trash-sheet {
+  background: rgba(255,255,255,.92);
+  border: 1px solid #e5edf3;
+  border-radius: 18px;
+  overflow: hidden;
+}
+
+.trash-sheet-row {
+  align-items: center;
+  border-bottom: 1px solid #e5edf3;
+  column-gap: 14px;
+  direction: rtl;
+  display: grid;
+  grid-template-columns: 110px minmax(160px, 1.2fr) minmax(150px, 1fr) minmax(150px, 1fr) 110px 70px 120px 140px 120px minmax(180px, auto);
+  padding: 14px 16px;
+  text-align: right;
+}
+
+.trash-sheet-row:last-child {
+  border-bottom: 0;
+}
+
+.trash-sheet-head {
+  background: #f8fafc;
+  font-size: 12px;
+  font-weight: 950;
+}
+
+.trash-sheet-row span {
+  color: #334155;
+  line-height: 1.5;
+}
+
+.trash-sheet-actions {
+  display: flex;
+  flex-direction: row-reverse;
+  gap: 8px;
+  justify-content: flex-start;
+}
+
 .flight-config-grid {
   display: grid;
   gap: 18px;
@@ -1498,6 +1544,14 @@ input[type="number"]::-webkit-inner-spin-button {
   .room-choice-grid,
   .housing-grid {
     grid-template-columns: 1fr;
+  }
+
+  .trash-sheet-row {
+    grid-template-columns: 1fr;
+  }
+
+  .trash-sheet-actions {
+    flex-wrap: wrap;
   }
 
   .housing-card {

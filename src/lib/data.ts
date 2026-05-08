@@ -216,6 +216,9 @@ export type Reservation = {
   notes: string;
   status: ReservationStatus;
   createdAt: string;
+  trashedAt?: string | null;
+  trashedBy?: string | null;
+  trashReason?: string | null;
 };
 
 export type ContactMessage = {
@@ -767,6 +770,37 @@ export function saveReservations(nextReservations: Reservation[]) {
   writeStore("hv-reservations", nextReservations);
 }
 
+export function isReservationTrashed(reservation: Reservation) {
+  return Boolean(reservation.trashedAt);
+}
+
+function recomputeTravelAvailability(sourceTravels: Travel[], reservations: Reservation[]) {
+  const activeConfirmedReservations = reservations.filter((reservation) => !isReservationTrashed(reservation) && reservation.status === "Confirmee");
+
+  return sourceTravels.map((travel) => {
+    const soldSeats = activeConfirmedReservations
+      .filter((reservation) => reservation.travelId === travel.id)
+      .reduce((sum, reservation) => sum + reservation.quantity, 0);
+
+    return {
+      ...travel,
+      ticketsLeft: Math.max(0, Number(travel.ticketsTotal ?? 0) - soldSeats),
+    };
+  });
+}
+
+async function syncTravelAvailabilityForReservations(reservations: Reservation[]) {
+  const nextTravels = recomputeTravelAvailability(getTravels(), reservations);
+  saveTravels(nextTravels);
+
+  if (!hasSupabaseConfig) return nextTravels;
+
+  const rows = nextTravels.map((travel) => mapTravelToRow(travel));
+  const { error } = await supabase.from("travels").upsert(rows, { onConflict: "id" });
+  if (error) throw error;
+  return nextTravels;
+}
+
 export function getContactMessages() {
   return readStore<ContactMessage[]>("hv-contact-messages", []);
 }
@@ -850,6 +884,9 @@ type ReservationRequestRow = {
   notes: string | null;
   status: ReservationStatus;
   created_at: string;
+  trashed_at?: string | null;
+  trashed_by?: string | null;
+  trash_reason?: string | null;
 };
 
 type ReservationPassengerRow = {
@@ -1217,6 +1254,9 @@ function mapReservationRows(
     notes: reservationMeta.notes,
     status: row.status,
     createdAt: row.created_at,
+    trashedAt: row.trashed_at ?? null,
+    trashedBy: row.trashed_by ?? null,
+    trashReason: row.trash_reason ?? null,
   };
   });
 }
@@ -1392,7 +1432,7 @@ export async function syncReservationsFromSupabase() {
 
   const { data: reservationData, error: reservationError } = await supabase
     .from("reservation_requests")
-    .select("id, travel_id, employee_id, employee_name, customer_first_name, customer_last_name, customer_address, customer_phone, adults_count, children_count, babies_count, quantity, total_amount, notes, status, created_at")
+    .select("id, travel_id, employee_id, employee_name, customer_first_name, customer_last_name, customer_address, customer_phone, adults_count, children_count, babies_count, quantity, total_amount, notes, status, created_at, trashed_at, trashed_by, trash_reason")
     .order("created_at", { ascending: false });
 
   if (reservationError) throw reservationError;
@@ -1456,6 +1496,9 @@ export async function createReservationInSupabase(reservation: Reservation) {
       notes: serializeReservationNotes(reservation),
       status: reservation.status,
       created_at: reservation.createdAt,
+      trashed_at: reservation.trashedAt ?? null,
+      trashed_by: reservation.trashedBy ?? null,
+      trash_reason: reservation.trashReason ?? null,
     });
 
     if (reservationError) throw reservationError;
@@ -1528,6 +1571,9 @@ export async function updateReservationInSupabase(reservation: Reservation) {
       total_amount: reservation.total,
       notes: serializeReservationNotes(reservation),
       status: reservation.status,
+      trashed_at: reservation.trashedAt ?? null,
+      trashed_by: reservation.trashedBy ?? null,
+      trash_reason: reservation.trashReason ?? null,
     }).eq("id", reservation.id);
 
     if (reservationError) throw reservationError;
@@ -1597,6 +1643,110 @@ export async function updateReservationStatusInSupabase(reservationId: string, s
   const { error } = await supabase.from("reservation_requests").update({ status }).eq("id", reservationId);
   if (error) throw error;
   return syncReservationsFromSupabase();
+}
+
+export async function moveReservationToTrashInSupabase(reservationId: string, trashedBy: string, reason = "manual") {
+  if (!hasSupabaseConfig) {
+    const nextReservations = getReservations().map((reservation) => (
+      reservation.id === reservationId
+        ? { ...reservation, trashedAt: new Date().toISOString(), trashedBy, trashReason: reason }
+        : reservation
+    ));
+    saveReservations(nextReservations);
+    await syncTravelAvailabilityForReservations(nextReservations);
+    return nextReservations;
+  }
+
+  const { error } = await supabase
+    .from("reservation_requests")
+    .update({
+      trashed_at: new Date().toISOString(),
+      trashed_by: trashedBy,
+      trash_reason: reason,
+    })
+    .eq("id", reservationId);
+
+  if (error) throw error;
+  const nextReservations = await syncReservationsFromSupabase();
+  await syncTravelAvailabilityForReservations(nextReservations);
+  return nextReservations;
+}
+
+export async function restoreReservationFromTrashInSupabase(reservationId: string) {
+  if (!hasSupabaseConfig) {
+    const nextReservations = getReservations().map((reservation) => (
+      reservation.id === reservationId
+        ? { ...reservation, trashedAt: null, trashedBy: null, trashReason: null }
+        : reservation
+    ));
+    saveReservations(nextReservations);
+    await syncTravelAvailabilityForReservations(nextReservations);
+    return nextReservations;
+  }
+
+  const { error } = await supabase
+    .from("reservation_requests")
+    .update({
+      trashed_at: null,
+      trashed_by: null,
+      trash_reason: null,
+    })
+    .eq("id", reservationId);
+
+  if (error) throw error;
+  const nextReservations = await syncReservationsFromSupabase();
+  await syncTravelAvailabilityForReservations(nextReservations);
+  return nextReservations;
+}
+
+export async function emptyTrashReservationInSupabase(reservationId: string) {
+  if (!hasSupabaseConfig) {
+    const nextReservations = getReservations().filter((reservation) => reservation.id !== reservationId);
+    saveReservations(nextReservations);
+    await syncTravelAvailabilityForReservations(nextReservations);
+    return nextReservations;
+  }
+
+  const { error: deletePassengersError } = await supabase.from("reservation_passengers").delete().eq("reservation_id", reservationId);
+  if (deletePassengersError) throw deletePassengersError;
+
+  const { error: deleteAttachmentsError } = await supabase.from("reservation_attachments").delete().eq("reservation_id", reservationId);
+  if (deleteAttachmentsError) throw deleteAttachmentsError;
+
+  const { error } = await supabase.from("reservation_requests").delete().eq("id", reservationId);
+  if (error) throw error;
+
+  const nextReservations = await syncReservationsFromSupabase();
+  await syncTravelAvailabilityForReservations(nextReservations);
+  return nextReservations;
+}
+
+export async function moveAllReservationsToTrashInSupabase(trashedBy: string, reason = "reset-dashboard") {
+  if (!hasSupabaseConfig) {
+    const stamp = new Date().toISOString();
+    const nextReservations = getReservations().map((reservation) => (
+      isReservationTrashed(reservation)
+        ? reservation
+        : { ...reservation, trashedAt: stamp, trashedBy, trashReason: reason }
+    ));
+    saveReservations(nextReservations);
+    await syncTravelAvailabilityForReservations(nextReservations);
+    return nextReservations;
+  }
+
+  const { error } = await supabase
+    .from("reservation_requests")
+    .update({
+      trashed_at: new Date().toISOString(),
+      trashed_by: trashedBy,
+      trash_reason: reason,
+    })
+    .is("trashed_at", null);
+
+  if (error) throw error;
+  const nextReservations = await syncReservationsFromSupabase();
+  await syncTravelAvailabilityForReservations(nextReservations);
+  return nextReservations;
 }
 
 export function readStore<T>(key: string, fallback: T): T {

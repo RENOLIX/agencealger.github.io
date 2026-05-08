@@ -7,6 +7,7 @@ import {
   buildReservationNumberMap,
   getReservations,
   getTravels,
+  isReservationTrashed,
   passengerTypeLabels,
   reservationStatusLabels,
   syncReservationsFromSupabase,
@@ -31,7 +32,7 @@ export default function ApprovalReservations() {
   }, []);
 
   const pendingReservations = useMemo(() => {
-    const filtered = reservations.filter((reservation) => reservation.status === "Nouvelle" || reservation.status === "En etude");
+    const filtered = reservations.filter((reservation) => !isReservationTrashed(reservation) && (reservation.status === "Nouvelle" || reservation.status === "En etude"));
     const needle = query.trim().toLowerCase();
     if (!needle) return filtered;
     const reservationNumberMap = buildReservationNumberMap(reservations);
@@ -89,8 +90,8 @@ export default function ApprovalReservations() {
         <div className="metric-grid">
           <article><span>طلبات تنتظر القرار</span><strong>{pendingReservations.length}</strong></article>
           <article><span>أماكن متاحة</span><strong>{travels.reduce((sum, travel) => sum + travel.ticketsLeft, 0)}</strong></article>
-          <article><span>طلبات مؤكدة</span><strong>{reservations.filter((reservation) => reservation.status === "Confirmee").length}</strong></article>
-          <article><span>طلبات ملغاة</span><strong>{reservations.filter((reservation) => reservation.status === "Annulee").length}</strong></article>
+          <article><span>طلبات مؤكدة</span><strong>{reservations.filter((reservation) => !isReservationTrashed(reservation) && reservation.status === "Confirmee").length}</strong></article>
+          <article><span>طلبات ملغاة</span><strong>{reservations.filter((reservation) => !isReservationTrashed(reservation) && reservation.status === "Annulee").length}</strong></article>
         </div>
 
         <div className="reservation-admin-shell">
