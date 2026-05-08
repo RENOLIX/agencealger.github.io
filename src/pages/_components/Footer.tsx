@@ -1,4 +1,5 @@
 import { Camera, Globe, Mail, MapPin, MessageCircle, Phone, Plane, Share2 } from "lucide-react";
+import { withAppBase } from "../../lib/app-base";
 
 export default function Footer() {
   return (
@@ -10,7 +11,7 @@ export default function Footer() {
       </div>
       <div className="footer-grid">
         <div>
-          <img className="footer-logo" src="/agencealger.github.io/logo-transparent.png" alt="Hamdi Voyage" />
+          <img className="footer-logo" src={withAppBase("/logo-transparent.png")} alt="Hamdi Voyage" />
           <p>منذ 2006، ننظم رحلات عمرة مريحة وواضحة إلى مكة المكرمة.</p>
           <div className="socials"><Share2 /><Camera /><MessageCircle /><Globe /></div>
         </div>

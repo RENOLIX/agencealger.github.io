@@ -1,6 +1,7 @@
 import { LogOut, Menu, Plus, ShieldCheck } from "lucide-react";
 import { useState } from "react";
 import type { User } from "../../lib/data";
+import { withAppBase } from "../../lib/app-base";
 
 type NavItem = {
   key: string;
@@ -36,7 +37,7 @@ export default function AdminTopbar({ user, items, onCreateReservation, onLogout
         <button type="button" className="admin-menu-toggle" onClick={() => setOpen((current) => !current)} aria-label="القائمة">
           <Menu size={19} />
         </button>
-        <img src="/agencealger.github.io/logo-normal.png" alt="Hamdi Voyage" />
+        <img src={withAppBase("/logo-normal.png")} alt="Hamdi Voyage" />
       </div>
 
       <nav className={`admin-topnav ${open ? "open" : ""}`}>
