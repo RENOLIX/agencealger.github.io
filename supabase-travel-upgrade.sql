@@ -48,6 +48,58 @@ values (
 )
 on conflict (id) do nothing;
 
+create table if not exists public.hotel_cost_settings (
+  id text primary key,
+  title text not null default 'فندق 01 بيعد 300',
+  mecca_sar numeric(12,2) not null default 90,
+  medina_sar numeric(12,2) not null default 400,
+  visa_sar numeric(12,2) not null default 565,
+  diwan_dzd numeric(12,2) not null default 2500,
+  ticket_dzd numeric(12,2) not null default 76000,
+  gift_dzd numeric(12,2) not null default 1800,
+  food_dzd numeric(12,2) not null default 0,
+  guide_dzd numeric(12,2) not null default 3275.51,
+  exchange_rate numeric(12,2) not null default 61,
+  seats_count integer not null default 50,
+  mecca_nights integer not null default 10,
+  medina_nights integer not null default 4,
+  updated_at timestamptz not null default now()
+);
+
+insert into public.hotel_cost_settings (
+  id,
+  title,
+  mecca_sar,
+  medina_sar,
+  visa_sar,
+  diwan_dzd,
+  ticket_dzd,
+  gift_dzd,
+  food_dzd,
+  guide_dzd,
+  exchange_rate,
+  seats_count,
+  mecca_nights,
+  medina_nights
+)
+values (
+  'default',
+  'فندق 01 بيعد 300',
+  90,
+  400,
+  565,
+  2500,
+  76000,
+  1800,
+  0,
+  3275.51,
+  61,
+  50,
+  10,
+  4
+)
+on conflict (id) do nothing;
+
 do $$
 declare
   guides_udt text;

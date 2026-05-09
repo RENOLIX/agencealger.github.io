@@ -4,37 +4,66 @@ import { Navigate } from "react-router-dom";
 import { useAuth } from "../components/providers/auth";
 import {
   defaultGuideCostSettings,
+  defaultHotelCostSettings,
   getGuideCostSettings,
+  getHotelCostSettings,
   saveGuideCostSettings,
   saveGuideCostSettingsToSupabase,
+  saveHotelCostSettings,
+  saveHotelCostSettingsToSupabase,
   syncGuideCostSettingsFromSupabase,
+  syncHotelCostSettingsFromSupabase,
   type GuideCostSettings,
+  type HotelCostSettings,
 } from "../lib/data";
 import { withAppBase } from "../lib/app-base";
+
+const roomRows = [
+  { key: "quint", label: "سرير خماسية", occupancy: 5 },
+  { key: "quad", label: "سرير رباعية", occupancy: 4 },
+  { key: "triple", label: "سرير ثلاثية", occupancy: 3 },
+  { key: "double", label: "ثنائية", occupancy: 2 },
+  { key: "single", label: "أحادية", occupancy: 1 },
+] as const;
 
 export default function HamdiAdmin() {
   const { user, login, logout } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const [settings, setSettings] = useState<GuideCostSettings>(() => getGuideCostSettings());
+  const [guideSettings, setGuideSettings] = useState<GuideCostSettings>(() => getGuideCostSettings());
+  const [hotelSettings, setHotelSettings] = useState<HotelCostSettings>(() => getHotelCostSettings());
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState("");
 
   useEffect(() => {
     if (!user || user.role !== "admin") return;
-    void syncGuideCostSettingsFromSupabase()
-      .then(setSettings)
-      .catch(() => setSettings(getGuideCostSettings()));
+    void Promise.all([
+      syncGuideCostSettingsFromSupabase().catch(() => getGuideCostSettings()),
+      syncHotelCostSettingsFromSupabase().catch(() => getHotelCostSettings()),
+    ]).then(([nextGuideSettings, nextHotelSettings]) => {
+      setGuideSettings(nextGuideSettings);
+      setHotelSettings(nextHotelSettings);
+    });
   }, [user]);
 
-  const totalCost = useMemo(() => (
-    Number(settings.guideTicketCost || 0) +
-    Number(settings.visaCost || 0) +
-    Number(settings.expenseCost || 0) +
-    Number(settings.medinaBedCost || 0) +
-    Number(settings.meccaBedCost || 0)
-  ), [settings]);
+  const guideTotalCost = useMemo(() => (
+    Number(guideSettings.guideTicketCost || 0) +
+    Number(guideSettings.visaCost || 0) +
+    Number(guideSettings.expenseCost || 0) +
+    Number(guideSettings.medinaBedCost || 0) +
+    Number(guideSettings.meccaBedCost || 0)
+  ), [guideSettings]);
+
+  const visaDzd = useMemo(() => (
+    Number(hotelSettings.visaSar || 0) * Number(hotelSettings.exchangeRate || 0)
+  ), [hotelSettings.exchangeRate, hotelSettings.visaSar]);
+
+  const roomValues = useMemo(() => roomRows.map((room) => ({
+    ...room,
+    meccaDzd: (Number(hotelSettings.meccaSar || 0) * Number(hotelSettings.meccaNights || 0) * Number(hotelSettings.exchangeRate || 0)) / room.occupancy,
+    medinaDzd: (Number(hotelSettings.medinaSar || 0) * Number(hotelSettings.medinaNights || 0) * Number(hotelSettings.exchangeRate || 0)) / room.occupancy,
+  })), [hotelSettings.exchangeRate, hotelSettings.meccaNights, hotelSettings.meccaSar, hotelSettings.medinaNights, hotelSettings.medinaSar]);
 
   async function submitLogin(event: FormEvent) {
     event.preventDefault();
@@ -47,29 +76,54 @@ export default function HamdiAdmin() {
     setSaved("");
   }
 
-  async function saveTable(event: FormEvent) {
+  async function saveTables(event: FormEvent) {
     event.preventDefault();
     setSaving(true);
     setSaved("");
     try {
-      const nextSettings = await saveGuideCostSettingsToSupabase(settings);
-      setSettings(nextSettings);
-      saveGuideCostSettings(nextSettings);
-      setSaved("تم حفظ الجدول بنجاح.");
+      const [nextGuideSettings, nextHotelSettings] = await Promise.all([
+        saveGuideCostSettingsToSupabase(guideSettings),
+        saveHotelCostSettingsToSupabase(hotelSettings),
+      ]);
+      setGuideSettings(nextGuideSettings);
+      setHotelSettings(nextHotelSettings);
+      saveGuideCostSettings(nextGuideSettings);
+      saveHotelCostSettings(nextHotelSettings);
+      setSaved("تم حفظ الجداول بنجاح.");
     } catch {
-      saveGuideCostSettings(settings);
-      setSaved("تم حفظ التعديل محليًا.");
+      saveGuideCostSettings(guideSettings);
+      saveHotelCostSettings(hotelSettings);
+      setSaved("تم حفظ التعديلات محليًا.");
     } finally {
       setSaving(false);
     }
   }
 
-  function updateField(field: keyof Omit<GuideCostSettings, "id">, value: string) {
+  function updateGuideField(field: keyof Omit<GuideCostSettings, "id">, value: string) {
     const nextValue = Number(value);
-    setSettings((current) => ({
+    setGuideSettings((current) => ({
       ...current,
       [field]: Number.isFinite(nextValue) ? nextValue : 0,
     }));
+  }
+
+  function updateHotelField(field: keyof Omit<HotelCostSettings, "id">, value: string | number) {
+    setHotelSettings((current) => ({
+      ...current,
+      [field]: typeof value === "number" ? value : field === "title" ? value : Number(value) || 0,
+    }));
+  }
+
+  function formatAmount(value: number, digits = 0) {
+    return value.toLocaleString("fr-FR", {
+      minimumFractionDigits: digits,
+      maximumFractionDigits: digits,
+    });
+  }
+
+  function formatRoomAmount(value: number) {
+    const roundedToTwo = Number(value.toFixed(2));
+    return formatAmount(roundedToTwo, Number.isInteger(roundedToTwo) ? 0 : 2);
   }
 
   if (user && user.role !== "admin") {
@@ -116,63 +170,143 @@ export default function HamdiAdmin() {
         </div>
 
         <nav className="hamdi-admin-nav-links">
-          <button type="button" className="active">تكلفة المرشد</button>
+          <button type="button" className="active">الجداول</button>
           <button type="button" onClick={logout}><LogOut size={15} /> خروج</button>
         </nav>
       </header>
 
       <section className="hamdi-admin-shell-page">
-        <article className="hamdi-admin-card">
-          <div className="hamdi-admin-card-head">
-            <div>
-              <span className="label">الجدول الأول</span>
-              <h2>تكلفة المرشد</h2>
-            </div>
+        <form onSubmit={saveTables} className="hamdi-admin-form">
+          <div className="hamdi-admin-layout">
+            <article className="hamdi-admin-card hotel-cost-card">
+              <div className="hamdi-admin-card-head">
+                <div>
+                  <span className="label">الجدول الرئيسي</span>
+                  <h2>تفاصيل الفندق</h2>
+                </div>
+              </div>
+
+              <div className="hotel-cost-sheet">
+                <div className="hotel-cost-title-row">
+                  <input
+                    className="hotel-cost-title-input"
+                    value={hotelSettings.title}
+                    onChange={(event) => updateHotelField("title", event.target.value)}
+                  />
+                </div>
+
+                <table className="hotel-cost-table">
+                  <tbody>
+                    <tr>
+                      <th className="hotel-side-header" />
+                      <th>مكة</th>
+                      <th>مدينة</th>
+                      <th>فيزة</th>
+                      <th>الديوان</th>
+                      <th>تذكرة</th>
+                      <th>الهدية</th>
+                      <th>الأكل</th>
+                      <th>المرشد</th>
+                    </tr>
+                    <tr>
+                      <th className="hotel-side-header">القيمة</th>
+                      <td><input type="number" value={hotelSettings.meccaSar} onChange={(event) => updateHotelField("meccaSar", event.target.value)} /></td>
+                      <td><input type="number" value={hotelSettings.medinaSar} onChange={(event) => updateHotelField("medinaSar", event.target.value)} /></td>
+                      <td><input type="number" value={hotelSettings.visaSar} onChange={(event) => updateHotelField("visaSar", event.target.value)} /></td>
+                      <td><input type="number" value={hotelSettings.diwanDzd} onChange={(event) => updateHotelField("diwanDzd", event.target.value)} /></td>
+                      <td><input type="number" value={hotelSettings.ticketDzd} onChange={(event) => updateHotelField("ticketDzd", event.target.value)} /></td>
+                      <td><input type="number" value={hotelSettings.giftDzd} onChange={(event) => updateHotelField("giftDzd", event.target.value)} /></td>
+                      <td><input type="number" value={hotelSettings.foodDzd} onChange={(event) => updateHotelField("foodDzd", event.target.value)} /></td>
+                      <td><input type="number" value={hotelSettings.guideDzd} onChange={(event) => updateHotelField("guideDzd", event.target.value)} /></td>
+                    </tr>
+                    <tr>
+                      <th className="hotel-side-header">عدد ليالي</th>
+                      <td><input type="number" value={hotelSettings.meccaNights} onChange={(event) => updateHotelField("meccaNights", event.target.value)} /></td>
+                      <td><input type="number" value={hotelSettings.medinaNights} onChange={(event) => updateHotelField("medinaNights", event.target.value)} /></td>
+                      <td colSpan={6} />
+                    </tr>
+                    {roomValues.map((room, index) => (
+                      <tr key={room.key}>
+                        <th className="hotel-side-header">{room.label}</th>
+                        <td className="computed-cell">{formatRoomAmount(room.meccaDzd)}</td>
+                        <td className="computed-cell">{formatRoomAmount(room.medinaDzd)}</td>
+                        <td className="computed-cell">{index === 0 ? formatRoomAmount(visaDzd) : ""}</td>
+                        <td colSpan={5} />
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+
+                <div className="hotel-cost-bottom-grid">
+                  <div className="hotel-mini-table">
+                    <div className="hotel-mini-row">
+                      <span>تحويل</span>
+                      <input type="number" value={hotelSettings.exchangeRate} onChange={(event) => updateHotelField("exchangeRate", event.target.value)} />
+                    </div>
+                    <div className="hotel-mini-row">
+                      <span>عدد مقاعد</span>
+                      <input type="number" value={hotelSettings.seatsCount} onChange={(event) => updateHotelField("seatsCount", event.target.value)} />
+                    </div>
+                  </div>
+                  <div className="hotel-cost-note">
+                    <strong>فيزة بالدينار الجزائري</strong>
+                    <span>{formatRoomAmount(visaDzd)} دج</span>
+                  </div>
+                </div>
+              </div>
+            </article>
+
+            <aside className="hamdi-admin-card guide-cost-card compact">
+              <div className="hamdi-admin-card-head">
+                <div>
+                  <span className="label">الجدول الجانبي</span>
+                  <h2>تكلفة المرشد</h2>
+                </div>
+              </div>
+
+              <div className="guide-cost-table">
+                <div className="guide-cost-head">تكلفة المرشد</div>
+
+                <div className="guide-cost-row">
+                  <span>تدكرة مرشدة</span>
+                  <input type="number" value={guideSettings.guideTicketCost} onChange={(event) => updateGuideField("guideTicketCost", event.target.value)} />
+                </div>
+
+                <div className="guide-cost-row">
+                  <span>فيزة</span>
+                  <input type="number" value={guideSettings.visaCost} onChange={(event) => updateGuideField("visaCost", event.target.value)} />
+                </div>
+
+                <div className="guide-cost-row">
+                  <span>مصروف</span>
+                  <input type="number" value={guideSettings.expenseCost} onChange={(event) => updateGuideField("expenseCost", event.target.value)} />
+                </div>
+
+                <div className="guide-cost-row">
+                  <span>سرير مدينة</span>
+                  <input type="number" value={guideSettings.medinaBedCost} onChange={(event) => updateGuideField("medinaBedCost", event.target.value)} />
+                </div>
+
+                <div className="guide-cost-row">
+                  <span>سرير مكة</span>
+                  <input type="number" value={guideSettings.meccaBedCost} onChange={(event) => updateGuideField("meccaBedCost", event.target.value)} />
+                </div>
+
+                <div className="guide-cost-row total">
+                  <span>مجموعة تكلفة</span>
+                  <strong>{formatAmount(guideTotalCost)}</strong>
+                </div>
+              </div>
+            </aside>
           </div>
 
-          <form onSubmit={saveTable} className="hamdi-admin-form">
-            <div className="guide-cost-table">
-              <div className="guide-cost-head">تكلفة المرشد</div>
-
-              <div className="guide-cost-row">
-                <span>تدكرة مرشدة</span>
-                <input type="number" value={settings.guideTicketCost} onChange={(event) => updateField("guideTicketCost", event.target.value)} />
-              </div>
-
-              <div className="guide-cost-row">
-                <span>فيزة</span>
-                <input type="number" value={settings.visaCost} onChange={(event) => updateField("visaCost", event.target.value)} />
-              </div>
-
-              <div className="guide-cost-row">
-                <span>مصروف</span>
-                <input type="number" value={settings.expenseCost} onChange={(event) => updateField("expenseCost", event.target.value)} />
-              </div>
-
-              <div className="guide-cost-row">
-                <span>سرير مدينة</span>
-                <input type="number" value={settings.medinaBedCost} onChange={(event) => updateField("medinaBedCost", event.target.value)} />
-              </div>
-
-              <div className="guide-cost-row">
-                <span>سرير مكة</span>
-                <input type="number" value={settings.meccaBedCost} onChange={(event) => updateField("meccaBedCost", event.target.value)} />
-              </div>
-
-              <div className="guide-cost-row total">
-                <span>مجموعة تكلفة</span>
-                <strong>{totalCost.toLocaleString("fr-FR")}</strong>
-              </div>
-            </div>
-
-            <div className="hamdi-admin-actions">
-              <button type="submit" className="hamdi-admin-save" disabled={saving}>
-                <Save size={16} /> {saving ? "جارٍ الحفظ..." : "حفظ التعديلات"}
-              </button>
-              {saved && <p className="hamdi-admin-saved">{saved}</p>}
-            </div>
-          </form>
-        </article>
+          <div className="hamdi-admin-actions">
+            <button type="submit" className="hamdi-admin-save" disabled={saving}>
+              <Save size={16} /> {saving ? "جارٍ الحفظ..." : "حفظ التعديلات"}
+            </button>
+            {saved && <p className="hamdi-admin-saved">{saved}</p>}
+          </div>
+        </form>
       </section>
     </main>
   );

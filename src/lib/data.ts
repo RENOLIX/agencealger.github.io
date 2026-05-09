@@ -247,6 +247,23 @@ export type GuideCostSettings = {
   meccaBedCost: number;
 };
 
+export type HotelCostSettings = {
+  id: string;
+  title: string;
+  meccaSar: number;
+  medinaSar: number;
+  visaSar: number;
+  diwanDzd: number;
+  ticketDzd: number;
+  giftDzd: number;
+  foodDzd: number;
+  guideDzd: number;
+  exchangeRate: number;
+  seatsCount: number;
+  meccaNights: number;
+  medinaNights: number;
+};
+
 export const defaultGuideCostSettings: GuideCostSettings = {
   id: "default",
   guideTicketCost: 30000,
@@ -254,6 +271,23 @@ export const defaultGuideCostSettings: GuideCostSettings = {
   expenseCost: 100000,
   medinaBedCost: 19520,
   meccaBedCost: 10980,
+};
+
+export const defaultHotelCostSettings: HotelCostSettings = {
+  id: "default",
+  title: "فندق 01 بيعد 300",
+  meccaSar: 90,
+  medinaSar: 400,
+  visaSar: 565,
+  diwanDzd: 2500,
+  ticketDzd: 76000,
+  giftDzd: 1800,
+  foodDzd: 0,
+  guideDzd: 3275.51,
+  exchangeRate: 61,
+  seatsCount: 50,
+  meccaNights: 10,
+  medinaNights: 4,
 };
 
 export const seedUsers: User[] = [
@@ -369,6 +403,35 @@ export async function saveGuideCostSettingsToSupabase(settings: GuideCostSetting
   const { error } = await supabase.from("guide_cost_settings").upsert(payload, { onConflict: "id" });
   if (error) throw error;
   return syncGuideCostSettingsFromSupabase();
+}
+
+export async function syncHotelCostSettingsFromSupabase() {
+  if (!hasSupabaseConfig) return getHotelCostSettings();
+
+  const { data, error } = await supabase
+    .from("hotel_cost_settings")
+    .select("id, title, mecca_sar, medina_sar, visa_sar, diwan_dzd, ticket_dzd, gift_dzd, food_dzd, guide_dzd, exchange_rate, seats_count, mecca_nights, medina_nights, updated_at")
+    .order("updated_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) throw error;
+
+  const settings = mapHotelCostSettingsRow(data as HotelCostSettingsRow | null);
+  saveHotelCostSettings(settings);
+  return settings;
+}
+
+export async function saveHotelCostSettingsToSupabase(settings: HotelCostSettings) {
+  if (!hasSupabaseConfig) {
+    saveHotelCostSettings(settings);
+    return settings;
+  }
+
+  const payload = mapHotelCostSettingsToRow(settings);
+  const { error } = await supabase.from("hotel_cost_settings").upsert(payload, { onConflict: "id" });
+  if (error) throw error;
+  return syncHotelCostSettingsFromSupabase();
 }
 
 export async function createUserInSupabase(user: User) {
@@ -826,6 +889,15 @@ export function saveGuideCostSettings(nextSettings: GuideCostSettings) {
   writeStore("hv-guide-cost-settings", nextSettings);
 }
 
+export function getHotelCostSettings() {
+  const stored = readStore<HotelCostSettings | null>("hv-hotel-cost-settings", null);
+  return stored ? { ...defaultHotelCostSettings, ...stored } : defaultHotelCostSettings;
+}
+
+export function saveHotelCostSettings(nextSettings: HotelCostSettings) {
+  writeStore("hv-hotel-cost-settings", nextSettings);
+}
+
 export function isReservationTrashed(reservation: Reservation) {
   return Boolean(reservation.trashedAt);
 }
@@ -919,6 +991,24 @@ type GuideCostSettingsRow = {
   expense_cost: number | string | null;
   medina_bed_cost: number | string | null;
   mecca_bed_cost: number | string | null;
+  updated_at?: string | null;
+};
+
+type HotelCostSettingsRow = {
+  id: string;
+  title: string | null;
+  mecca_sar: number | string | null;
+  medina_sar: number | string | null;
+  visa_sar: number | string | null;
+  diwan_dzd: number | string | null;
+  ticket_dzd: number | string | null;
+  gift_dzd: number | string | null;
+  food_dzd: number | string | null;
+  guide_dzd: number | string | null;
+  exchange_rate: number | string | null;
+  seats_count: number | string | null;
+  mecca_nights: number | string | null;
+  medina_nights: number | string | null;
   updated_at?: string | null;
 };
 
@@ -1264,6 +1354,45 @@ function mapGuideCostSettingsToRow(settings: GuideCostSettings) {
     expense_cost: Number(settings.expenseCost ?? 0),
     medina_bed_cost: Number(settings.medinaBedCost ?? 0),
     mecca_bed_cost: Number(settings.meccaBedCost ?? 0),
+  };
+}
+
+function mapHotelCostSettingsRow(row: HotelCostSettingsRow | null | undefined): HotelCostSettings {
+  if (!row) return defaultHotelCostSettings;
+  return {
+    id: row.id || defaultHotelCostSettings.id,
+    title: row.title || defaultHotelCostSettings.title,
+    meccaSar: Number(row.mecca_sar ?? defaultHotelCostSettings.meccaSar),
+    medinaSar: Number(row.medina_sar ?? defaultHotelCostSettings.medinaSar),
+    visaSar: Number(row.visa_sar ?? defaultHotelCostSettings.visaSar),
+    diwanDzd: Number(row.diwan_dzd ?? defaultHotelCostSettings.diwanDzd),
+    ticketDzd: Number(row.ticket_dzd ?? defaultHotelCostSettings.ticketDzd),
+    giftDzd: Number(row.gift_dzd ?? defaultHotelCostSettings.giftDzd),
+    foodDzd: Number(row.food_dzd ?? defaultHotelCostSettings.foodDzd),
+    guideDzd: Number(row.guide_dzd ?? defaultHotelCostSettings.guideDzd),
+    exchangeRate: Number(row.exchange_rate ?? defaultHotelCostSettings.exchangeRate),
+    seatsCount: Number(row.seats_count ?? defaultHotelCostSettings.seatsCount),
+    meccaNights: Number(row.mecca_nights ?? defaultHotelCostSettings.meccaNights),
+    medinaNights: Number(row.medina_nights ?? defaultHotelCostSettings.medinaNights),
+  };
+}
+
+function mapHotelCostSettingsToRow(settings: HotelCostSettings) {
+  return {
+    id: settings.id,
+    title: settings.title,
+    mecca_sar: Number(settings.meccaSar ?? 0),
+    medina_sar: Number(settings.medinaSar ?? 0),
+    visa_sar: Number(settings.visaSar ?? 0),
+    diwan_dzd: Number(settings.diwanDzd ?? 0),
+    ticket_dzd: Number(settings.ticketDzd ?? 0),
+    gift_dzd: Number(settings.giftDzd ?? 0),
+    food_dzd: Number(settings.foodDzd ?? 0),
+    guide_dzd: Number(settings.guideDzd ?? 0),
+    exchange_rate: Number(settings.exchangeRate ?? 0),
+    seats_count: Number(settings.seatsCount ?? 0),
+    mecca_nights: Number(settings.meccaNights ?? 0),
+    medina_nights: Number(settings.medinaNights ?? 0),
   };
 }
 
