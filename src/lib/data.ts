@@ -238,6 +238,24 @@ export type TeamGroup = {
   members: string[];
 };
 
+export type GuideCostSettings = {
+  id: string;
+  guideTicketCost: number;
+  visaCost: number;
+  expenseCost: number;
+  medinaBedCost: number;
+  meccaBedCost: number;
+};
+
+export const defaultGuideCostSettings: GuideCostSettings = {
+  id: "default",
+  guideTicketCost: 30000,
+  visaCost: 0,
+  expenseCost: 100000,
+  medinaBedCost: 19520,
+  meccaBedCost: 10980,
+};
+
 export const seedUsers: User[] = [
   { id: "seller-bouraq", name: "وكالة البراق", email: "elbouraqtravel@gmail.com", password: "Hamdi2026!01", role: "employee", avatar: "بر" },
   { id: "seller-fariha", name: "وكالة فريحة", email: "agencefareha@gmail.com", password: "Hamdi2026!02", role: "employee", avatar: "فر" },
@@ -322,6 +340,35 @@ export async function syncUsersFromSupabase() {
   const users = (data as UserRow[]).map(mapUserRow);
   saveUsers(users);
   return users;
+}
+
+export async function syncGuideCostSettingsFromSupabase() {
+  if (!hasSupabaseConfig) return getGuideCostSettings();
+
+  const { data, error } = await supabase
+    .from("guide_cost_settings")
+    .select("id, guide_ticket_cost, visa_cost, expense_cost, medina_bed_cost, mecca_bed_cost, updated_at")
+    .order("updated_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) throw error;
+
+  const settings = mapGuideCostSettingsRow(data as GuideCostSettingsRow | null);
+  saveGuideCostSettings(settings);
+  return settings;
+}
+
+export async function saveGuideCostSettingsToSupabase(settings: GuideCostSettings) {
+  if (!hasSupabaseConfig) {
+    saveGuideCostSettings(settings);
+    return settings;
+  }
+
+  const payload = mapGuideCostSettingsToRow(settings);
+  const { error } = await supabase.from("guide_cost_settings").upsert(payload, { onConflict: "id" });
+  if (error) throw error;
+  return syncGuideCostSettingsFromSupabase();
 }
 
 export async function createUserInSupabase(user: User) {
@@ -770,6 +817,15 @@ export function saveReservations(nextReservations: Reservation[]) {
   writeStore("hv-reservations", nextReservations);
 }
 
+export function getGuideCostSettings() {
+  const stored = readStore<GuideCostSettings | null>("hv-guide-cost-settings", null);
+  return stored ? { ...defaultGuideCostSettings, ...stored } : defaultGuideCostSettings;
+}
+
+export function saveGuideCostSettings(nextSettings: GuideCostSettings) {
+  writeStore("hv-guide-cost-settings", nextSettings);
+}
+
 export function isReservationTrashed(reservation: Reservation) {
   return Boolean(reservation.trashedAt);
 }
@@ -854,6 +910,16 @@ type TeamMemberRow = {
   team_group_id: string;
   full_name: string;
   display_order: number;
+};
+
+type GuideCostSettingsRow = {
+  id: string;
+  guide_ticket_cost: number | string | null;
+  visa_cost: number | string | null;
+  expense_cost: number | string | null;
+  medina_bed_cost: number | string | null;
+  mecca_bed_cost: number | string | null;
+  updated_at?: string | null;
 };
 
 type ContactMessageRow = {
@@ -1175,6 +1241,29 @@ function mapContactMessageRow(row: ContactMessageRow): ContactMessage {
     message: row.message,
     status: row.status,
     createdAt: row.created_at,
+  };
+}
+
+function mapGuideCostSettingsRow(row: GuideCostSettingsRow | null | undefined): GuideCostSettings {
+  if (!row) return defaultGuideCostSettings;
+  return {
+    id: row.id || defaultGuideCostSettings.id,
+    guideTicketCost: Number(row.guide_ticket_cost ?? defaultGuideCostSettings.guideTicketCost),
+    visaCost: Number(row.visa_cost ?? defaultGuideCostSettings.visaCost),
+    expenseCost: Number(row.expense_cost ?? defaultGuideCostSettings.expenseCost),
+    medinaBedCost: Number(row.medina_bed_cost ?? defaultGuideCostSettings.medinaBedCost),
+    meccaBedCost: Number(row.mecca_bed_cost ?? defaultGuideCostSettings.meccaBedCost),
+  };
+}
+
+function mapGuideCostSettingsToRow(settings: GuideCostSettings) {
+  return {
+    id: settings.id,
+    guide_ticket_cost: Number(settings.guideTicketCost ?? 0),
+    visa_cost: Number(settings.visaCost ?? 0),
+    expense_cost: Number(settings.expenseCost ?? 0),
+    medina_bed_cost: Number(settings.medinaBedCost ?? 0),
+    mecca_bed_cost: Number(settings.meccaBedCost ?? 0),
   };
 }
 

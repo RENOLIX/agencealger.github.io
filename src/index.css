@@ -1046,6 +1046,273 @@ progress { accent-color: var(--orange); width: 100%; }
   justify-content: flex-start;
 }
 
+.hamdi-admin-auth-page,
+.hamdi-admin-page {
+  background:
+    linear-gradient(180deg, rgba(248, 249, 251, 0.96), rgba(255, 255, 255, 0.98)),
+    var(--admin-pattern-image) center/cover fixed no-repeat;
+  min-height: 100vh;
+}
+
+.hamdi-admin-auth-page {
+  align-items: center;
+  display: flex;
+  justify-content: center;
+  padding: 24px;
+}
+
+.hamdi-admin-auth-card {
+  background: rgba(255,255,255,.95);
+  border: 1px solid #e5edf3;
+  border-radius: 28px;
+  box-shadow: 0 30px 80px -58px rgba(15,23,42,.38);
+  display: grid;
+  gap: 26px;
+  max-width: 540px;
+  padding: 34px;
+  width: 100%;
+}
+
+.hamdi-admin-auth-brand {
+  display: grid;
+  gap: 12px;
+  justify-items: center;
+  text-align: center;
+}
+
+.hamdi-admin-auth-brand img {
+  height: 82px;
+  object-fit: contain;
+}
+
+.hamdi-admin-auth-brand h1 {
+  font-size: 42px;
+  margin: 0;
+}
+
+.hamdi-admin-auth-brand p {
+  color: #64748b;
+  margin: 0;
+  max-width: 360px;
+}
+
+.hamdi-admin-auth-form {
+  display: grid;
+  gap: 16px;
+}
+
+.hamdi-admin-auth-form label {
+  color: #52616b;
+  display: grid;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.hamdi-admin-auth-form input {
+  background: white;
+  border: 1px solid #d7e0ea;
+  border-radius: 16px;
+  min-height: 52px;
+  padding: 0 16px;
+}
+
+.hamdi-admin-auth-form button,
+.hamdi-admin-save {
+  align-items: center;
+  background: linear-gradient(135deg, #d5ae4d, #b88a26);
+  border: 0;
+  border-radius: 16px;
+  color: white;
+  display: inline-flex;
+  font-weight: 900;
+  gap: 8px;
+  justify-content: center;
+  min-height: 52px;
+  padding: 0 18px;
+}
+
+.hamdi-admin-nav {
+  align-items: center;
+  background: rgba(255,255,255,.92);
+  border-bottom: 1px solid #e5edf3;
+  display: flex;
+  justify-content: space-between;
+  padding: 18px 28px;
+  position: sticky;
+  top: 0;
+  z-index: 8;
+}
+
+.hamdi-admin-nav-brand {
+  align-items: center;
+  display: flex;
+  gap: 14px;
+}
+
+.hamdi-admin-nav-brand img {
+  height: 54px;
+  object-fit: contain;
+}
+
+.hamdi-admin-nav-brand div {
+  display: grid;
+  gap: 3px;
+}
+
+.hamdi-admin-nav-brand strong {
+  font-family: "Cairo", system-ui, sans-serif;
+  font-size: 20px;
+}
+
+.hamdi-admin-nav-brand small {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.hamdi-admin-nav-links {
+  display: flex;
+  flex-direction: row-reverse;
+  gap: 10px;
+}
+
+.hamdi-admin-nav-links button {
+  align-items: center;
+  background: white;
+  border: 1px solid #e5edf3;
+  border-radius: 999px;
+  color: #1e293b;
+  display: inline-flex;
+  font-weight: 900;
+  gap: 8px;
+  min-height: 42px;
+  padding: 0 16px;
+}
+
+.hamdi-admin-nav-links button.active {
+  background: #111827;
+  border-color: #111827;
+  color: white;
+}
+
+.hamdi-admin-shell-page {
+  padding: 28px;
+}
+
+.hamdi-admin-card {
+  background: rgba(255,255,255,.95);
+  border: 1px solid #e5edf3;
+  border-radius: 28px;
+  box-shadow: 0 24px 70px -54px rgba(15,23,42,.26);
+  margin: 0 auto;
+  max-width: 760px;
+  padding: 28px;
+}
+
+.hamdi-admin-card-head {
+  margin-bottom: 22px;
+}
+
+.hamdi-admin-card-head h2 {
+  font-size: 34px;
+  margin: 8px 0 0;
+}
+
+.hamdi-admin-form {
+  display: grid;
+  gap: 20px;
+}
+
+.guide-cost-table {
+  border: 1px solid #d6dde8;
+  border-radius: 24px;
+  overflow: hidden;
+}
+
+.guide-cost-head {
+  background: white;
+  color: #111827;
+  font-family: "Cairo", system-ui, sans-serif;
+  font-size: 30px;
+  font-weight: 900;
+  padding: 18px 22px;
+  text-align: center;
+}
+
+.guide-cost-row {
+  align-items: stretch;
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) 180px;
+}
+
+.guide-cost-row span,
+.guide-cost-row strong,
+.guide-cost-row input {
+  border-top: 1px solid #d6dde8;
+  min-height: 72px;
+}
+
+.guide-cost-row span {
+  align-items: center;
+  background: #7fc6ec;
+  color: #111827;
+  display: flex;
+  font-family: "Cairo", system-ui, sans-serif;
+  font-size: 30px;
+  font-weight: 900;
+  justify-content: center;
+  padding: 0 16px;
+}
+
+.guide-cost-row:nth-child(3) span,
+.guide-cost-row:nth-child(5) span {
+  background: #ffffff;
+}
+
+.guide-cost-row input {
+  background: #ffffff;
+  border-right: 1px solid #d6dde8;
+  color: #111827;
+  font-family: "Cairo", system-ui, sans-serif;
+  font-size: 40px;
+  font-weight: 900;
+  outline: 0;
+  padding: 0 18px;
+  text-align: center;
+}
+
+.guide-cost-row.total span,
+.guide-cost-row.total strong {
+  background: #d96dd6;
+  color: #111827;
+  font-family: "Cairo", system-ui, sans-serif;
+  font-size: 32px;
+  font-weight: 900;
+}
+
+.guide-cost-row.total strong {
+  align-items: center;
+  border-right: 1px solid #d6dde8;
+  display: flex;
+  font-size: 40px;
+  justify-content: center;
+}
+
+.hamdi-admin-actions {
+  align-items: center;
+  display: flex;
+  flex-direction: row-reverse;
+  gap: 16px;
+  justify-content: space-between;
+}
+
+.hamdi-admin-saved {
+  color: #15803d;
+  font-weight: 900;
+  margin: 0;
+}
+
 .flight-config-grid {
   display: grid;
   gap: 18px;
@@ -1552,6 +1819,39 @@ input[type="number"]::-webkit-inner-spin-button {
 
   .trash-sheet-actions {
     flex-wrap: wrap;
+  }
+
+  .hamdi-admin-nav,
+  .hamdi-admin-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .hamdi-admin-nav {
+    gap: 16px;
+    padding: 18px 20px;
+  }
+
+  .hamdi-admin-shell-page {
+    padding: 18px;
+  }
+
+  .hamdi-admin-card {
+    padding: 18px;
+  }
+
+  .guide-cost-row {
+    grid-template-columns: 1fr;
+  }
+
+  .guide-cost-row input {
+    border-right: 0;
+    font-size: 32px;
+  }
+
+  .guide-cost-row.total strong {
+    border-right: 0;
+    font-size: 34px;
   }
 
   .housing-card {

@@ -20,6 +20,34 @@ alter table public.reservation_requests
 create index if not exists reservation_requests_trashed_at_idx
   on public.reservation_requests (trashed_at);
 
+create table if not exists public.guide_cost_settings (
+  id text primary key,
+  guide_ticket_cost numeric(12,2) not null default 30000,
+  visa_cost numeric(12,2) not null default 0,
+  expense_cost numeric(12,2) not null default 100000,
+  medina_bed_cost numeric(12,2) not null default 19520,
+  mecca_bed_cost numeric(12,2) not null default 10980,
+  updated_at timestamptz not null default now()
+);
+
+insert into public.guide_cost_settings (
+  id,
+  guide_ticket_cost,
+  visa_cost,
+  expense_cost,
+  medina_bed_cost,
+  mecca_bed_cost
+)
+values (
+  'default',
+  30000,
+  0,
+  100000,
+  19520,
+  10980
+)
+on conflict (id) do nothing;
+
 do $$
 declare
   guides_udt text;
