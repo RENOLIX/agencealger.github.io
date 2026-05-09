@@ -122,8 +122,7 @@ export default function HamdiAdmin() {
   }
 
   function formatRoomAmount(value: number) {
-    const roundedToTwo = Number(value.toFixed(2));
-    return formatAmount(roundedToTwo, Number.isInteger(roundedToTwo) ? 0 : 2);
+    return formatAmount(Math.round(value), 0);
   }
 
   if (user && user.role !== "admin") {
