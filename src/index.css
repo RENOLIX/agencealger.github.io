@@ -2488,6 +2488,25 @@ input[type="number"]::-webkit-inner-spin-button {
     padding: 16px !important;
   }
 
+  .hamdi-admin-card-head > div {
+    align-items: baseline;
+    display: flex !important;
+    flex-direction: row-reverse;
+    flex-wrap: nowrap;
+    gap: 10px;
+  }
+
+  .hamdi-admin-card-head .label {
+    display: inline-block !important;
+    margin: 0 !important;
+    white-space: nowrap;
+  }
+
+  .hamdi-admin-card-head h2 {
+    margin: 0 !important;
+    white-space: nowrap;
+  }
+
   .hotel-cost-title-row,
   .guide-cost-head,
   .guide-cost-row span,
