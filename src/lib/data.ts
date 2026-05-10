@@ -262,6 +262,8 @@ export type HotelCostSettings = {
   seatsCount: number;
   meccaNights: number;
   medinaNights: number;
+  purchasePrice: number;
+  salePrice: number;
 };
 
 export const defaultGuideCostSettings: GuideCostSettings = {
@@ -288,6 +290,8 @@ export const defaultHotelCostSettings: HotelCostSettings = {
   seatsCount: 50,
   meccaNights: 10,
   medinaNights: 4,
+  purchasePrice: 0,
+  salePrice: 0,
 };
 
 export const seedUsers: User[] = [
@@ -1009,6 +1013,8 @@ type HotelCostSettingsRow = {
   seats_count: number | string | null;
   mecca_nights: number | string | null;
   medina_nights: number | string | null;
+  purchase_price: number | string | null;
+  sale_price: number | string | null;
   updated_at?: string | null;
 };
 
@@ -1374,6 +1380,8 @@ function mapHotelCostSettingsRow(row: HotelCostSettingsRow | null | undefined): 
     seatsCount: Number(row.seats_count ?? defaultHotelCostSettings.seatsCount),
     meccaNights: Number(row.mecca_nights ?? defaultHotelCostSettings.meccaNights),
     medinaNights: Number(row.medina_nights ?? defaultHotelCostSettings.medinaNights),
+    purchasePrice: Number(row.purchase_price ?? defaultHotelCostSettings.purchasePrice),
+    salePrice: Number(row.sale_price ?? defaultHotelCostSettings.salePrice),
   };
 }
 
@@ -1393,6 +1401,8 @@ function mapHotelCostSettingsToRow(settings: HotelCostSettings) {
     seats_count: Number(settings.seatsCount ?? 0),
     mecca_nights: Number(settings.meccaNights ?? 0),
     medina_nights: Number(settings.medinaNights ?? 0),
+    purchase_price: Number(settings.purchasePrice ?? 0),
+    sale_price: Number(settings.salePrice ?? 0),
   };
 }
 

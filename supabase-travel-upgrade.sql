@@ -63,8 +63,14 @@ create table if not exists public.hotel_cost_settings (
   seats_count integer not null default 50,
   mecca_nights integer not null default 10,
   medina_nights integer not null default 4,
+  purchase_price numeric(12,2) not null default 0,
+  sale_price numeric(12,2) not null default 0,
   updated_at timestamptz not null default now()
 );
+
+alter table public.hotel_cost_settings
+  add column if not exists purchase_price numeric(12,2) not null default 0,
+  add column if not exists sale_price numeric(12,2) not null default 0;
 
 insert into public.hotel_cost_settings (
   id,
@@ -80,7 +86,9 @@ insert into public.hotel_cost_settings (
   exchange_rate,
   seats_count,
   mecca_nights,
-  medina_nights
+  medina_nights,
+  purchase_price,
+  sale_price
 )
 values (
   'default',
@@ -96,7 +104,9 @@ values (
   61,
   50,
   10,
-  4
+  4,
+  0,
+  0
 )
 on conflict (id) do nothing;
 
@@ -116,6 +126,12 @@ set guide_dzd = case
   )
 end
 where h.id = 'default';
+
+update public.hotel_cost_settings
+set
+  purchase_price = coalesce(purchase_price, 0),
+  sale_price = coalesce(sale_price, 0)
+where true;
 
 do $$
 declare

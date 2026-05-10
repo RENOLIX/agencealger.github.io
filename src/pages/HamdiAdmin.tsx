@@ -92,6 +92,10 @@ export default function HamdiAdmin() {
     };
   }), [guideShareDzd, hotelSettings.diwanDzd, hotelSettings.foodDzd, hotelSettings.giftDzd, hotelSettings.ticketDzd, roomValues, visaDzd]);
 
+  const profitDzd = useMemo(() => (
+    Number(hotelSettings.salePrice || 0) - Number(hotelSettings.purchasePrice || 0)
+  ), [hotelSettings.purchasePrice, hotelSettings.salePrice]);
+
   async function submitLogin(event: FormEvent) {
     event.preventDefault();
     setError("");
@@ -331,13 +335,6 @@ export default function HamdiAdmin() {
             </aside>
           </div>
 
-          <div className="hamdi-admin-actions">
-            <button type="submit" className="hamdi-admin-save" disabled={saving}>
-              <Save size={16} /> {saving ? "جارٍ الحفظ..." : "حفظ التعديلات"}
-            </button>
-            {saved && <p className="hamdi-admin-saved">{saved}</p>}
-          </div>
-
           <div className="hamdi-admin-bottom-row">
             <article className="hamdi-admin-card pricing-summary-card">
               <div className="hamdi-admin-card-head compact-head">
@@ -368,6 +365,53 @@ export default function HamdiAdmin() {
                 </tbody>
               </table>
             </article>
+
+            <article className="hamdi-admin-card profit-card">
+              <div className="hamdi-admin-card-head compact-head">
+                <div>
+                  <span className="label">حساب آلي</span>
+                  <h2>جدول الفائدة</h2>
+                </div>
+              </div>
+
+              <table className="profit-table">
+                <thead>
+                  <tr>
+                    <th>سعر الشراء</th>
+                    <th>سعر البيع</th>
+                    <th>فائدة</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>
+                      <input
+                        type="number"
+                        value={hotelSettings.purchasePrice}
+                        onWheel={stopNumberScroll}
+                        onChange={(event) => updateHotelField("purchasePrice", event.target.value)}
+                      />
+                    </td>
+                    <td>
+                      <input
+                        type="number"
+                        value={hotelSettings.salePrice}
+                        onWheel={stopNumberScroll}
+                        onChange={(event) => updateHotelField("salePrice", event.target.value)}
+                      />
+                    </td>
+                    <td className="computed-cell">{formatRoomAmount(profitDzd)} دج</td>
+                  </tr>
+                </tbody>
+              </table>
+            </article>
+          </div>
+
+          <div className="hamdi-admin-actions">
+            <button type="submit" className="hamdi-admin-save" disabled={saving}>
+              <Save size={16} /> {saving ? "جارٍ الحفظ..." : "حفظ التعديلات"}
+            </button>
+            {saved && <p className="hamdi-admin-saved">{saved}</p>}
           </div>
         </form>
       </section>
