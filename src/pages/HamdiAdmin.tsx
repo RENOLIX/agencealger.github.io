@@ -1,12 +1,13 @@
 import { FormEvent, useEffect, useMemo, useState, type WheelEvent } from "react";
-import { LockKeyhole, LogOut, Mail, Save } from "lucide-react";
-import { Navigate } from "react-router-dom";
+import { ArrowRight, LockKeyhole, LogOut, Mail, Pencil, Plus, Printer, Save } from "lucide-react";
+import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../components/providers/auth";
 import {
   defaultGuideCostSettings,
   defaultHotelCostSettings,
   getGuideCostSettings,
   getHotelCostSettings,
+  listHamdiSheetsFromSupabase,
   saveGuideCostSettings,
   saveGuideCostSettingsToSupabase,
   saveHotelCostSettings,
@@ -14,6 +15,7 @@ import {
   syncGuideCostSettingsFromSupabase,
   syncHotelCostSettingsFromSupabase,
   type GuideCostSettings,
+  type HamdiSheetSummary,
   type HotelCostSettings,
 } from "../lib/data";
 import { withAppBase } from "../lib/app-base";
@@ -26,26 +28,63 @@ const roomRows = [
   { key: "single", label: "أحادية", occupancy: 1 },
 ] as const;
 
+function createSheetId() {
+  return crypto.randomUUID();
+}
+
 export default function HamdiAdmin() {
   const { user, login, logout } = useAuth();
+  const navigate = useNavigate();
+  const { sheetId } = useParams();
+  const isListView = !sheetId;
+  const resolvedSheetId = sheetId ?? defaultHotelCostSettings.id;
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const [guideSettings, setGuideSettings] = useState<GuideCostSettings>(() => getGuideCostSettings());
-  const [hotelSettings, setHotelSettings] = useState<HotelCostSettings>(() => getHotelCostSettings());
+  const [sheets, setSheets] = useState<HamdiSheetSummary[]>([]);
+  const [loadingSheets, setLoadingSheets] = useState(false);
+  const [guideSettings, setGuideSettings] = useState<GuideCostSettings>(() => ({
+    ...getGuideCostSettings(resolvedSheetId),
+    id: resolvedSheetId,
+  }));
+  const [hotelSettings, setHotelSettings] = useState<HotelCostSettings>(() => ({
+    ...getHotelCostSettings(resolvedSheetId),
+    id: resolvedSheetId,
+  }));
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState("");
 
   useEffect(() => {
     if (!user || user.role !== "admin") return;
-    void Promise.all([
-      syncGuideCostSettingsFromSupabase().catch(() => getGuideCostSettings()),
-      syncHotelCostSettingsFromSupabase().catch(() => getHotelCostSettings()),
-    ]).then(([nextGuideSettings, nextHotelSettings]) => {
-      setGuideSettings(nextGuideSettings);
-      setHotelSettings(nextHotelSettings);
+
+    if (isListView) {
+      setLoadingSheets(true);
+      void listHamdiSheetsFromSupabase()
+        .then(setSheets)
+        .finally(() => setLoadingSheets(false));
+      return;
+    }
+
+    setGuideSettings({ ...defaultGuideCostSettings, id: resolvedSheetId });
+    setHotelSettings({
+      ...defaultHotelCostSettings,
+      id: resolvedSheetId,
+      title: "فيشة جديدة",
     });
-  }, [user]);
+
+    void Promise.all([
+      syncGuideCostSettingsFromSupabase(resolvedSheetId).catch(() => getGuideCostSettings(resolvedSheetId)),
+      syncHotelCostSettingsFromSupabase(resolvedSheetId).catch(() => getHotelCostSettings(resolvedSheetId)),
+    ]).then(([nextGuideSettings, nextHotelSettings]) => {
+      setGuideSettings({ ...nextGuideSettings, id: resolvedSheetId });
+      setHotelSettings({
+        ...nextHotelSettings,
+        id: resolvedSheetId,
+        title: nextHotelSettings.title || "فيشة جديدة",
+      });
+    });
+  }, [isListView, resolvedSheetId, user]);
 
   const guideTotalCost = useMemo(() => (
     Number(guideSettings.guideTicketCost || 0) +
@@ -113,17 +152,17 @@ export default function HamdiAdmin() {
     setSaved("");
     try {
       const [nextGuideSettings, nextHotelSettings] = await Promise.all([
-        saveGuideCostSettingsToSupabase(guideSettings),
-        saveHotelCostSettingsToSupabase({ ...hotelSettings, guideDzd: guideShareDzd }),
+        saveGuideCostSettingsToSupabase({ ...guideSettings, id: resolvedSheetId }),
+        saveHotelCostSettingsToSupabase({ ...hotelSettings, id: resolvedSheetId, guideDzd: guideShareDzd }),
       ]);
       setGuideSettings(nextGuideSettings);
       setHotelSettings(nextHotelSettings);
       saveGuideCostSettings(nextGuideSettings);
       saveHotelCostSettings(nextHotelSettings);
-      setSaved("تم حفظ الجداول بنجاح.");
+      setSaved("تم حفظ الفيشة بنجاح.");
     } catch {
-      saveGuideCostSettings(guideSettings);
-      saveHotelCostSettings(hotelSettings);
+      saveGuideCostSettings({ ...guideSettings, id: resolvedSheetId });
+      saveHotelCostSettings({ ...hotelSettings, id: resolvedSheetId });
       setSaved("تم حفظ التعديلات محليًا.");
     } finally {
       setSaving(false);
@@ -161,6 +200,22 @@ export default function HamdiAdmin() {
     return formatAmount(Math.round(value), 0);
   }
 
+  function printPage() {
+    window.print();
+  }
+
+  function openNewSheet() {
+    navigate(`/hamdi-admin/${createSheetId()}`);
+  }
+
+  function openSheet(id: string) {
+    navigate(`/hamdi-admin/${id}`);
+  }
+
+  function backToSheets() {
+    navigate("/hamdi-admin");
+  }
+
   if (user && user.role !== "admin") {
     return <Navigate to="/admin" replace />;
   }
@@ -173,7 +228,7 @@ export default function HamdiAdmin() {
             <img src={withAppBase("/logo-normal.png")} alt="Hamdi Voyage" />
             <span className="label">بوابة خاصة</span>
             <h1>Hamdi Admin</h1>
-            <p>تسجيل دخول منفصل لإدارة الجداول الخاصة والبيانات الداخلية.</p>
+            <p>تسجيل دخول منفصل لإدارة الفيش الخاصة والبيانات الداخلية.</p>
           </div>
 
           <form className="hamdi-admin-auth-form" onSubmit={submitLogin}>
@@ -193,6 +248,62 @@ export default function HamdiAdmin() {
     );
   }
 
+  if (isListView) {
+    return (
+      <main className="hamdi-admin-page">
+        <header className="hamdi-admin-nav">
+          <div className="hamdi-admin-nav-brand">
+            <img src={withAppBase("/logo-normal.png")} alt="Hamdi Voyage" />
+            <div>
+              <strong>Hamdi Admin</strong>
+              <small>أرشيف الفيش الخاصة</small>
+            </div>
+          </div>
+
+          <nav className="hamdi-admin-nav-links">
+            <button type="button" className="active">كل الفيش</button>
+            <button type="button" onClick={openNewSheet}><Plus size={15} /> إضافة جديدة</button>
+            <button type="button" onClick={logout}><LogOut size={15} /> خروج</button>
+          </nav>
+        </header>
+
+        <section className="hamdi-admin-shell-page">
+          <div className="hamdi-admin-card sheet-list-card">
+            <div className="hamdi-admin-card-head sheet-list-head">
+              <div>
+                <span className="label">كل الرحلات</span>
+                <h2>تخزين الفيش</h2>
+              </div>
+              <button type="button" className="sheet-add-btn" onClick={openNewSheet}>
+                <Plus size={16} /> إضافة فيشة
+              </button>
+            </div>
+
+            <div className="sheet-list-grid">
+              {loadingSheets ? (
+                <div className="sheet-empty-state">جاري تحميل الفيش...</div>
+              ) : sheets.length === 0 ? (
+                <div className="sheet-empty-state">لا توجد فيش بعد. أضف أول فيشة من الزر بالأعلى.</div>
+              ) : sheets.map((sheet) => (
+                <article key={sheet.id} className="sheet-list-row">
+                  <div>
+                    <strong>{sheet.title}</strong>
+                    <small>{new Date(sheet.updatedAt).toLocaleString("fr-FR")}</small>
+                  </div>
+                  <div className="sheet-list-actions">
+                    <button type="button" onClick={() => openSheet(sheet.id)}>
+                      <Pencil size={15} /> تعديل
+                    </button>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </div>
+        </section>
+      </main>
+    );
+  }
+
   return (
     <main className="hamdi-admin-page">
       <header className="hamdi-admin-nav">
@@ -200,12 +311,14 @@ export default function HamdiAdmin() {
           <img src={withAppBase("/logo-normal.png")} alt="Hamdi Voyage" />
           <div>
             <strong>Hamdi Admin</strong>
-            <small>لوحة الجداول الخاصة</small>
+            <small>تعديل فيشة الرحلة</small>
           </div>
         </div>
 
         <nav className="hamdi-admin-nav-links">
-          <button type="button" className="active">الجداول</button>
+          <button type="button" onClick={backToSheets}><ArrowRight size={15} /> كل الفيش</button>
+          <button type="button" onClick={openNewSheet}><Plus size={15} /> إضافة جديدة</button>
+          <button type="button" className="active">الفِيشة الحالية</button>
           <button type="button" onClick={logout}><LogOut size={15} /> خروج</button>
         </nav>
       </header>
@@ -303,7 +416,7 @@ export default function HamdiAdmin() {
                 <div className="guide-cost-head">تكلفة المرشد</div>
 
                 <div className="guide-cost-row">
-                  <span>تدكرة مرشدة</span>
+                  <span>تذكرة مرشدة</span>
                   <input type="number" value={guideSettings.guideTicketCost} onWheel={stopNumberScroll} onChange={(event) => updateGuideField("guideTicketCost", event.target.value)} />
                 </div>
 
@@ -408,9 +521,14 @@ export default function HamdiAdmin() {
           </div>
 
           <div className="hamdi-admin-actions">
-            <button type="submit" className="hamdi-admin-save" disabled={saving}>
-              <Save size={16} /> {saving ? "جارٍ الحفظ..." : "حفظ التعديلات"}
-            </button>
+            <div className="hamdi-admin-action-buttons">
+              <button type="button" className="hamdi-admin-print" onClick={printPage}>
+                <Printer size={16} /> طباعة
+              </button>
+              <button type="submit" className="hamdi-admin-save" disabled={saving}>
+                <Save size={16} /> {saving ? "جارٍ الحفظ..." : "حفظ التعديلات"}
+              </button>
+            </div>
             {saved && <p className="hamdi-admin-saved">{saved}</p>}
           </div>
         </form>

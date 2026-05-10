@@ -39,6 +39,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
           <Route path="/voyages/:travelId" element={<TravelDetail />} />
           <Route path="/auth" element={<SignIn />} />
           <Route path="/hamdi-admin" element={<HamdiAdmin />} />
+          <Route path="/hamdi-admin/:sheetId" element={<HamdiAdmin />} />
           <Route path="/admin" element={<Protected><Admin /></Protected>} />
           <Route path="/admin/reservations/new" element={<Protected><AdminReservationCatalog /></Protected>} />
           <Route path="/admin/reservations/new/:travelId" element={<Protected><TravelDetail /></Protected>} />

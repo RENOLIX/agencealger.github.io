@@ -266,6 +266,12 @@ export type HotelCostSettings = {
   salePrice: number;
 };
 
+export type HamdiSheetSummary = {
+  id: string;
+  title: string;
+  updatedAt: string;
+};
+
 export const defaultGuideCostSettings: GuideCostSettings = {
   id: "default",
   guideTicketCost: 30000,
@@ -380,19 +386,20 @@ export async function syncUsersFromSupabase() {
   return users;
 }
 
-export async function syncGuideCostSettingsFromSupabase() {
-  if (!hasSupabaseConfig) return getGuideCostSettings();
+export async function syncGuideCostSettingsFromSupabase(id = defaultGuideCostSettings.id) {
+  if (!hasSupabaseConfig) return getGuideCostSettings(id);
 
   const { data, error } = await supabase
     .from("guide_cost_settings")
     .select("id, guide_ticket_cost, visa_cost, expense_cost, medina_bed_cost, mecca_bed_cost, updated_at")
-    .order("updated_at", { ascending: false })
-    .limit(1)
+    .eq("id", id)
     .maybeSingle();
 
   if (error) throw error;
 
-  const settings = mapGuideCostSettingsRow(data as GuideCostSettingsRow | null);
+  const settings = data
+    ? mapGuideCostSettingsRow(data as GuideCostSettingsRow)
+    : { ...defaultGuideCostSettings, id };
   saveGuideCostSettings(settings);
   return settings;
 }
@@ -403,25 +410,26 @@ export async function saveGuideCostSettingsToSupabase(settings: GuideCostSetting
     return settings;
   }
 
-  const payload = mapGuideCostSettingsToRow(settings);
+  const payload = { ...mapGuideCostSettingsToRow(settings), updated_at: new Date().toISOString() };
   const { error } = await supabase.from("guide_cost_settings").upsert(payload, { onConflict: "id" });
   if (error) throw error;
-  return syncGuideCostSettingsFromSupabase();
+  return syncGuideCostSettingsFromSupabase(settings.id);
 }
 
-export async function syncHotelCostSettingsFromSupabase() {
-  if (!hasSupabaseConfig) return getHotelCostSettings();
+export async function syncHotelCostSettingsFromSupabase(id = defaultHotelCostSettings.id) {
+  if (!hasSupabaseConfig) return getHotelCostSettings(id);
 
   const { data, error } = await supabase
     .from("hotel_cost_settings")
-    .select("id, title, mecca_sar, medina_sar, visa_sar, diwan_dzd, ticket_dzd, gift_dzd, food_dzd, guide_dzd, exchange_rate, seats_count, mecca_nights, medina_nights, updated_at")
-    .order("updated_at", { ascending: false })
-    .limit(1)
+    .select("id, title, mecca_sar, medina_sar, visa_sar, diwan_dzd, ticket_dzd, gift_dzd, food_dzd, guide_dzd, exchange_rate, seats_count, mecca_nights, medina_nights, purchase_price, sale_price, updated_at")
+    .eq("id", id)
     .maybeSingle();
 
   if (error) throw error;
 
-  const settings = mapHotelCostSettingsRow(data as HotelCostSettingsRow | null);
+  const settings = data
+    ? mapHotelCostSettingsRow(data as HotelCostSettingsRow)
+    : { ...defaultHotelCostSettings, id };
   saveHotelCostSettings(settings);
   return settings;
 }
@@ -432,10 +440,27 @@ export async function saveHotelCostSettingsToSupabase(settings: HotelCostSetting
     return settings;
   }
 
-  const payload = mapHotelCostSettingsToRow(settings);
+  const payload = { ...mapHotelCostSettingsToRow(settings), updated_at: new Date().toISOString() };
   const { error } = await supabase.from("hotel_cost_settings").upsert(payload, { onConflict: "id" });
   if (error) throw error;
-  return syncHotelCostSettingsFromSupabase();
+  return syncHotelCostSettingsFromSupabase(settings.id);
+}
+
+export async function listHamdiSheetsFromSupabase(): Promise<HamdiSheetSummary[]> {
+  if (!hasSupabaseConfig) return listLocalHamdiSheets();
+
+  const { data, error } = await supabase
+    .from("hotel_cost_settings")
+    .select("id, title, updated_at")
+    .order("updated_at", { ascending: false });
+
+  if (error) throw error;
+
+  return ((data ?? []) as Array<{ id: string; title: string | null; updated_at: string | null }>).map((row) => ({
+    id: row.id,
+    title: row.title || defaultHotelCostSettings.title,
+    updatedAt: row.updated_at || new Date().toISOString(),
+  }));
 }
 
 export async function createUserInSupabase(user: User) {
@@ -884,22 +909,76 @@ export function saveReservations(nextReservations: Reservation[]) {
   writeStore("hv-reservations", nextReservations);
 }
 
-export function getGuideCostSettings() {
-  const stored = readStore<GuideCostSettings | null>("hv-guide-cost-settings", null);
-  return stored ? { ...defaultGuideCostSettings, ...stored } : defaultGuideCostSettings;
+function readGuideCostSettingsMap() {
+  const storedList = readStore<GuideCostSettings[] | null>("hv-guide-cost-settings-list", null);
+  if (Array.isArray(storedList) && storedList.length > 0) {
+    return new globalThis.Map(storedList.map((entry) => [entry.id, { ...defaultGuideCostSettings, ...entry }]));
+  }
+
+  const storedSingle = readStore<GuideCostSettings | null>("hv-guide-cost-settings", null);
+  if (storedSingle) {
+    return new globalThis.Map([[storedSingle.id || defaultGuideCostSettings.id, { ...defaultGuideCostSettings, ...storedSingle }]]);
+  }
+
+  return new globalThis.Map<string, GuideCostSettings>();
+}
+
+function writeGuideCostSettingsMap(map: globalThis.Map<string, GuideCostSettings>) {
+  const values = Array.from(map.values());
+  writeStore("hv-guide-cost-settings-list", values);
+  if (values.length > 0) writeStore("hv-guide-cost-settings", values[0]);
+}
+
+export function getGuideCostSettings(id = defaultGuideCostSettings.id) {
+  const map = readGuideCostSettingsMap();
+  return map.get(id) ?? { ...defaultGuideCostSettings, id };
 }
 
 export function saveGuideCostSettings(nextSettings: GuideCostSettings) {
-  writeStore("hv-guide-cost-settings", nextSettings);
+  const map = readGuideCostSettingsMap();
+  map.set(nextSettings.id, { ...defaultGuideCostSettings, ...nextSettings });
+  writeGuideCostSettingsMap(map);
 }
 
-export function getHotelCostSettings() {
-  const stored = readStore<HotelCostSettings | null>("hv-hotel-cost-settings", null);
-  return stored ? { ...defaultHotelCostSettings, ...stored } : defaultHotelCostSettings;
+function readHotelCostSettingsMap() {
+  const storedList = readStore<HotelCostSettings[] | null>("hv-hotel-cost-settings-list", null);
+  if (Array.isArray(storedList) && storedList.length > 0) {
+    return new globalThis.Map(storedList.map((entry) => [entry.id, { ...defaultHotelCostSettings, ...entry }]));
+  }
+
+  const storedSingle = readStore<HotelCostSettings | null>("hv-hotel-cost-settings", null);
+  if (storedSingle) {
+    return new globalThis.Map([[storedSingle.id || defaultHotelCostSettings.id, { ...defaultHotelCostSettings, ...storedSingle }]]);
+  }
+
+  return new globalThis.Map<string, HotelCostSettings>();
+}
+
+function writeHotelCostSettingsMap(map: globalThis.Map<string, HotelCostSettings>) {
+  const values = Array.from(map.values());
+  writeStore("hv-hotel-cost-settings-list", values);
+  if (values.length > 0) writeStore("hv-hotel-cost-settings", values[0]);
+}
+
+export function getHotelCostSettings(id = defaultHotelCostSettings.id) {
+  const map = readHotelCostSettingsMap();
+  return map.get(id) ?? { ...defaultHotelCostSettings, id };
 }
 
 export function saveHotelCostSettings(nextSettings: HotelCostSettings) {
-  writeStore("hv-hotel-cost-settings", nextSettings);
+  const map = readHotelCostSettingsMap();
+  map.set(nextSettings.id, { ...defaultHotelCostSettings, ...nextSettings });
+  writeHotelCostSettingsMap(map);
+}
+
+export function listLocalHamdiSheets() {
+  return Array.from(readHotelCostSettingsMap().values())
+    .map((sheet) => ({
+      id: sheet.id,
+      title: sheet.title || defaultHotelCostSettings.title,
+      updatedAt: new Date().toISOString(),
+    }))
+    .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
 }
 
 export function isReservationTrashed(reservation: Reservation) {

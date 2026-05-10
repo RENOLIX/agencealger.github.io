@@ -1140,7 +1140,10 @@ progress { accent-color: var(--orange); width: 100%; }
 }
 
 .hamdi-admin-auth-form button,
-.hamdi-admin-save {
+.hamdi-admin-save,
+.hamdi-admin-print,
+.sheet-add-btn,
+.sheet-list-actions button {
   align-items: center;
   background: linear-gradient(135deg, #d5ae4d, #b88a26);
   border: 0;
@@ -1152,6 +1155,13 @@ progress { accent-color: var(--orange); width: 100%; }
   justify-content: center;
   min-height: 52px;
   padding: 0 18px;
+}
+
+.hamdi-admin-print,
+.sheet-list-actions button {
+  background: white;
+  border: 1px solid #d7e0ea;
+  color: #111827;
 }
 
 .hamdi-admin-nav {
@@ -1329,6 +1339,12 @@ progress { accent-color: var(--orange); width: 100%; }
   flex-direction: row-reverse;
   gap: 16px;
   justify-content: space-between;
+}
+
+.hamdi-admin-action-buttons {
+  display: flex;
+  flex-direction: row-reverse;
+  gap: 12px;
 }
 
 .hamdi-admin-saved {
@@ -1533,6 +1549,67 @@ progress { accent-color: var(--orange); width: 100%; }
   display: grid;
   gap: 20px;
   grid-template-columns: minmax(0, 1.15fr) minmax(320px, .85fr);
+}
+
+.sheet-list-card {
+  max-width: 1080px;
+}
+
+.sheet-list-head {
+  align-items: center;
+  display: flex;
+  flex-direction: row-reverse;
+  justify-content: space-between;
+}
+
+.sheet-add-btn {
+  min-height: 46px;
+}
+
+.sheet-list-grid {
+  display: grid;
+  gap: 14px;
+}
+
+.sheet-list-row {
+  align-items: center;
+  background: #fbfdff;
+  border: 1px solid #d6dde8;
+  border-radius: 20px;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: 1fr auto;
+  padding: 16px 18px;
+}
+
+.sheet-list-row strong {
+  color: #0f172a;
+  display: block;
+  font-size: 21px;
+  margin-bottom: 4px;
+}
+
+.sheet-list-row small {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.sheet-list-actions {
+  display: flex;
+  flex-direction: row-reverse;
+  gap: 10px;
+}
+
+.sheet-empty-state {
+  background: #fbfdff;
+  border: 1px dashed #d6dde8;
+  border-radius: 20px;
+  color: #64748b;
+  font-size: 15px;
+  font-weight: 800;
+  padding: 28px;
+  text-align: center;
 }
 
 .pricing-summary-card {
@@ -2167,6 +2244,10 @@ input[type="number"]::-webkit-inner-spin-button {
     flex-direction: column;
   }
 
+  .hamdi-admin-action-buttons {
+    flex-direction: column;
+  }
+
   .hamdi-admin-nav {
     gap: 16px;
     padding: 18px 20px;
@@ -2184,6 +2265,20 @@ input[type="number"]::-webkit-inner-spin-button {
   .hotel-cost-bottom-grid,
   .hamdi-admin-bottom-row {
     grid-template-columns: 1fr;
+  }
+
+  .sheet-list-head,
+  .sheet-list-row {
+    grid-template-columns: 1fr;
+  }
+
+  .sheet-list-actions {
+    justify-content: stretch;
+  }
+
+  .sheet-list-actions button,
+  .sheet-add-btn {
+    width: 100%;
   }
 
   .guide-cost-card.compact {
@@ -2329,5 +2424,103 @@ input[type="number"]::-webkit-inner-spin-button {
   .admin-topnav.open {
     margin-top: 10px;
     padding-top: 10px;
+  }
+}
+
+@media print {
+  @page {
+    margin: 14mm;
+    size: A4 portrait;
+  }
+
+  body {
+    background: white !important;
+  }
+
+  .hamdi-admin-page,
+  .hamdi-admin-page::before,
+  .hamdi-admin-page::after {
+    background: white !important;
+  }
+
+  .hamdi-admin-nav {
+    border-bottom: 2px solid #d6dde8;
+    margin-bottom: 12px;
+    padding: 0 0 12px;
+    position: static;
+  }
+
+  .hamdi-admin-nav-links,
+  .hamdi-admin-actions,
+  .sheet-add-btn,
+  .sheet-list-actions {
+    display: none !important;
+  }
+
+  .hamdi-admin-shell-page {
+    padding: 0;
+  }
+
+  .hamdi-admin-form,
+  .hamdi-admin-layout,
+  .hamdi-admin-bottom-row {
+    display: grid !important;
+    gap: 14px !important;
+  }
+
+  .hamdi-admin-layout {
+    grid-template-columns: minmax(0, 1fr) 280px !important;
+  }
+
+  .hamdi-admin-bottom-row {
+    grid-template-columns: minmax(0, 1fr) minmax(260px, .8fr) !important;
+  }
+
+  .hamdi-admin-card {
+    border: 1px solid #d6dde8 !important;
+    border-radius: 18px !important;
+    box-shadow: none !important;
+    break-inside: avoid;
+    content-visibility: visible !important;
+    margin: 0 !important;
+    max-width: none !important;
+    page-break-inside: avoid;
+    padding: 16px !important;
+  }
+
+  .hotel-cost-title-row,
+  .guide-cost-head,
+  .guide-cost-row span,
+  .guide-cost-row.total span,
+  .guide-cost-row.total strong,
+  .pricing-summary-table thead th,
+  .profit-table thead th,
+  .profit-table .computed-cell {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .hotel-cost-table th,
+  .hotel-cost-table td,
+  .pricing-summary-table th,
+  .pricing-summary-table td,
+  .profit-table th,
+  .profit-table td {
+    font-size: 13px !important;
+    padding: 7px 6px !important;
+  }
+
+  .hotel-cost-table input,
+  .hotel-mini-row input,
+  .profit-table input,
+  .guide-cost-row input {
+    border: 0 !important;
+    min-height: auto !important;
+    padding: 0 !important;
+  }
+
+  input {
+    appearance: none;
+    -webkit-appearance: none;
   }
 }
