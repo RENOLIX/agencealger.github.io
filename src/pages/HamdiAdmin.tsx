@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState, type WheelEvent } from "react";
 import { LockKeyhole, LogOut, Mail, Save } from "lucide-react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../components/providers/auth";
@@ -114,6 +114,11 @@ export default function HamdiAdmin() {
     }));
   }
 
+  function stopNumberScroll(event: WheelEvent<HTMLInputElement>) {
+    event.currentTarget.blur();
+    event.stopPropagation();
+  }
+
   function formatAmount(value: number, digits = 0) {
     return value.toLocaleString("fr-FR", {
       minimumFractionDigits: digits,
@@ -209,19 +214,19 @@ export default function HamdiAdmin() {
                     </tr>
                     <tr>
                       <th className="hotel-side-header">القيمة</th>
-                      <td><input type="number" value={hotelSettings.meccaSar} onChange={(event) => updateHotelField("meccaSar", event.target.value)} /></td>
-                      <td><input type="number" value={hotelSettings.medinaSar} onChange={(event) => updateHotelField("medinaSar", event.target.value)} /></td>
-                      <td><input type="number" value={hotelSettings.visaSar} onChange={(event) => updateHotelField("visaSar", event.target.value)} /></td>
-                      <td><input type="number" value={hotelSettings.diwanDzd} onChange={(event) => updateHotelField("diwanDzd", event.target.value)} /></td>
-                      <td><input type="number" value={hotelSettings.ticketDzd} onChange={(event) => updateHotelField("ticketDzd", event.target.value)} /></td>
-                      <td><input type="number" value={hotelSettings.giftDzd} onChange={(event) => updateHotelField("giftDzd", event.target.value)} /></td>
-                      <td><input type="number" value={hotelSettings.foodDzd} onChange={(event) => updateHotelField("foodDzd", event.target.value)} /></td>
-                      <td><input type="number" value={hotelSettings.guideDzd} onChange={(event) => updateHotelField("guideDzd", event.target.value)} /></td>
+                      <td><input type="number" value={hotelSettings.meccaSar} onWheel={stopNumberScroll} onChange={(event) => updateHotelField("meccaSar", event.target.value)} /></td>
+                      <td><input type="number" value={hotelSettings.medinaSar} onWheel={stopNumberScroll} onChange={(event) => updateHotelField("medinaSar", event.target.value)} /></td>
+                      <td><input type="number" value={hotelSettings.visaSar} onWheel={stopNumberScroll} onChange={(event) => updateHotelField("visaSar", event.target.value)} /></td>
+                      <td><input type="number" value={hotelSettings.diwanDzd} onWheel={stopNumberScroll} onChange={(event) => updateHotelField("diwanDzd", event.target.value)} /></td>
+                      <td><input type="number" value={hotelSettings.ticketDzd} onWheel={stopNumberScroll} onChange={(event) => updateHotelField("ticketDzd", event.target.value)} /></td>
+                      <td><input type="number" value={hotelSettings.giftDzd} onWheel={stopNumberScroll} onChange={(event) => updateHotelField("giftDzd", event.target.value)} /></td>
+                      <td><input type="number" value={hotelSettings.foodDzd} onWheel={stopNumberScroll} onChange={(event) => updateHotelField("foodDzd", event.target.value)} /></td>
+                      <td><input type="number" value={hotelSettings.guideDzd} onWheel={stopNumberScroll} onChange={(event) => updateHotelField("guideDzd", event.target.value)} /></td>
                     </tr>
                     <tr>
                       <th className="hotel-side-header">عدد ليالي</th>
-                      <td><input type="number" value={hotelSettings.meccaNights} onChange={(event) => updateHotelField("meccaNights", event.target.value)} /></td>
-                      <td><input type="number" value={hotelSettings.medinaNights} onChange={(event) => updateHotelField("medinaNights", event.target.value)} /></td>
+                      <td><input type="number" value={hotelSettings.meccaNights} onWheel={stopNumberScroll} onChange={(event) => updateHotelField("meccaNights", event.target.value)} /></td>
+                      <td><input type="number" value={hotelSettings.medinaNights} onWheel={stopNumberScroll} onChange={(event) => updateHotelField("medinaNights", event.target.value)} /></td>
                       <td colSpan={6} />
                     </tr>
                     {roomValues.map((room, index) => (
@@ -240,11 +245,11 @@ export default function HamdiAdmin() {
                   <div className="hotel-mini-table">
                     <div className="hotel-mini-row">
                       <span>تحويل</span>
-                      <input type="number" value={hotelSettings.exchangeRate} onChange={(event) => updateHotelField("exchangeRate", event.target.value)} />
+                      <input type="number" value={hotelSettings.exchangeRate} onWheel={stopNumberScroll} onChange={(event) => updateHotelField("exchangeRate", event.target.value)} />
                     </div>
                     <div className="hotel-mini-row">
                       <span>عدد مقاعد</span>
-                      <input type="number" value={hotelSettings.seatsCount} onChange={(event) => updateHotelField("seatsCount", event.target.value)} />
+                      <input type="number" value={hotelSettings.seatsCount} onWheel={stopNumberScroll} onChange={(event) => updateHotelField("seatsCount", event.target.value)} />
                     </div>
                   </div>
                   <div className="hotel-cost-note">
@@ -268,27 +273,27 @@ export default function HamdiAdmin() {
 
                 <div className="guide-cost-row">
                   <span>تدكرة مرشدة</span>
-                  <input type="number" value={guideSettings.guideTicketCost} onChange={(event) => updateGuideField("guideTicketCost", event.target.value)} />
+                  <input type="number" value={guideSettings.guideTicketCost} onWheel={stopNumberScroll} onChange={(event) => updateGuideField("guideTicketCost", event.target.value)} />
                 </div>
 
                 <div className="guide-cost-row">
                   <span>فيزة</span>
-                  <input type="number" value={guideSettings.visaCost} onChange={(event) => updateGuideField("visaCost", event.target.value)} />
+                  <input type="number" value={guideSettings.visaCost} onWheel={stopNumberScroll} onChange={(event) => updateGuideField("visaCost", event.target.value)} />
                 </div>
 
                 <div className="guide-cost-row">
                   <span>مصروف</span>
-                  <input type="number" value={guideSettings.expenseCost} onChange={(event) => updateGuideField("expenseCost", event.target.value)} />
+                  <input type="number" value={guideSettings.expenseCost} onWheel={stopNumberScroll} onChange={(event) => updateGuideField("expenseCost", event.target.value)} />
                 </div>
 
                 <div className="guide-cost-row">
                   <span>سرير مدينة</span>
-                  <input type="number" value={guideSettings.medinaBedCost} onChange={(event) => updateGuideField("medinaBedCost", event.target.value)} />
+                  <input type="number" value={guideSettings.medinaBedCost} onWheel={stopNumberScroll} onChange={(event) => updateGuideField("medinaBedCost", event.target.value)} />
                 </div>
 
                 <div className="guide-cost-row">
                   <span>سرير مكة</span>
-                  <input type="number" value={guideSettings.meccaBedCost} onChange={(event) => updateGuideField("meccaBedCost", event.target.value)} />
+                  <input type="number" value={guideSettings.meccaBedCost} onWheel={stopNumberScroll} onChange={(event) => updateGuideField("meccaBedCost", event.target.value)} />
                 </div>
 
                 <div className="guide-cost-row total">
