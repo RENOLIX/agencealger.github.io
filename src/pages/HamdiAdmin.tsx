@@ -65,6 +65,27 @@ export default function HamdiAdmin() {
     medinaDzd: (Number(hotelSettings.medinaSar || 0) * Number(hotelSettings.medinaNights || 0) * Number(hotelSettings.exchangeRate || 0)) / room.occupancy,
   })), [hotelSettings.exchangeRate, hotelSettings.meccaNights, hotelSettings.meccaSar, hotelSettings.medinaNights, hotelSettings.medinaSar]);
 
+  const roomTotals = useMemo(() => roomValues.map((room) => {
+    const sharedBase =
+      room.meccaDzd +
+      room.medinaDzd +
+      visaDzd +
+      Number(hotelSettings.diwanDzd || 0) +
+      Number(hotelSettings.ticketDzd || 0) +
+      Number(hotelSettings.giftDzd || 0) +
+      Number(hotelSettings.guideDzd || 0);
+
+    const totalWithFood = sharedBase + Number(hotelSettings.foodDzd || 0);
+    const totalWithoutFood = sharedBase;
+
+    return {
+      ...room,
+      totalCost: totalWithFood,
+      totalWithoutFood,
+      saleWithFood: totalWithFood,
+    };
+  }), [hotelSettings.diwanDzd, hotelSettings.foodDzd, hotelSettings.giftDzd, hotelSettings.guideDzd, hotelSettings.ticketDzd, roomValues, visaDzd]);
+
   async function submitLogin(event: FormEvent) {
     event.preventDefault();
     setError("");
@@ -309,6 +330,38 @@ export default function HamdiAdmin() {
               <Save size={16} /> {saving ? "جارٍ الحفظ..." : "حفظ التعديلات"}
             </button>
             {saved && <p className="hamdi-admin-saved">{saved}</p>}
+          </div>
+
+          <div className="hamdi-admin-bottom-row">
+            <article className="hamdi-admin-card pricing-summary-card">
+              <div className="hamdi-admin-card-head compact-head">
+                <div>
+                  <span className="label">ملخص آلي</span>
+                  <h2>جدول الأسعار</h2>
+                </div>
+              </div>
+
+              <table className="pricing-summary-table">
+                <thead>
+                  <tr>
+                    <th>تكلفة</th>
+                    <th>السعر بدون الأكل</th>
+                    <th>السعر بيع بالأكل</th>
+                    <th>الغرفة</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {roomTotals.map((room) => (
+                    <tr key={`summary-${room.key}`}>
+                      <td>{formatRoomAmount(room.totalCost)}</td>
+                      <td>{formatRoomAmount(room.totalWithoutFood)}</td>
+                      <td>{formatRoomAmount(room.saleWithFood)}</td>
+                      <th>{room.label}</th>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </article>
           </div>
         </form>
       </section>

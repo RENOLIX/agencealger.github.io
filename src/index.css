@@ -1525,6 +1525,77 @@ progress { accent-color: var(--orange); width: 100%; }
   font-weight: 900;
 }
 
+.hamdi-admin-bottom-row {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.pricing-summary-card {
+  margin: 0;
+  max-width: 720px;
+  padding: 18px;
+}
+
+.compact-head {
+  margin-bottom: 14px;
+}
+
+.compact-head h2 {
+  font-size: 24px;
+}
+
+.pricing-summary-table {
+  border-collapse: collapse;
+  table-layout: fixed;
+  width: 100%;
+}
+
+.pricing-summary-table th,
+.pricing-summary-table td {
+  border: 1px solid #d6dde8;
+  min-height: 48px;
+  padding: 10px 8px;
+  text-align: center;
+}
+
+.pricing-summary-table thead th {
+  color: #111827;
+  font-family: "Cairo", system-ui, sans-serif;
+  font-size: 16px;
+  font-weight: 900;
+}
+
+.pricing-summary-table thead th:nth-child(1) {
+  background: #ffe81f;
+  color: #dc2626;
+}
+
+.pricing-summary-table thead th:nth-child(2) {
+  background: #efefef;
+}
+
+.pricing-summary-table thead th:nth-child(3) {
+  background: #22c55e;
+  color: #111827;
+}
+
+.pricing-summary-table thead th:nth-child(4) {
+  background: white;
+}
+
+.pricing-summary-table tbody td,
+.pricing-summary-table tbody th {
+  color: #111827;
+  font-family: "Cairo", system-ui, sans-serif;
+  font-size: 18px;
+  font-weight: 900;
+}
+
+.pricing-summary-table tbody tr:nth-child(even) td,
+.pricing-summary-table tbody tr:nth-child(even) th {
+  background: #f3f4f6;
+}
+
 .flight-config-grid {
   display: grid;
   gap: 18px;
