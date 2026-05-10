@@ -100,6 +100,23 @@ values (
 )
 on conflict (id) do nothing;
 
+update public.hotel_cost_settings h
+set guide_dzd = case
+  when coalesce(h.seats_count, 0) <= 0 then 0
+  else (
+    select round((
+      coalesce(g.guide_ticket_cost, 0) +
+      coalesce(g.visa_cost, 0) +
+      coalesce(g.expense_cost, 0) +
+      coalesce(g.medina_bed_cost, 0) +
+      coalesce(g.mecca_bed_cost, 0)
+    ) / h.seats_count, 2)
+    from public.guide_cost_settings g
+    where g.id = 'default'
+  )
+end
+where h.id = 'default';
+
 do $$
 declare
   guides_udt text;

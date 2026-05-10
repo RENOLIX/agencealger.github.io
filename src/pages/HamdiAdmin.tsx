@@ -55,6 +55,12 @@ export default function HamdiAdmin() {
     Number(guideSettings.meccaBedCost || 0)
   ), [guideSettings]);
 
+  const guideShareDzd = useMemo(() => {
+    const seats = Number(hotelSettings.seatsCount || 0);
+    if (seats <= 0) return 0;
+    return guideTotalCost / seats;
+  }, [guideTotalCost, hotelSettings.seatsCount]);
+
   const visaDzd = useMemo(() => (
     Number(hotelSettings.visaSar || 0) * Number(hotelSettings.exchangeRate || 0)
   ), [hotelSettings.exchangeRate, hotelSettings.visaSar]);
@@ -73,7 +79,7 @@ export default function HamdiAdmin() {
       Number(hotelSettings.diwanDzd || 0) +
       Number(hotelSettings.ticketDzd || 0) +
       Number(hotelSettings.giftDzd || 0) +
-      Number(hotelSettings.guideDzd || 0);
+      guideShareDzd;
 
     const totalWithFood = sharedBase + Number(hotelSettings.foodDzd || 0);
     const totalWithoutFood = sharedBase;
@@ -84,7 +90,7 @@ export default function HamdiAdmin() {
       totalWithoutFood,
       saleWithFood: totalWithFood,
     };
-  }), [hotelSettings.diwanDzd, hotelSettings.foodDzd, hotelSettings.giftDzd, hotelSettings.guideDzd, hotelSettings.ticketDzd, roomValues, visaDzd]);
+  }), [guideShareDzd, hotelSettings.diwanDzd, hotelSettings.foodDzd, hotelSettings.giftDzd, hotelSettings.ticketDzd, roomValues, visaDzd]);
 
   async function submitLogin(event: FormEvent) {
     event.preventDefault();
@@ -104,7 +110,7 @@ export default function HamdiAdmin() {
     try {
       const [nextGuideSettings, nextHotelSettings] = await Promise.all([
         saveGuideCostSettingsToSupabase(guideSettings),
-        saveHotelCostSettingsToSupabase(hotelSettings),
+        saveHotelCostSettingsToSupabase({ ...hotelSettings, guideDzd: guideShareDzd }),
       ]);
       setGuideSettings(nextGuideSettings);
       setHotelSettings(nextHotelSettings);
@@ -242,7 +248,7 @@ export default function HamdiAdmin() {
                       <td><input type="number" value={hotelSettings.ticketDzd} onWheel={stopNumberScroll} onChange={(event) => updateHotelField("ticketDzd", event.target.value)} /></td>
                       <td><input type="number" value={hotelSettings.giftDzd} onWheel={stopNumberScroll} onChange={(event) => updateHotelField("giftDzd", event.target.value)} /></td>
                       <td><input type="number" value={hotelSettings.foodDzd} onWheel={stopNumberScroll} onChange={(event) => updateHotelField("foodDzd", event.target.value)} /></td>
-                      <td><input type="number" value={hotelSettings.guideDzd} onWheel={stopNumberScroll} onChange={(event) => updateHotelField("guideDzd", event.target.value)} /></td>
+                      <td className="computed-cell">{formatRoomAmount(guideShareDzd)}</td>
                     </tr>
                     <tr>
                       <th className="hotel-side-header">عدد ليالي</th>
