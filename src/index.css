@@ -1010,7 +1010,8 @@ progress { accent-color: var(--orange); width: 100%; }
   background: rgba(255,255,255,.92);
   border: 1px solid #e5edf3;
   border-radius: 18px;
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
 }
 
 .trash-sheet-row {
@@ -1019,7 +1020,8 @@ progress { accent-color: var(--orange); width: 100%; }
   column-gap: 14px;
   direction: rtl;
   display: grid;
-  grid-template-columns: 110px minmax(160px, 1.2fr) minmax(150px, 1fr) minmax(150px, 1fr) 110px 70px 120px 140px 120px minmax(180px, auto);
+  grid-template-columns: 110px minmax(160px, 1.2fr) minmax(150px, 1fr) minmax(150px, 1fr) 110px 70px 120px 140px 120px minmax(250px, auto);
+  min-width: 1460px;
   padding: 14px 16px;
   text-align: right;
 }
@@ -1044,6 +1046,7 @@ progress { accent-color: var(--orange); width: 100%; }
   flex-direction: row-reverse;
   gap: 8px;
   justify-content: flex-start;
+  white-space: nowrap;
 }
 
 .hamdi-admin-auth-page,
