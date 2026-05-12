@@ -84,6 +84,7 @@ const exitOptions = ["جدة", "المدينة المنورة", "الدمام", 
 const airlineOptions = [
   { value: "Air Algerie", label: "Air Algérie" },
   { value: "Flynas", label: "Flynas" },
+  { value: "Nouvelair", label: "Nouvelair" },
   { value: "Jordanian airline", label: "Jordanian airline" },
   { value: "Qatar Airlines", label: "Qatar Airlines" },
   { value: "Pegasus", label: "Pegasus" },
@@ -646,7 +647,7 @@ export default function Admin() {
   }
 
   async function moveReservationToTrash(reservation: Reservation) {
-    if (!window.confirm("إرسال هذا الحجز إلى الكوربيلة؟")) return;
+    if (!window.confirm("إرسال هذا الحجز إلى سلة؟")) return;
     setTrashBusyId(reservation.id);
     try {
       const nextReservations = await moveReservationToTrashInSupabase(reservation.id, user?.name ?? "Admin", "manual-delete");
@@ -660,7 +661,7 @@ export default function Admin() {
   }
 
   async function resetDashboardCounters() {
-    if (!window.confirm("سيتم تصفير العدادات ونقل جميع الحجوزات إلى الكوربيلة. هل تريد المتابعة؟")) return;
+    if (!window.confirm("سيتم تصفير العدادات ونقل جميع الحجوزات إلى سلة. هل تريد المتابعة؟")) return;
     setResettingCounters(true);
     try {
       const nextReservations = await moveAllReservationsToTrashInSupabase(user?.name ?? "Admin", "dashboard-reset");
@@ -686,7 +687,7 @@ export default function Admin() {
   }
 
   async function emptyTrashReservation(reservationId: string) {
-    if (!window.confirm("حذف نهائي من الكوربيلة؟")) return;
+    if (!window.confirm("حذف نهائي من سلة؟")) return;
     setTrashActionBusyId(reservationId);
     try {
       const nextReservations = await emptyTrashReservationInSupabase(reservationId);
@@ -742,7 +743,7 @@ export default function Admin() {
             { key: "reservations", label: "سجل الحجوزات", active: tab === "reservations", onClick: () => setTab("reservations") },
             { key: "housing", label: "تسكين", active: tab === "housing", onClick: () => setTab("housing") },
             { key: "history", label: "الأرشيف", active: tab === "history", onClick: () => setTab("history") },
-            { key: "trash", label: "الكوربيلة", active: tab === "trash", onClick: () => setTab("trash") },
+            { key: "trash", label: "سلة", active: tab === "trash", onClick: () => setTab("trash") },
             { key: "voyages", label: "الرحلات", active: tab === "voyages", onClick: () => setTab("voyages"), visible: isAdmin },
             { key: "team", label: "الطاقم", active: tab === "team", onClick: () => setTab("team"), visible: isAdmin },
             { key: "messages", label: "الرسائل", active: tab === "messages", onClick: () => setTab("messages"), visible: isAdmin },
@@ -762,7 +763,7 @@ export default function Admin() {
                 tab === "reservations" ? "متابعة سجل الحجوزات" :
                   tab === "housing" ? "تسكين الحجوزات" :
                   tab === "history" ? "الأرشيف الكامل للحجوزات" :
-                    tab === "trash" ? "الكوربيلة" :
+                    tab === "trash" ? "سلة" :
                 tab === "voyages" ? "إدارة الرحلات" :
                   tab === "team" ? "إدارة الطاقم" :
                     tab === "messages" ? "رسائل العملاء" : "الحسابات"}
@@ -925,7 +926,7 @@ export default function Admin() {
 
             {filteredTrash.length === 0 ? (
               <article className="admin-card">
-                <h2>الكوربيلة فارغة</h2>
+                <h2>سلة فارغة</h2>
                 <p>كل الحجوزات التي تحذف من السجل أو عند تصفير العدادات ستظهر هنا.</p>
               </article>
             ) : (
@@ -1046,7 +1047,7 @@ export default function Admin() {
                                 <small>الهاتف: {passenger.phone} - العنوان: {passenger.address}</small>
                                 <small>باللاتينية: {passenger.firstNameLatin} {passenger.lastNameLatin}</small>
                                 <small>الجنس: {passenger.sex === "female" ? "امرأة" : "رجل"} - المهنة: {passenger.profession}</small>
-                                <small>الأب: {passenger.fatherName} - الجد: {passenger.grandfatherName || "غير مسجل"}</small>
+                                <small>الأب: {passenger.fatherName} - الأم: {passenger.motherFirstName || "غير مسجل"} - الجد: {passenger.grandfatherName || "غير مسجل"}</small>
                                 <small>{passenger.birthPlace} - {passenger.birthDate}</small>
                                 <small>صدور الجواز: {passenger.passportIssueDate}</small>
                                 <small>انتهاء صلاحية جواز السفر: {passenger.passportExpiry}</small>

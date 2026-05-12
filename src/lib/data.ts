@@ -86,6 +86,7 @@ export type AirlineCode =
   | "MS"
   | "TK"
   | "Flynas"
+  | "Nouvelair"
   | "Jordanian airline"
   | "Qatar Airlines"
   | "Pegasus"
@@ -185,6 +186,7 @@ export type ReservationPassenger = {
   phone: string;
   address: string;
   fatherName: string;
+  motherFirstName: string;
   grandfatherName: string;
   profession: string;
   birthPlace: string;
@@ -1150,6 +1152,7 @@ function serializePassengerNotes(passenger: ReservationPassenger) {
     sex: passenger.sex || "male",
     address: passenger.address || "",
     fatherName: passenger.fatherName || "",
+    motherFirstName: passenger.motherFirstName || "",
     grandfatherName: passenger.grandfatherName || "",
     firstNameLatin: passenger.firstNameLatin || "",
     lastNameLatin: passenger.lastNameLatin || "",
@@ -1164,6 +1167,7 @@ function parsePassengerNotes(raw: string | null) {
     sex: "male" as PassengerSex,
     address: "",
     fatherName: "",
+    motherFirstName: "",
     grandfatherName: "",
     firstNameLatin: "",
     lastNameLatin: "",
@@ -1177,6 +1181,7 @@ function parsePassengerNotes(raw: string | null) {
       sex: (parsed.sex === "female" ? "female" : "male") as PassengerSex,
       address: typeof parsed.address === "string" ? parsed.address : "",
       fatherName: typeof parsed.fatherName === "string" ? parsed.fatherName : "",
+      motherFirstName: typeof parsed.motherFirstName === "string" ? parsed.motherFirstName : "",
       grandfatherName: typeof parsed.grandfatherName === "string" ? parsed.grandfatherName : "",
       firstNameLatin: typeof parsed.firstNameLatin === "string" ? parsed.firstNameLatin : "",
       lastNameLatin: typeof parsed.lastNameLatin === "string" ? parsed.lastNameLatin : "",
@@ -1189,6 +1194,7 @@ function parsePassengerNotes(raw: string | null) {
       sex: "male" as PassengerSex,
       address: "",
       fatherName: "",
+      motherFirstName: "",
       grandfatherName: "",
       firstNameLatin: "",
       lastNameLatin: "",
@@ -1539,6 +1545,7 @@ function mapReservationRows(
           phone: passenger.phone,
           address: meta.address,
           fatherName: meta.fatherName,
+          motherFirstName: meta.motherFirstName,
           grandfatherName: meta.grandfatherName,
           profession: meta.profession,
           birthPlace: passenger.birth_place,

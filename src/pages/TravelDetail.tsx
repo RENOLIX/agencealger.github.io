@@ -38,6 +38,7 @@ function createPassenger(type: PassengerType): ReservationPassenger {
     phone: "",
     address: "",
     fatherName: "",
+    motherFirstName: "",
     grandfatherName: "",
     profession: "",
     birthPlace: "",
@@ -78,7 +79,6 @@ export default function TravelDetail() {
   const quantity = adults + children + babies;
   const roomGuests = adults;
   const maxTickets = (travel?.ticketsLeft ?? 0) + (editingReservation?.status === "Confirmee" ? editingReservation.quantity : 0);
-  const isSinglePassenger = roomGuests === 1;
 
   useEffect(() => {
     void syncTravelsFromSupabase()
@@ -132,22 +132,19 @@ export default function TravelDetail() {
   const roomsMatchQuantity = roomGuests === 0 || selectedRoomCapacity === roomGuests;
 
   useEffect(() => {
-    if (isSinglePassenger && travel) {
-      setSelectedRooms((current) => (
-        current.length === 1 && current[0].type === "single" && current[0].capacity === 1
-          ? current
-          : [{
-            id: crypto.randomUUID(),
-            type: "single",
-            capacity: 1,
-            price: Number((travel.roomPrices?.single ?? travel.price) || 0),
-          }]
-      ));
-      return;
-    }
     if (selectedRoomCapacity <= roomGuests) return;
-    setSelectedRooms([]);
-  }, [isSinglePassenger, roomGuests, selectedRoomCapacity, travel]);
+    setSelectedRooms((current) => {
+      let remaining = roomGuests;
+      return current
+        .map((room) => {
+          if (remaining <= 0) return null;
+          const nextCapacity = Math.min(room.capacity, remaining);
+          remaining -= nextCapacity;
+          return { ...room, capacity: nextCapacity };
+        })
+        .filter((room): room is ReservationRoom => Boolean(room));
+    });
+  }, [roomGuests, selectedRoomCapacity]);
 
   const total = useMemo(() => {
     if (!travel) return 0;
@@ -201,8 +198,9 @@ export default function TravelDetail() {
   }
 
   function addRoom(roomType: keyof typeof roomTypeLabels) {
-    const capacity = isSinglePassenger && roomType === "single" ? 1 : roomCapacities[roomType];
-    if (selectedRoomCapacity + capacity > roomGuests) return;
+    const remainingAdults = roomGuests - selectedRoomCapacity;
+    if (remainingAdults <= 0) return;
+    const capacity = Math.min(roomCapacities[roomType], remainingAdults);
     setSelectedRooms((current) => [
       ...current,
       { id: crypto.randomUUID(), type: roomType, capacity, price: Number(roomPriceList[roomType] ?? currentTravel.price) },
@@ -210,7 +208,6 @@ export default function TravelDetail() {
   }
 
   function removeRoom(roomId: string) {
-    if (isSinglePassenger) return;
     setSelectedRooms((current) => current.filter((room) => room.id !== roomId));
   }
 
@@ -224,6 +221,7 @@ export default function TravelDetail() {
       passenger.phone.trim() &&
       passenger.address.trim() &&
       passenger.fatherName.trim() &&
+      passenger.motherFirstName.trim() &&
       passenger.grandfatherName.trim() &&
       passenger.profession.trim() &&
       passenger.birthPlace.trim() &&
@@ -459,8 +457,9 @@ export default function TravelDetail() {
             </div>
             <div className="room-choice-grid">
               {(Object.keys(roomTypeLabels) as Array<keyof typeof roomTypeLabels>).map((roomType) => {
-                const capacity = isSinglePassenger && roomType === "single" ? 1 : roomCapacities[roomType];
-                const disabled = isSinglePassenger ? roomType !== "single" : selectedRoomCapacity + capacity > roomGuests;
+                const remainingAdults = Math.max(0, roomGuests - selectedRoomCapacity);
+                const capacity = Math.min(roomCapacities[roomType], Math.max(1, remainingAdults));
+                const disabled = remainingAdults <= 0;
                 return (
                   <button key={roomType} type="button" disabled={disabled} onClick={() => addRoom(roomType)}>
                     <strong>{roomTypeLabels[roomType]}</strong>
@@ -513,6 +512,7 @@ export default function TravelDetail() {
                     </select>
                   </label>
                   <label>اسم الأب<input required value={passenger.fatherName} onChange={(event) => updatePassenger(passenger.id, "fatherName", event.target.value)} /></label>
+                  <label>اسم الأم<input required value={passenger.motherFirstName} onChange={(event) => updatePassenger(passenger.id, "motherFirstName", event.target.value)} /></label>
                   <label>رقم الهاتف<input required value={passenger.phone} onChange={(event) => updatePassenger(passenger.id, "phone", event.target.value)} /></label>
                   <label>اسم الجد<input required value={passenger.grandfatherName} onChange={(event) => updatePassenger(passenger.id, "grandfatherName", event.target.value)} /></label>
                   <label>المهنة<input required value={passenger.profession} onChange={(event) => updatePassenger(passenger.id, "profession", event.target.value)} /></label>
